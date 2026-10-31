@@ -1,0 +1,195 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792113361700,
+      "tag": "0000_bored_queen_noir",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792132428004,
+      "tag": "0001_brown_alice",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792132645512,
+      "tag": "0002_powerful_tyger_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792134883690,
+      "tag": "0003_bumpy_darwin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792154141335,
+      "tag": "0004_solid_rage",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792154807219,
+      "tag": "0005_left_viper",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792155168369,
+      "tag": "0006_aspiring_slyde",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792305774330,
+      "tag": "0007_purple_speed",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792310158248,
+      "tag": "0008_supreme_whistler",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792313710744,
+      "tag": "0009_spooky_paper_doll",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792315075564,
+      "tag": "0010_zippy_lake",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792337770712,
+      "tag": "0011_old_rachel_grey",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792341539091,
+      "tag": "0012_odd_mandroid",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792342882893,
+      "tag": "0013_gigantic_micromacro",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792550359829,
+      "tag": "0014_lyrical_romulus",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792550578314,
+      "tag": "0015_migrate_salary_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792552301826,
+      "tag": "0016_sweet_morgan_stark",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792552440845,
+      "tag": "0017_migrate_finance_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792554000000,
+      "tag": "0018_attendance_daily_enhancement",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792570884685,
+      "tag": "0019_lumpy_guardsmen",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792581190675,
+      "tag": "0020_parallel_silver_fox",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792587747072,
+      "tag": "0021_nasty_killer_shrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792591621625,
+      "tag": "0022_slow_captain_midlands",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792600000000,
+      "tag": "0023_soft_warpath",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792639201052,
+      "tag": "0024_jittery_colleen_wing",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793462400000,
+      "tag": "0025_grandfather_existing_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793470000000,
+      "tag": "0026_email_send_cooldowns",
+      "breakpoints": true
+    }
+  ]
+}

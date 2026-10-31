@@ -1,0 +1,1 @@
+ALTER TABLE "company_members" ALTER COLUMN "role" DROP DEFAULT;

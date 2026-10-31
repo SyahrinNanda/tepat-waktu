@@ -1,0 +1,97 @@
+name: tepatwaktu
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: tepatwaktu-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tepatwaktu
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tepatwaktu"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - database_data:/var/lib/postgresql/data
+
+  object-storage:
+    image: chrislusf/seaweedfs:latest
+    container_name: tepatwaktu-object-storage
+    restart: unless-stopped
+    command: ["mini", "-dir=/data", "-ip=object-storage"]
+    environment:
+      AWS_ACCESS_KEY_ID: ${OBJECT_STORAGE_ACCESS_KEY:-tepatwaktu-local}
+      AWS_SECRET_ACCESS_KEY: ${OBJECT_STORAGE_SECRET_KEY:-tepatwaktu-local-storage-secret}
+      S3_BUCKET: ${OBJECT_STORAGE_BUCKET:-tepatwaktu-private}
+    ports:
+      - "${OBJECT_STORAGE_PORT:-9000}:8333"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8333/readyz >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    volumes:
+      - object_storage_data:/data
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    container_name: tepatwaktu-migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/tepatwaktu
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-tepatwaktu-local-development-secret-change-me-2026}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: ${NEXT_PUBLIC_GOOGLE_AUTH_ENABLED:-false}
+    env_file:
+      - path: .env.local
+        required: false
+    container_name: tepatwaktu-app
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/tepatwaktu
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-tepatwaktu-local-development-secret-change-me-2026}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: ${NEXT_PUBLIC_GOOGLE_AUTH_ENABLED:-false}
+      OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
+      OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:-us-east-1}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-tepatwaktu-private}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-tepatwaktu-local}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-tepatwaktu-local-storage-secret}
+      OBJECT_STORAGE_FORCE_PATH_STYLE: "true"
+      OBJECT_STORAGE_AUTO_CREATE_BUCKET: "true"
+      GEOCODING_BASE_URL: ${GEOCODING_BASE_URL:-https://nominatim.openstreetmap.org}
+      GEOCODING_USER_AGENT: ${GEOCODING_USER_AGENT:-TepatWaktu/0.1}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      object-storage:
+        condition: service_healthy
+
+volumes:
+  database_data:
+  object_storage_data:

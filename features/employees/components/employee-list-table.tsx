@@ -1,0 +1,64 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { Check, ChevronDown, Ellipsis, UserRound, Users } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { deleteEmployee, updateEmployeeLocks } from "@/features/workforce/server/actions";
+
+export type EmployeeListRow = {
+  id: string; employeeCode: string; name: string; email: string; department: string; position: string;
+  status: "active" | "inactive"; allAttendanceLocations: boolean; contractType: string | null; photoAssetId: string | null;
+  lockLocation: boolean; lockPhoto: boolean; lockVisit: boolean;
+};
+
+export function EmployeeListTable({ rows, canManage }: { rows: EmployeeListRow[]; canManage: boolean }) {
+  const router = useRouter();
+  const [deleteTarget, setDeleteTarget] = useState<EmployeeListRow | null>(null);
+  const [busy, startTransition] = useTransition();
+  const remove = () => {
+    if (!deleteTarget) return;
+    startTransition(async () => {
+      await deleteEmployee(deleteTarget.id);
+      setDeleteTarget(null);
+      router.refresh();
+    });
+  };
+  if (!rows.length) return <div className="location-empty"><Users size={46}/><strong>Data Kosong</strong><span>Karyawan tidak ditemukan.</span></div>;
+  return <>
+    <div className="table-scroll"><table className="employee-list-table"><thead><tr><th>#</th><th>Foto</th><th>Nama Karyawan</th><th>Jabatan–Divisi</th><th>Lokasi Presensi</th><th>Kunci Pengaturan</th><th>Tipe Kontrak</th><th>Aksi</th></tr></thead><tbody>
+      {rows.map((row, index) => <tr key={row.id} className={row.status === "inactive" ? "employee-inactive-row" : undefined}>
+        <td>{index + 1}</td>
+        <td>{row.photoAssetId ? <Image className="employee-photo" src={`/api/files/${row.photoAssetId}`} alt={row.name} width={56} height={56} unoptimized/> : <span className="employee-photo-placeholder"><UserRound size={38}/></span>}</td>
+        <td><span className="employee-code">NI: {row.employeeCode}</span><Link href={`/dashboard/karyawan/${row.id}`}>{row.name}</Link><small>{row.email}</small></td>
+        <td><strong>{row.position}</strong><small>{row.department}</small></td>
+        <td>{row.allAttendanceLocations ? "Semua Lokasi" : "Lokasi Tertentu"}</td>
+        <td><LockMenu row={row} disabled={!canManage}/></td>
+        <td>{row.contractType || "–"}</td>
+        <td><details className="employee-action-menu"><summary aria-label={`Aksi ${row.name}`}><Ellipsis size={19}/></summary><div><Link href={`/dashboard/karyawan/${row.id}` as Route}>Detail</Link>{canManage && <Link href={`/dashboard/karyawan/${row.id}/edit` as Route}>Edit</Link>}{canManage && <button type="button" onClick={() => setDeleteTarget(row)}>Hapus</button>}</div></details></td>
+      </tr>)}
+    </tbody></table></div>
+    <ConfirmDialog open={Boolean(deleteTarget)} title="Hapus Karyawan?" message={`Data ${deleteTarget?.name ?? "karyawan"} beserta riwayat terkait akan dihapus permanen.`} busy={busy} onCancel={() => setDeleteTarget(null)} onConfirm={remove}/>
+  </>;
+}
+
+function LockMenu({ row, disabled }: { row: EmployeeListRow; disabled: boolean }) {
+  const [locks, setLocks] = useState({ location: row.lockLocation, photo: row.lockPhoto, visit: row.lockVisit });
+  const [pending, startTransition] = useTransition();
+  const toggle = (key: keyof typeof locks) => {
+    if (disabled || pending) return;
+    const previous = locks;
+    const next = { ...locks, [key]: !locks[key] };
+    setLocks(next);
+    startTransition(async () => { try { await updateEmployeeLocks(row.id, next); } catch { setLocks(previous); } });
+  };
+  const active = Object.values(locks).filter(Boolean).length;
+  return <details className="employee-lock-menu"><summary>{pending ? "Menyimpan..." : active === 3 ? "Kunci Lokasi..." : `${active} Kunci Aktif`}<ChevronDown size={13}/></summary><div>
+    <button type="button" disabled={disabled} onClick={() => toggle("location")}>Kunci Lokasi {locks.location && <Check size={14}/>}</button>
+    <button type="button" disabled={disabled} onClick={() => toggle("photo")}>Kunci Foto {locks.photo && <Check size={14}/>}</button>
+    <button type="button" disabled={disabled} onClick={() => toggle("visit")}>Kunci Kunjungan {locks.visit && <Check size={14}/>}</button>
+  </div></details>;
+}
