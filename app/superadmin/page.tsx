@@ -150,7 +150,7 @@ export default async function Page() {
             <strong style={{ fontSize: "14px", color: "var(--ink)", display: "block" }}>
               Ruang Kerja Perusahaan (Tenant)
             </strong>
-            <small style={{ color: "var(--muted)", fontSize: "11px" }}>
+            <small style={{ color: "var(--muted)", fontSize: "12px" }}>
               Pilih ruang kerja untuk masuk dan mengelola data perusahaan dengan hak akses Admin penuh
             </small>
           </div>
@@ -173,9 +173,9 @@ export default async function Page() {
                     <p style={{ margin: "2px 0 8px" }}>
                       {company.industry} · <span className="status-pill green">Paket {company.plan}</span>
                     </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", color: "#52697c", fontSize: "11px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", color: "#6c6862", fontSize: "12px" }}>
                       <span><Users size={14} /> {Number(company.employeeCount)} karyawan</span>
-                      <small style={{ color: "#8b9aa8" }}>{company.timezone}</small>
+                      <small style={{ color: "#9d9a96" }}>{company.timezone}</small>
                     </div>
                   </div>
                 </div>

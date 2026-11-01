@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Banknote,
   BarChart3,
   Bell,
   Building2,
@@ -12,8 +11,6 @@ import {
   ChevronDown,
   ClipboardList,
   FileText,
-  Gauge,
-  HandCoins,
   LayoutDashboard,
   LogOut,
   MapPinned,
@@ -22,7 +19,6 @@ import {
   MessageCircleQuestion,
   PackageSearch,
   Settings,
-  ShieldCheck,
   Users,
   WalletCards,
   X,
@@ -53,7 +49,6 @@ type NavGroup = {
 
 const primaryItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/monitor", label: "Monitor Perusahaan", icon: Gauge, roles: managementRoles },
   { href: "/dashboard/pengumuman", label: "Pengumuman", icon: Megaphone },
 ];
 
@@ -69,7 +64,6 @@ const groups: NavGroup[] = [
       { href: "/dashboard/master/jabatan", label: "Jabatan", roles: hrRoles },
       { href: "/dashboard/master/lokasi-kunjungan", label: "Lokasi Kunjungan", roles: hrRoles },
       { href: "/dashboard/master/lokasi-presensi", label: "Lokasi Presensi", roles: hrRoles },
-      { href: "/dashboard/master/istilah-gaji", label: "Istilah Gaji", roles: hrRoles },
     ],
   },
   {
@@ -79,8 +73,6 @@ const groups: NavGroup[] = [
     children: [
       { href: "/dashboard/pengajuan/izin-cuti", label: "Izin / Cuti" },
       { href: "/dashboard/pengajuan/lembur", label: "Lembur" },
-      { href: "/dashboard/pengajuan/kasbon", label: "Kasbon" },
-      { href: "/dashboard/pengajuan/klaim-beban", label: "Klaim Beban" },
     ],
   },
   {
@@ -89,17 +81,7 @@ const groups: NavGroup[] = [
     base: "/dashboard/karyawan",
     children: [
       { href: "/dashboard/karyawan", label: "Daftar Karyawan", roles: managementRoles },
-      { href: "/dashboard/karyawan/gaji", label: "Daftar Gaji", roles: hrRoles },
       { href: "/dashboard/karyawan/laporan-cuti", label: "Laporan Cuti", roles: managementRoles },
-    ],
-  },
-  {
-    label: "Perusahaan",
-    icon: Building2,
-    base: "/dashboard/perusahaan",
-    children: [
-      { href: "/dashboard/perusahaan/laporan-keuangan", label: "Laporan Keuangan", roles: ["admin", "general_manager"] },
-      { href: "/dashboard/perusahaan/istilah-keuangan", label: "Istilah Keuangan", roles: ["admin", "general_manager"] },
     ],
   },
   {
@@ -123,16 +105,6 @@ const groups: NavGroup[] = [
     ],
   },
   {
-    label: "Payroll",
-    icon: Banknote,
-    base: "/dashboard/payroll",
-    children: [
-      { href: "/dashboard/payroll/istilah", label: "Daftar Istilah", roles: hrRoles },
-      { href: "/dashboard/payroll", label: "Daftar Payroll", roles: hrRoles },
-      { href: "/dashboard/payroll/pengaturan", label: "Pengaturan Payroll", roles: ["admin", "hrd"] },
-    ],
-  },
-  {
     label: "Pengaturan",
     icon: Settings,
     base: "/dashboard/pengaturan",
@@ -147,7 +119,6 @@ const groups: NavGroup[] = [
 ];
 
 const secondaryItems: NavItem[] = [
-  { href: "/dashboard/kasbon/pembayaran", label: "Pembayaran Kasbon", icon: HandCoins, roles: hrRoles },
   { href: "/dashboard/langganan", label: "Langganan", icon: WalletCards, roles: ["admin"] },
 ];
 
@@ -192,7 +163,7 @@ export function DashboardShell({
   }
 
   function isActive(href: string) {
-    if (["/dashboard", "/dashboard/karyawan", "/dashboard/kunjungan", "/dashboard/payroll"].includes(href)) {
+    if (["/dashboard", "/dashboard/karyawan", "/dashboard/kunjungan"].includes(href)) {
       return pathname === href;
     }
     return pathname.startsWith(href);
@@ -263,12 +234,6 @@ export function DashboardShell({
             </div>
           ) : null}
         </nav>
-
-        <div className="sidebar-help">
-          <div className="help-icon"><ShieldCheck size={18} /></div>
-          <div><strong>Pusat bantuan</strong><small>Butuh bantuan mengatur tim?</small></div>
-          <MessageCircleQuestion size={17} />
-        </div>
       </aside>
 
       <div className="main-area">

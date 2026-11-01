@@ -24,6 +24,7 @@ Portal manajemen kehadiran berbasis Next.js, PostgreSQL, Drizzle ORM, dan Better
 Prasyarat: Docker Desktop dengan Docker Compose.
 
 ```bash
+docker compose --env-file .env.local up -d --build app
 docker compose up -d --build
 ```
 

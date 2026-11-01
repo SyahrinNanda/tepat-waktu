@@ -9,5 +9,5 @@ export async function POST(request: Request) {
   const parsed = inputSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ message: "Masukkan email yang valid." }, { status: 400 });
   await db.insert(deletionRequests).values({ email: parsed.data.email.toLowerCase(), reason: parsed.data.reason || null });
-  return NextResponse.json({ message: "Permintaan diterima. Kami akan melakukan verifikasi melalui email." }, { status: 201 });
+  return NextResponse.json({ message: "Permintaan penghapusan akun diterima dan akan ditinjau administrator. Akun Anda belum dihapus." }, { status: 201 });
 }

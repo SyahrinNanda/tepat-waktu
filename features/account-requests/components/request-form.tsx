@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Mail } from "lucide-react";
 
 export function RequestForm({ type }: { type: "password" | "deletion" }) {
   const [loading, setLoading] = useState(false);
@@ -33,12 +33,15 @@ export function RequestForm({ type }: { type: "password" | "deletion" }) {
       {error && <div className="error-box" role="alert">{error}</div>}
       {message && <div className="success-box" role="status">{message}</div>}
       <div className="field">
-        <label htmlFor="email">{type === "deletion" ? "Email karyawan" : "Email"}</label>
-        <input className="input" id="email" name="email" type="email" placeholder="emailanda@perusahaan.com" required />
+        <label htmlFor="email">{type === "deletion" ? "Email akun" : "Email"}</label>
+        <div className={type === "deletion" ? "login-field-wrap" : undefined}>
+          {type === "deletion" && <Mail size={17} aria-hidden="true" />}
+          <input className="input" id="email" name="email" type="email" placeholder="nama@perusahaan.com" autoComplete="email" required />
+        </div>
       </div>
-      {type === "deletion" && <div className="field"><label htmlFor="reason">Alasan (opsional)</label><textarea className="input" id="reason" name="reason" placeholder="Ceritakan alasan penghapusan data" /></div>}
-      <button className={`btn btn-block ${type === "deletion" ? "btn-danger" : "btn-primary"}`} disabled={loading}>
-        {loading && <LoaderCircle size={16} />}{loading ? "Mengirim…" : type === "deletion" ? "Ajukan penghapusan" : "Kirim tautan verifikasi"}
+      {type === "deletion" && <div className="field"><label htmlFor="reason">Alasan penghapusan (opsional)</label><textarea className="input" id="reason" name="reason" placeholder="Ceritakan alasan Anda menghapus akun" maxLength={500} rows={4} /></div>}
+      <button className="btn btn-primary btn-block" disabled={loading}>
+        {loading && <LoaderCircle size={16} className="spin" />}{loading ? "Mengirim…" : type === "deletion" ? "Ajukan penghapusan akun" : "Kirim tautan verifikasi"}
       </button>
     </form>
   );

@@ -20,6 +20,7 @@ import {
   type ProfileMutationResult,
 } from "@/app/dashboard/pengaturan/profile/actions";
 import { authClient } from "@/lib/auth-client";
+import { supabaseAuthEnabled, supabaseBrowser } from "@/lib/supabase/client";
 
 type UserProfile = {
   name: string;
@@ -139,6 +140,19 @@ export function ProfileSettings({
       return;
     }
     startTransition(async () => {
+      if (supabaseAuthEnabled()) {
+        const client = supabaseBrowser();
+        const { data: { user: identity } } = await client.auth.getUser();
+        if (identity?.email?.toLowerCase() === user.email.toLowerCase()) {
+          const verified = await client.auth.signInWithPassword({ email: user.email, password: currentPassword });
+          if (verified.error) { setNotice({ type: "error", text: "Password saat ini belum tepat." }); return; }
+          const updated = await client.auth.updateUser({ password: newPassword });
+          if (updated.error) { setNotice({ type: "error", text: updated.error.message }); return; }
+          setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation("");
+          setNotice({ type: "success", text: "Password berhasil diganti." });
+          return;
+        }
+      }
       const result = await authClient.changePassword({
         currentPassword,
         newPassword,

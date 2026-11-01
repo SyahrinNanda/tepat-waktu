@@ -13,12 +13,9 @@ export type ApplicationSettingsData = {
   menuIstirahat: boolean;
   menuLaporan: boolean;
   menuKunjungan: boolean;
-  menuPayroll: boolean;
-  menuKlaimBeban: boolean;
   menuTugas: boolean;
   menuLembur: boolean;
   menuIzin: boolean;
-  menuKasbon: boolean;
   verifikasiAkses: boolean;
 };
 
@@ -28,12 +25,9 @@ const settingsSchema = z.object({
   menuIstirahat: z.boolean().default(true),
   menuLaporan: z.boolean().default(true),
   menuKunjungan: z.boolean().default(true),
-  menuPayroll: z.boolean().default(true),
-  menuKlaimBeban: z.boolean().default(true),
   menuTugas: z.boolean().default(true),
   menuLembur: z.boolean().default(true),
   menuIzin: z.boolean().default(true),
-  menuKasbon: z.boolean().default(true),
   verifikasiAkses: z.boolean().default(false),
 });
 
@@ -50,12 +44,9 @@ export async function saveApplicationSettings(
       menuIstirahat: String(parsed.menuIstirahat),
       menuLaporan: String(parsed.menuLaporan),
       menuKunjungan: String(parsed.menuKunjungan),
-      menuPayroll: String(parsed.menuPayroll),
-      menuKlaimBeban: String(parsed.menuKlaimBeban),
       menuTugas: String(parsed.menuTugas),
       menuLembur: String(parsed.menuLembur),
       menuIzin: String(parsed.menuIzin),
-      menuKasbon: String(parsed.menuKasbon),
       verifikasiAkses: String(parsed.verifikasiAkses),
     };
 

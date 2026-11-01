@@ -157,7 +157,7 @@ export function PlansManagementTable({ plans }: { plans: PlanItem[] }) {
             {filteredPlans.map((plan) => (
               <tr key={plan.id}>
                 <td>
-                  <strong style={{ fontFamily: "monospace", fontSize: "12px", color: "var(--primary)" }}>
+                  <strong style={{ fontFamily: "monospace", fontSize: "12.5px", color: "var(--primary)" }}>
                     {plan.code.toUpperCase()}
                   </strong>
                 </td>
@@ -172,13 +172,13 @@ export function PlansManagementTable({ plans }: { plans: PlanItem[] }) {
                   <span className="badge blue">{plan.maxEmployees} Karyawan</span>
                 </td>
                 <td style={{ maxWidth: "260px" }}>
-                  <span style={{ color: "var(--muted)", fontSize: "12px" }}>{plan.description}</span>
+                  <span style={{ color: "var(--muted)", fontSize: "12.5px" }}>{plan.description}</span>
                 </td>
                 <td>
                   {plan.active ? (
                     <span className="status-pill green">Aktif</span>
                   ) : (
-                    <span className="status-pill" style={{ background: "#f1f5f9", color: "#64748b" }}>
+                    <span className="status-pill" style={{ background: "#f6f5f4", color: "#7c7873" }}>
                       Nonaktif
                     </span>
                   )}
@@ -408,7 +408,7 @@ export function PlansManagementTable({ plans }: { plans: PlanItem[] }) {
             <form onSubmit={handleDelete}>
               <div className="standard-modal-body">
                 <input type="hidden" name="id" value={deletePlanItem.id} />
-                <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.6", color: "#1e293b" }}>
+                <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.6", color: "#262421" }}>
                   Apakah Anda yakin ingin menghapus paket <strong>{deletePlanItem.name}</strong>? Jika paket ini pernah digunakan pada invoice langganan, paket akan otomatis dinonaktifkan agar data transaksi perusahaan tetap utuh.
                 </p>
               </div>

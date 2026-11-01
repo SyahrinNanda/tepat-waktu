@@ -41,12 +41,9 @@ export async function savePlatformSettings(form: FormData) {
     showMenuIstirahat: form.get("showMenuIstirahat") === "true" ? "true" : "false",
     showMenuLaporan: form.get("showMenuLaporan") === "true" ? "true" : "false",
     showMenuKunjungan: form.get("showMenuKunjungan") === "true" ? "true" : "false",
-    showMenuPayroll: form.get("showMenuPayroll") === "true" ? "true" : "false",
-    showMenuKlaimBeban: form.get("showMenuKlaimBeban") === "true" ? "true" : "false",
     showMenuTugas: form.get("showMenuTugas") === "true" ? "true" : "false",
     showMenuLembur: form.get("showMenuLembur") === "true" ? "true" : "false",
     showMenuIzin: form.get("showMenuIzin") === "true" ? "true" : "false",
-    showMenuKasbon: form.get("showMenuKasbon") === "true" ? "true" : "false",
     accessVerification: form.get("accessVerification") === "true" ? "true" : "false",
   };
 

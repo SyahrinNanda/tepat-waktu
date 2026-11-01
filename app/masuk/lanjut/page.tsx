@@ -1,13 +1,12 @@
 import { eq } from "drizzle-orm";
 import type { Route } from "next";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { user } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { getAppSession } from "@/lib/app-session";
 
 export default async function LoginRedirectPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getAppSession();
   if (!session) redirect("/");
 
   const [account] = await db

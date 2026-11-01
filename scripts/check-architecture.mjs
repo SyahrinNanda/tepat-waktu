@@ -43,7 +43,6 @@ for (const path of await filesIn(root)) {
 }
 
 const requiredAdapters = [
-  "app/dashboard/monitor/page.tsx",
   "app/dashboard/pengumuman/page.tsx",
   "app/dashboard/master/shift/page.tsx",
   "app/dashboard/master/jam-kerja/page.tsx",

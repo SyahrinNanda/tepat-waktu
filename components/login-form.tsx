@@ -3,22 +3,31 @@
 import Link from "next/link";
 import { ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
+import { supabaseAuthEnabled, supabaseBrowser } from "@/lib/supabase/client";
 
 export function LoginForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     setLoading(true);
     setError("");
-    setUnverifiedEmail("");
 
+    let unconfirmedSupabase = false;
     try {
+      if (supabaseAuthEnabled()) {
+        const client = supabaseBrowser();
+        const { error: supabaseError } = await client.auth.signInWithPassword({ email: String(form.get("email")), password: String(form.get("password")) });
+        if (!supabaseError) { router.push("/masuk/lanjut"); router.refresh(); return; }
+        unconfirmedSupabase = supabaseError.code === "email_not_confirmed";
+        await client.auth.signOut();
+      }
       const result = await signIn.email({
         email: String(form.get("email")),
         password: String(form.get("password")),
@@ -27,9 +36,10 @@ export function LoginForm() {
       });
 
       if (result.error) {
-        if (result.error.code === "EMAIL_NOT_VERIFIED") {
-          setUnverifiedEmail(String(form.get("email") || "").trim());
+        if (unconfirmedSupabase && result.error.code !== "EMAIL_NOT_VERIFIED") {
           setError("Email belum diverifikasi. Buka tautan di kotak masuk Anda.");
+        } else if (result.error.code === "EMAIL_NOT_VERIFIED") {
+          setError("Akun lama belum diverifikasi. Hubungi administrator untuk bantuan aktivasi.");
         } else {
           setError(result.error.message ?? "Email atau password belum tepat.");
         }
@@ -45,8 +55,8 @@ export function LoginForm() {
     setLoading(true);
     setError("");
     try {
-      const result = await signIn.social({ provider: "google", callbackURL: "/masuk/lanjut" });
-      if (result?.error) setError("Login Google belum dikonfigurasi oleh administrator.");
+      const result = await supabaseBrowser().auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } });
+      if (result.error) setError("Login Google belum dikonfigurasi di Supabase Auth.");
     } catch {
       setError("Tidak dapat menghubungi server autentikasi.");
     } finally {
@@ -54,12 +64,11 @@ export function LoginForm() {
     }
   }
 
-  const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+  const googleEnabled = supabaseAuthEnabled();
 
   return (
     <form onSubmit={submit}>
       {error && <div className="error-box" role="alert">{error}</div>}
-      {unverifiedEmail && <Link className="btn btn-outline btn-block" href={`/verifikasi-email?email=${encodeURIComponent(unverifiedEmail)}`}>Kirim ulang tautan verifikasi</Link>}
       <div className="field">
         <label htmlFor="email">Email</label>
         <div className="login-field-wrap"><Mail size={17} /><input className="input" id="email" name="email" type="email" placeholder="nama@perusahaan.com" autoComplete="email" required /></div>
@@ -84,13 +93,13 @@ export function LoginForm() {
           {loading ? "Memeriksa akun…" : "Masuk sekarang"}
           {!loading && <ArrowRight size={17} />}
         </button>
-        <button className="btn btn-outline btn-block" type="button" disabled={!googleEnabled || loading} onClick={googleSignIn} title={googleEnabled ? undefined : "Isi konfigurasi Google OAuth untuk mengaktifkan"}>
+        <button className="btn btn-outline btn-block" type="button" disabled={!googleEnabled || loading} onClick={googleSignIn} title={googleEnabled ? undefined : "Isi URL dan publishable key Supabase di .env.local, lalu bangun ulang aplikasi"}>
           <span aria-hidden="true">G</span> Lanjutkan dengan Google
         </button>
       </div>
       <div className="auth-foot">
         Belum punya akun? <Link href="/register" className="text-link">Daftar di sini</Link><br />
-        Ingin menghapus data karyawan? <Link href="/hapus-karyawan" className="text-link">Ajukan di sini</Link>
+        Ingin menghapus akun? <Link href="/penghapusan-akun" className="text-link">Ajukan di sini</Link>
       </div>
     </form>
   );

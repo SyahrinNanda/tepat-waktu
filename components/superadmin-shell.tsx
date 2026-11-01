@@ -12,10 +12,7 @@ import {
   LogOut,
   Menu,
   MessageCircle,
-  MessageCircleQuestion,
-  Send,
   Settings,
-  ShieldCheck,
   Tags,
   Users,
   Video,
@@ -103,12 +100,6 @@ export function SuperAdminShell({
             })}
           </div>
         </nav>
-
-        <div className="sidebar-help">
-          <div className="help-icon"><ShieldCheck size={18} /></div>
-          <div><strong>Pusat Bantuan Platform</strong><small>Konsol Super Administrator</small></div>
-          <MessageCircleQuestion size={17} />
-        </div>
       </aside>
 
       <div className="main-area">
@@ -141,15 +132,6 @@ export function SuperAdminShell({
               title="Customer Service"
             >
               <MessageCircle size={14} style={{ color: "#22c55e" }} /> Customer Service <ExternalLink size={11} style={{ opacity: 0.6 }} />
-            </a>
-            <a
-              href="https://t.me"
-              target="_blank"
-              rel="noreferrer"
-              className="support-link"
-              title="Grup Telegram"
-            >
-              <Send size={13} style={{ color: "#0284c7" }} /> Grup Telegram <ExternalLink size={11} style={{ opacity: 0.6 }} />
             </a>
             <button className="icon-button notification-button" aria-label="Notifikasi">
               <Bell size={19} />

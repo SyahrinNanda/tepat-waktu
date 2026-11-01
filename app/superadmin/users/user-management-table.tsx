@@ -211,14 +211,14 @@ export function UserManagementTable({
                       <span
                         className="avatar"
                         style={{
-                          background: u.platformRole === "superadmin" ? "linear-gradient(135deg, #8b5cf6, #6366f1)" : undefined,
+                          background: u.platformRole === "superadmin" ? "linear-gradient(135deg, #fcbe55, #fcbe55)" : undefined,
                         }}
                       >
                         {initials}
                       </span>
                       <div>
                         <strong>
-                          {u.name} {isSelf ? <span style={{ fontSize: "10px", color: "var(--primary)" }}>(Anda)</span> : null}
+                          {u.name} {isSelf ? <span style={{ fontSize: "11px", color: "var(--primary)" }}>(Anda)</span> : null}
                         </strong>
                         <small>{u.email}</small>
                       </div>
@@ -329,11 +329,11 @@ export function UserManagementTable({
                   </select>
                 </label>
                 {roleModalUser.id === currentUserId ? (
-                  <p style={{ fontSize: "11px", color: "var(--red)", margin: 0 }}>
+                  <p style={{ fontSize: "12px", color: "var(--red)", margin: 0 }}>
                     Anda tidak dapat mencabut hak akses Super Admin dari akun Anda sendiri.
                   </p>
                 ) : (
-                  <p style={{ fontSize: "11px", color: "var(--muted)", margin: 0 }}>
+                  <p style={{ fontSize: "12px", color: "var(--muted)", margin: 0 }}>
                     Super Admin dapat melihat dan mengelola seluruh tenant perusahaan, konfigurasi harga paket, dan data akun sistem.
                   </p>
                 )}
@@ -378,7 +378,7 @@ export function UserManagementTable({
                     required
                   />
                 </label>
-                <p style={{ fontSize: "11px", color: "var(--muted)", margin: 0 }}>
+                <p style={{ fontSize: "12px", color: "var(--muted)", margin: 0 }}>
                   Pengguna dapat langsung masuk menggunakan kata sandi baru ini. Pastikan memberi tahu pengguna secara aman.
                 </p>
               </div>
@@ -414,7 +414,7 @@ export function UserManagementTable({
             <form onSubmit={handleDeleteSubmit}>
               <div className="standard-modal-body">
                 <input type="hidden" name="userId" value={deleteModalUser.id} />
-                <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.6", color: "#1e293b" }}>
+                <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.6", color: "#262421" }}>
                   Apakah Anda yakin ingin menghapus akun <strong>{deleteModalUser.email}</strong>? Tindakan ini akan menghapus sesi login dan keanggotaan tenant pengguna secara permanen.
                 </p>
               </div>

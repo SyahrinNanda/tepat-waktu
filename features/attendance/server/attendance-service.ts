@@ -14,7 +14,7 @@ import {
   workScheduleDays,
   workSchedules,
 } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { getAppSession } from "@/lib/app-session";
 import { deletePrivateObject, objectStorageBucket, putPrivateObject } from "@/lib/object-storage";
 import { compressUpload } from "@/lib/file-compression";
 import { selectedCompanyFromRequest } from "@/lib/selected-company";
@@ -45,7 +45,7 @@ export type SelfAttendanceContext = Actor & {
 };
 
 export async function authenticatedActor(request: Request): Promise<Actor> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getAppSession(request.headers);
   if (!session) throw new AttendanceError("Sesi tidak ditemukan.", 401);
   const [account] = await db.select({ platformRole: user.platformRole }).from(user).where(eq(user.id, session.user.id)).limit(1);
   return { userId: session.user.id, email: session.user.email, platformRole: account?.platformRole ?? "user" };

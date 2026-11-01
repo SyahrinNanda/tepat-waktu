@@ -1,18 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { BarChart3, CheckCircle2, Clock3, RotateCcw, Users } from "lucide-react";
 import { db } from "@/db";
 import { attendances, companies, employees, subscriptionPlans } from "@/db/schema";
-import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
+import { dateInTimeZone } from "@/lib/current-company";
 
-export const metadata: Metadata = { title: "Monitor Perusahaan" };
-type Props = { searchParams: Promise<{ year?: string; month?: string }> };
+type MonitorContext = { companyId: string; timezone: string; plan: string };
+type Props = { context: MonitorContext; params: { year?: string; month?: string } };
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-export default async function Page({ searchParams }: Props) {
-  const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
-  const params = await searchParams;
+// Rendered at the bottom of /dashboard for management roles (formerly the Monitor Perusahaan page).
+export async function MonitorSection({ context, params }: Props) {
   const today = dateInTimeZone(context.timezone);
   const currentYear = Number(today.slice(0, 4));
   const year = /^20\d{2}$/.test(params.year ?? "") ? Number(params.year) : currentYear;
@@ -38,9 +36,9 @@ export default async function Page({ searchParams }: Props) {
   const usage = Math.min(100, Math.round(active / Math.max(maxEmployees, 1) * 100));
   const years = Array.from({ length: Math.max(currentYear - 2023 + 1, 1) }, (_, index) => currentYear - index);
 
-  return <>
-    <div className="monitor-page-head"><span>Presensi Admin Panel</span><h1>Monitor Perusahaan</h1></div>
-    <form className="monitor-global-filter"><select name="year" defaultValue={year}>{years.map((item) => <option key={item}>{item}</option>)}</select><select name="month" defaultValue={month}>{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select><button type="submit">Terapkan</button><Link href="/dashboard/monitor" aria-label="Reset filter"><RotateCcw size={15} /></Link></form>
+  return <section className="dashboard-monitor" id="monitor">
+    <div className="dashboard-monitor-head"><div><span>Analitik periode</span><h2>Monitor Perusahaan</h2></div>
+    <form className="monitor-global-filter" action="/dashboard#monitor"><select name="year" defaultValue={year}>{years.map((item) => <option key={item}>{item}</option>)}</select><select name="month" defaultValue={month}>{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select><button type="submit">Terapkan</button><Link href="/dashboard#monitor" aria-label="Reset filter"><RotateCcw size={15} /></Link></form></div>
     <div className="monitor-layout"><main className="monitor-main">
       <ReportCard icon={<BarChart3 size={17} />} tone="blue" title="Laporan Absen Semua Karyawan" year={year} month={month}>
         <div className="monitor-kpis"><Kpi label="Total Karyawan" value={active} tone="blue" /><Kpi label="Tepat Waktu" value={status.present ?? 0} tone="green" /><Kpi label="Terlambat" value={status.late ?? 0} tone="red" /><Kpi label="Izin" value={status.leave ?? 0} tone="orange" /></div>
@@ -52,7 +50,7 @@ export default async function Page({ searchParams }: Props) {
       <section className="monitor-side-card"><h2><i className="blue" />Laporan Limit Karyawan</h2><div className="limit-ring" style={{ "--usage": usage } as React.CSSProperties}><div><strong>{active}</strong><span>dari {maxEmployees}</span></div></div><div className="limit-copy"><span>Karyawan Terpakai</span><b>{active} / {maxEmployees}</b></div><div className="monitor-progress"><i style={{ width: `${usage}%` }} /></div><small>Paket {plan?.name ?? context.plan}</small></section>
       <section className="monitor-side-card"><h2><i className="orange" />Perbandingan Jenis Kelamin</h2><div className="gender-graphic"><Users size={31} /><strong>{knownGender}</strong><span>data terisi</span></div><GenderBar label="Laki-laki" value={male} total={knownGender} tone="blue" /><GenderBar label="Perempuan" value={female} total={knownGender} tone="pink" />{knownGender < active ? <small>{active - knownGender} profil belum mengisi jenis kelamin.</small> : null}</section>
     </aside></div>
-  </>;
+  </section>;
 }
 
 function rankedEmployees(companyId: string, start: string, end: string, status: "late" | "present") {

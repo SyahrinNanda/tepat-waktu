@@ -1,7 +1,7 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { getAppSession } from "@/lib/app-session";
 import { db } from "@/db";
 import { companies, companyMembers, user } from "@/db/schema";
 import { SELECTED_COMPANY_COOKIE } from "@/lib/selected-company";
@@ -9,7 +9,7 @@ import { SELECTED_COMPANY_COOKIE } from "@/lib/selected-company";
 export type CompanyRole = "owner" | "admin" | "general_manager" | "hrd" | "manager" | "employee";
 
 export async function requireCompany() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getAppSession();
   if (!session) redirect("/");
 
   const [account] = await db.select({ platformRole: user.platformRole }).from(user).where(eq(user.id, session.user.id)).limit(1);

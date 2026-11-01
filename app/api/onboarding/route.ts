@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { getAppSession } from "@/lib/app-session";
 import { db } from "@/db";
 import { companies, companyMembers } from "@/db/schema";
 
@@ -12,7 +11,7 @@ const inputSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getAppSession();
   if (!session) return NextResponse.json({ message: "Sesi tidak ditemukan." }, { status: 401 });
   const parsed = inputSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ message: "Data perusahaan belum lengkap." }, { status: 400 });

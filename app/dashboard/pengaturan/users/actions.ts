@@ -193,6 +193,7 @@ export async function createCompanyUser(form: FormData) {
         password: parsed.password,
       },
     });
+    await db.update(user).set({ emailVerified: true }).where(eq(user.id, created.user.id));
     targetUser = { id: created.user.id, platformRole: "user" };
   }
 
@@ -280,6 +281,7 @@ export async function createCompanyUserAction(input: {
           password: parsed.password,
         },
       });
+      await db.update(user).set({ emailVerified: true }).where(eq(user.id, created.user.id));
       targetUser = { id: created.user.id, platformRole: "user" };
     }
 

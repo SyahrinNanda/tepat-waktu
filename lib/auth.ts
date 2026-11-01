@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
-import { emailDeliveryConfigured, sendVerificationLink } from "@/lib/verification-email";
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 const configuredOrigins = [process.env.BETTER_AUTH_URL, process.env.NEXT_PUBLIC_APP_URL].filter(
@@ -18,10 +17,10 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true, requireEmailVerification: true },
   emailVerification: {
     sendOnSignUp: false,
-    sendOnSignIn: emailDeliveryConfigured(),
+    sendOnSignIn: false,
     expiresIn: 60 * 30,
-    sendVerificationEmail: async ({ user, url }) => {
-      await sendVerificationLink(user.email, url);
+    sendVerificationEmail: async () => {
+      throw new Error("Akun lama belum diverifikasi. Hubungi administrator.");
     },
   },
   socialProviders: googleEnabled
@@ -29,6 +28,7 @@ export const auth = betterAuth({
         google: {
           clientId: process.env.GOOGLE_CLIENT_ID!,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          disableSignUp: true,
         },
       }
     : undefined,

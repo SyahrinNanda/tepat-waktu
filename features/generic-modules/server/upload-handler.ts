@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     stored = await putPrivateObject({ key, body: bytes, contentType: format.contentType, storageCompression: compressed.storageCompression, metadata: { company: context.companyId, module: context.module, sha256: checksum, uploadQuality: "70" } });
     const [asset] = await db.insert(fileAssets).values({
       companyId: context.companyId, ownerEmployeeId: employee?.id ?? null, uploadedBy: context.userId,
-      category: context.module === "pengajuan/klaim-beban" ? "claim_attachment" : "employee_document",
+      category: "employee_document",
       bucket: stored.bucket, objectKey: stored.key, originalName: file.name || `lampiran.${format.extension}`,
       contentType: format.contentType, byteSize: bytes.byteLength, checksumSha256: checksum,
     }).returning({ id: fileAssets.id });

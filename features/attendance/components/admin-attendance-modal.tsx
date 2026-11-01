@@ -178,7 +178,7 @@ export function AdminAttendanceModal({
                       border: "1px solid var(--line)",
                       borderRadius: "12px",
                       padding: "16px",
-                      background: "#fafbfc",
+                      background: "#fbfbfb",
                     }}
                   >
                     <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--ink)", marginBottom: "12px" }}>
@@ -220,10 +220,10 @@ export function AdminAttendanceModal({
                           onChange={handleCheckInFileChange}
                         />
                         <Camera size={24} style={{ color: "var(--muted)", margin: "0 auto 6px" }} />
-                        <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>
+                        <div style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--ink)" }}>
                           Upload Foto Check-In
                         </div>
-                        <small style={{ color: "var(--muted)", fontSize: "10px" }}>
+                        <small style={{ color: "var(--muted)", fontSize: "11px" }}>
                           JPG, PNG atau WebP (Maks. 5 MB)
                         </small>
                       </label>
@@ -236,7 +236,7 @@ export function AdminAttendanceModal({
                       border: "1px solid var(--line)",
                       borderRadius: "12px",
                       padding: "16px",
-                      background: "#fafbfc",
+                      background: "#fbfbfb",
                     }}
                   >
                     <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--ink)", marginBottom: "12px" }}>
@@ -278,10 +278,10 @@ export function AdminAttendanceModal({
                           onChange={handleCheckOutFileChange}
                         />
                         <Camera size={24} style={{ color: "var(--muted)", margin: "0 auto 6px" }} />
-                        <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>
+                        <div style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--ink)" }}>
                           Upload Foto Check-Out
                         </div>
-                        <small style={{ color: "var(--muted)", fontSize: "10px" }}>
+                        <small style={{ color: "var(--muted)", fontSize: "11px" }}>
                           JPG, PNG atau WebP (Maks. 5 MB)
                         </small>
                       </label>

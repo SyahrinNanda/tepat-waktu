@@ -149,12 +149,9 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                 { key: "showMenuIstirahat", label: "Tampilkan Menu Istirahat", defaultVal: "true" },
                 { key: "showMenuLaporan", label: "Tampilkan Menu Laporan", defaultVal: "true" },
                 { key: "showMenuKunjungan", label: "Tampilkan Menu Kunjungan", defaultVal: "true" },
-                { key: "showMenuPayroll", label: "Tampilkan Menu Payroll", defaultVal: "true" },
-                { key: "showMenuKlaimBeban", label: "Tampilkan Menu Klaim Beban", defaultVal: "true" },
                 { key: "showMenuTugas", label: "Tampilkan Menu Tugas", defaultVal: "true" },
                 { key: "showMenuLembur", label: "Tampilkan Menu Lembur", defaultVal: "true" },
                 { key: "showMenuIzin", label: "Tampilkan Menu Izin", defaultVal: "true" },
-                { key: "showMenuKasbon", label: "Tampilkan Menu Kasbon", defaultVal: "true" },
               ].map((item) => {
                 const checked = (settings[item.key] ?? item.defaultVal) === "true";
                 return (
@@ -211,7 +208,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                   onChange={(e) => handleChange("platformName", e.target.value)}
                   required
                 />
-                <small style={{ color: "var(--muted)", fontSize: "11px", marginTop: "4px", display: "block" }}>
+                <small style={{ color: "var(--muted)", fontSize: "12px", marginTop: "4px", display: "block" }}>
                   Ditampilkan pada header, tab browser, dan email sistem.
                 </small>
               </label>
@@ -285,7 +282,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                   <option value="Asia/Makassar">WITA (Asia/Makassar - UTC+8)</option>
                   <option value="Asia/Jayapura">WIT (Asia/Jayapura - UTC+9)</option>
                 </select>
-                <small style={{ color: "var(--muted)", fontSize: "11px", marginTop: "4px", display: "block" }}>
+                <small style={{ color: "var(--muted)", fontSize: "12px", marginTop: "4px", display: "block" }}>
                   Zona waktu acuan default saat perusahaan baru mendaftar.
                 </small>
               </label>
@@ -316,7 +313,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                   onChange={(e) => handleChange("defaultGeofenceRadius", e.target.value)}
                   required
                 />
-                <small style={{ color: "var(--muted)", fontSize: "11px", marginTop: "4px", display: "block" }}>
+                <small style={{ color: "var(--muted)", fontSize: "12px", marginTop: "4px", display: "block" }}>
                   Radius toleransi jarak GPS dari titik koordinat kantor pada saat presensi.
                 </small>
               </label>
@@ -403,7 +400,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
               <div className="settings-toggle-row">
                 <div>
                   <div className="settings-toggle-label">Pendaftaran Akun Terbuka (Public Sign-up)</div>
-                  <small style={{ color: "var(--muted)", fontSize: "11px" }}>
+                  <small style={{ color: "var(--muted)", fontSize: "12px" }}>
                     Jika dinonaktifkan, akun hanya bisa dibuat melalui undangan Super Admin atau Admin Perusahaan.
                   </small>
                 </div>
@@ -422,7 +419,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                   <div className="settings-toggle-label" style={{ color: "#b91c1c" }}>
                     Mode Pemeliharaan (Maintenance Mode)
                   </div>
-                  <small style={{ color: "var(--muted)", fontSize: "11px" }}>
+                  <small style={{ color: "var(--muted)", fontSize: "12px" }}>
                     Jika aktif, hanya Super Admin yang dapat mengakses sistem.
                   </small>
                 </div>

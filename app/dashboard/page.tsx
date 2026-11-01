@@ -6,11 +6,13 @@ import { attendances, employees, leaveRequests } from "@/db/schema";
 import { dateInTimeZone, requireCompany } from "@/lib/current-company";
 import { StatusBadge } from "@/components/status-badge";
 import { EmployeeDashboard } from "@/features/attendance/components/employee-dashboard";
+import { MonitorSection } from "@/features/monitor/pages/monitor-page";
 
 export const metadata: Metadata = { title: "Ringkasan" };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ year?: string; month?: string }> }) {
   const context = await requireCompany();
+  const params = await searchParams;
   const today = dateInTimeZone(context.timezone);
   let personalAttendance: { checkIn: string | null; checkOut: string | null; status: "present" | "late" | "absent" | "leave" } | null = null;
   if (context.role === "employee") {
@@ -75,6 +77,7 @@ export default async function DashboardPage() {
           <div className="progress-row"><div className="progress-copy"><span>Terlambat</span><strong>{Number(late.value)}</strong></div><div className="progress"><i style={{ width: `${Number(total.value) ? Number(late.value)/Number(total.value)*100 : 0}%`, background: "var(--orange)" }} /></div></div>
         </div>
       </section>
+      {context.role !== "employee" ? <MonitorSection context={context} params={params} /> : null}
     </>
   );
 }

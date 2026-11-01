@@ -52,8 +52,8 @@ export function AplikasiSettingsForm({
       <div style={{ marginBottom: "20px" }}>
         <div
           style={{
-            fontSize: "12px",
-            color: "#6b7280",
+            fontSize: "12.5px",
+            color: "#787673",
             marginBottom: "4px",
             fontWeight: 500,
           }}
@@ -64,7 +64,7 @@ export function AplikasiSettingsForm({
           style={{
             fontSize: "22px",
             fontWeight: 800,
-            color: "#111827",
+            color: "#181615",
             letterSpacing: "0.02em",
             margin: "0 0 6px 0",
           }}
@@ -77,17 +77,17 @@ export function AplikasiSettingsForm({
             alignItems: "center",
             gap: "8px",
             fontSize: "13px",
-            color: "#4b5563",
+            color: "#5a5854",
           }}
         >
           <Link
             href="/dashboard"
-            style={{ color: "#6b7280", textDecoration: "none" }}
+            style={{ color: "#787673", textDecoration: "none" }}
           >
             Beranda
           </Link>
-          <span style={{ color: "#9ca3af" }}>/</span>
-          <span style={{ color: "#374151", fontWeight: 500 }}>
+          <span style={{ color: "#a8a6a3" }}>/</span>
+          <span style={{ color: "#474541", fontWeight: 500 }}>
             Pengaturan Aplikasi
           </span>
         </div>
@@ -116,7 +116,7 @@ export function AplikasiSettingsForm({
         style={{
           backgroundColor: "#ffffff",
           borderRadius: "12px",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #e9e8e7",
           boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
           padding: "28px 32px",
         }}
@@ -127,7 +127,7 @@ export function AplikasiSettingsForm({
             style={{
               fontSize: "15px",
               fontWeight: 700,
-              color: "#1e293b",
+              color: "#262421",
               margin: "0 0 16px 0",
             }}
           >
@@ -137,7 +137,7 @@ export function AplikasiSettingsForm({
           {/* Info Banner */}
           <div
             style={{
-              backgroundColor: "#e0f2fe",
+              backgroundColor: "#fff5e0",
               borderRadius: "6px",
               padding: "12px 16px",
               display: "flex",
@@ -145,10 +145,10 @@ export function AplikasiSettingsForm({
               gap: "10px",
               marginBottom: "18px",
               fontSize: "13px",
-              color: "#0369a1",
+              color: "#9d5207",
             }}
           >
-            <Info size={18} style={{ color: "#0284c7", flexShrink: 0 }} />
+            <Info size={18} style={{ color: "#b05c07", flexShrink: 0 }} />
             <span>
               Anda dapat menambahkan <strong>$nama</strong> untuk menampilkan nama
               lengkap karyawan
@@ -163,7 +163,7 @@ export function AplikasiSettingsForm({
                 display: "block",
                 fontSize: "13px",
                 fontWeight: 500,
-                color: "#374151",
+                color: "#474541",
                 marginBottom: "6px",
               }}
             >
@@ -182,15 +182,15 @@ export function AplikasiSettingsForm({
                 height: "42px",
                 padding: "8px 14px",
                 fontSize: "14px",
-                color: "#1f2937",
-                border: "1px solid #cbd5e1",
+                color: "#242220",
+                border: "1px solid #d9d6d3",
                 borderRadius: "6px",
                 outline: "none",
                 backgroundColor: "#ffffff",
                 transition: "border-color 0.15s ease",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#007bff")}
-              onBlur={(e) => (e.target.style.borderColor = "#cbd5e1")}
+              onFocus={(e) => (e.target.style.borderColor = "#faa005")}
+              onBlur={(e) => (e.target.style.borderColor = "#d9d6d3")}
             />
           </div>
 
@@ -202,7 +202,7 @@ export function AplikasiSettingsForm({
                 display: "block",
                 fontSize: "13px",
                 fontWeight: 500,
-                color: "#374151",
+                color: "#474541",
                 marginBottom: "6px",
               }}
             >
@@ -221,15 +221,15 @@ export function AplikasiSettingsForm({
                 height: "42px",
                 padding: "8px 14px",
                 fontSize: "14px",
-                color: "#1f2937",
-                border: "1px solid #cbd5e1",
+                color: "#242220",
+                border: "1px solid #d9d6d3",
                 borderRadius: "6px",
                 outline: "none",
                 backgroundColor: "#ffffff",
                 transition: "border-color 0.15s ease",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#007bff")}
-              onBlur={(e) => (e.target.style.borderColor = "#cbd5e1")}
+              onFocus={(e) => (e.target.style.borderColor = "#faa005")}
+              onBlur={(e) => (e.target.style.borderColor = "#d9d6d3")}
             />
           </div>
         </div>
@@ -240,7 +240,7 @@ export function AplikasiSettingsForm({
             style={{
               fontSize: "15px",
               fontWeight: 700,
-              color: "#1e293b",
+              color: "#262421",
               margin: "0 0 18px 0",
             }}
           >
@@ -259,12 +259,9 @@ export function AplikasiSettingsForm({
               { key: "menuIstirahat", label: "Tampilkan Menu Istirahat" },
               { key: "menuLaporan", label: "Tampilkan Menu Laporan" },
               { key: "menuKunjungan", label: "Tampilkan Menu Kunjungan" },
-              { key: "menuPayroll", label: "Tampilkan Menu Payroll" },
-              { key: "menuKlaimBeban", label: "Tampilkan Menu Klaim Beban" },
               { key: "menuTugas", label: "Tampilkan Menu Tugas" },
               { key: "menuLembur", label: "Tampilkan Menu Lembur" },
               { key: "menuIzin", label: "Tampilkan Menu Izin" },
-              { key: "menuKasbon", label: "Tampilkan Menu Kasbon" },
             ].map((item) => {
               const active = form[item.key as keyof ApplicationSettingsData] as boolean;
               return (
@@ -279,7 +276,7 @@ export function AplikasiSettingsForm({
                   <span
                     style={{
                       fontSize: "13.5px",
-                      color: "#374151",
+                      color: "#474541",
                       fontWeight: 500,
                     }}
                   >
@@ -297,7 +294,7 @@ export function AplikasiSettingsForm({
                       width: "44px",
                       height: "24px",
                       borderRadius: "12px",
-                      backgroundColor: active ? "#007bff" : "#ef4444",
+                      backgroundColor: active ? "#faa005" : "#ef4444",
                       transition: "background-color 0.2s ease",
                       border: "none",
                       cursor: "pointer",
@@ -354,7 +351,7 @@ export function AplikasiSettingsForm({
             style={{
               fontSize: "15px",
               fontWeight: 700,
-              color: "#1e293b",
+              color: "#262421",
               margin: "0 0 18px 0",
             }}
           >
@@ -372,7 +369,7 @@ export function AplikasiSettingsForm({
             <span
               style={{
                 fontSize: "13.5px",
-                color: "#374151",
+                color: "#474541",
                 fontWeight: 500,
               }}
             >
@@ -388,7 +385,7 @@ export function AplikasiSettingsForm({
                 width: "44px",
                 height: "24px",
                 borderRadius: "12px",
-                backgroundColor: form.verifikasiAkses ? "#007bff" : "#ef4444",
+                backgroundColor: form.verifikasiAkses ? "#faa005" : "#ef4444",
                 transition: "background-color 0.2s ease",
                 border: "none",
                 cursor: "pointer",
@@ -440,7 +437,7 @@ export function AplikasiSettingsForm({
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            borderTop: "1px solid #f1f5f9",
+            borderTop: "1px solid #f6f5f4",
             paddingTop: "20px",
           }}
         >
@@ -448,8 +445,8 @@ export function AplikasiSettingsForm({
             type="submit"
             disabled={isPending}
             style={{
-              backgroundColor: "#007bff",
-              color: "#ffffff",
+              backgroundColor: "#faa005",
+              color: "#1a1a1a",
               fontSize: "13px",
               fontWeight: 700,
               letterSpacing: "0.04em",
@@ -464,10 +461,10 @@ export function AplikasiSettingsForm({
               transition: "background-color 0.15s ease",
             }}
             onMouseOver={(e) => {
-              if (!isPending) e.currentTarget.style.backgroundColor = "#0069d9";
+              if (!isPending) e.currentTarget.style.backgroundColor = "#e79405";
             }}
             onMouseOut={(e) => {
-              if (!isPending) e.currentTarget.style.backgroundColor = "#007bff";
+              if (!isPending) e.currentTarget.style.backgroundColor = "#faa005";
             }}
           >
             {isPending && <Loader2 size={16} className="animate-spin" />}

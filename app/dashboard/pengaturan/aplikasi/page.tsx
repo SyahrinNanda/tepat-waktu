@@ -44,14 +44,6 @@ export default async function Page() {
       fields.menuKunjungan === "false" || fields.menuKunjungan === false
         ? false
         : true,
-    menuPayroll:
-      fields.menuPayroll === "false" || fields.menuPayroll === false
-        ? false
-        : true,
-    menuKlaimBeban:
-      fields.menuKlaimBeban === "false" || fields.menuKlaimBeban === false
-        ? false
-        : true,
     menuTugas:
       fields.menuTugas === "false" || fields.menuTugas === false
         ? false
@@ -62,10 +54,6 @@ export default async function Page() {
         : true,
     menuIzin:
       fields.menuIzin === "false" || fields.menuIzin === false
-        ? false
-        : true,
-    menuKasbon:
-      fields.menuKasbon === "false" || fields.menuKasbon === false
         ? false
         : true,
     verifikasiAkses:

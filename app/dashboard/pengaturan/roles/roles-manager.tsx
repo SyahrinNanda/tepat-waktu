@@ -257,8 +257,8 @@ export function RolesManager({ initialRoles }: Props) {
       <div style={{ marginBottom: "20px" }}>
         <div
           style={{
-            fontSize: "12px",
-            color: "#6b7280",
+            fontSize: "12.5px",
+            color: "#787673",
             marginBottom: "4px",
             fontWeight: 500,
           }}
@@ -269,7 +269,7 @@ export function RolesManager({ initialRoles }: Props) {
           style={{
             fontSize: "22px",
             fontWeight: 800,
-            color: "#111827",
+            color: "#181615",
             letterSpacing: "0.02em",
             margin: "0 0 6px 0",
           }}
@@ -282,24 +282,24 @@ export function RolesManager({ initialRoles }: Props) {
             alignItems: "center",
             gap: "8px",
             fontSize: "13px",
-            color: "#4b5563",
+            color: "#5a5854",
           }}
         >
           <Link
             href="/dashboard"
-            style={{ color: "#6b7280", textDecoration: "none" }}
+            style={{ color: "#787673", textDecoration: "none" }}
           >
             Beranda
           </Link>
-          <span style={{ color: "#9ca3af" }}>/</span>
+          <span style={{ color: "#a8a6a3" }}>/</span>
           <Link
             href="/dashboard/pengaturan/users"
-            style={{ color: "#6b7280", textDecoration: "none" }}
+            style={{ color: "#787673", textDecoration: "none" }}
           >
             Manajemen User
           </Link>
-          <span style={{ color: "#9ca3af" }}>/</span>
-          <span style={{ color: "#374151", fontWeight: 500 }}>
+          <span style={{ color: "#a8a6a3" }}>/</span>
+          <span style={{ color: "#474541", fontWeight: 500 }}>
             Daftar User Level
           </span>
         </div>
@@ -344,7 +344,7 @@ export function RolesManager({ initialRoles }: Props) {
         style={{
           backgroundColor: "#ffffff",
           borderRadius: "8px",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #e9e8e7",
           boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)",
           padding: "24px 28px 120px 28px",
           overflow: "visible",
@@ -369,8 +369,8 @@ export function RolesManager({ initialRoles }: Props) {
                 htmlFor="filter-role-name"
                 style={{
                   display: "block",
-                  fontSize: "12px",
-                  color: "#6b7280",
+                  fontSize: "12.5px",
+                  color: "#787673",
                   marginBottom: "6px",
                   fontWeight: 500,
                 }}
@@ -388,11 +388,11 @@ export function RolesManager({ initialRoles }: Props) {
                   height: "38px",
                   padding: "6px 12px",
                   fontSize: "13.5px",
-                  border: "1px solid #cbd5e1",
+                  border: "1px solid #d9d6d3",
                   borderRadius: "4px",
                   outline: "none",
                   backgroundColor: "#ffffff",
-                  color: "#1e293b",
+                  color: "#262421",
                 }}
               />
             </div>
@@ -401,8 +401,8 @@ export function RolesManager({ initialRoles }: Props) {
             <div>
               <div
                 style={{
-                  fontSize: "12px",
-                  color: "#6b7280",
+                  fontSize: "12.5px",
+                  color: "#787673",
                   marginBottom: "6px",
                   fontWeight: 500,
                 }}
@@ -445,10 +445,10 @@ export function RolesManager({ initialRoles }: Props) {
             style={{
               height: "38px",
               padding: "0 22px",
-              backgroundColor: "#057ce4",
+              backgroundColor: "#ef9905",
               border: "none",
               borderRadius: "4px",
-              color: "#ffffff",
+              color: "#1a1a1a",
               fontSize: "13px",
               fontWeight: 700,
               display: "inline-flex",
@@ -456,11 +456,11 @@ export function RolesManager({ initialRoles }: Props) {
               gap: "6px",
               cursor: "pointer",
               letterSpacing: "0.02em",
-              boxShadow: "0 1px 2px rgba(5, 124, 228, 0.25)",
+              boxShadow: "0 1px 2px rgba(239, 153, 5, 0.25)",
               transition: "background-color 0.15s ease",
             }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#046ac4")}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#057ce4")}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#df8f05")}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ef9905")}
           >
             + TAMBAH
           </button>
@@ -486,7 +486,7 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "12px 16px",
                     fontSize: "13.5px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "48px",
                   }}
                 >
@@ -497,7 +497,7 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "12px 16px",
                     fontSize: "13.5px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   Nama Level
@@ -507,7 +507,7 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "12px 16px",
                     fontSize: "13.5px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   Akses Halaman
@@ -517,7 +517,7 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "12px 16px",
                     fontSize: "13.5px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   Akses Divisi
@@ -527,7 +527,7 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "12px 16px",
                     fontSize: "13.5px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   Akses Aksi
@@ -537,7 +537,7 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "12px 16px",
                     fontSize: "13.5px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "70px",
                     textAlign: "center",
                   }}
@@ -554,7 +554,7 @@ export function RolesManager({ initialRoles }: Props) {
                     style={{
                       padding: "36px",
                       textAlign: "center",
-                      color: "#6b7280",
+                      color: "#787673",
                       fontSize: "14px",
                     }}
                   >
@@ -575,7 +575,7 @@ export function RolesManager({ initialRoles }: Props) {
                         padding: "12px 16px",
                         fontSize: "13.5px",
                         fontWeight: 700,
-                        color: "#1e293b",
+                        color: "#262421",
                       }}
                     >
                       {idx + 1}
@@ -586,7 +586,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         padding: "12px 16px",
                         fontSize: "13.5px",
-                        color: "#1e293b",
+                        color: "#262421",
                         fontWeight: 400,
                       }}
                     >
@@ -598,7 +598,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         padding: "12px 16px",
                         fontSize: "13.5px",
-                        color: "#4b5563",
+                        color: "#5a5854",
                         fontWeight: 400,
                       }}
                     >
@@ -610,7 +610,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         padding: "12px 16px",
                         fontSize: "13.5px",
-                        color: "#4b5563",
+                        color: "#5a5854",
                         fontWeight: 400,
                       }}
                     >
@@ -622,7 +622,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         padding: "12px 16px",
                         fontSize: "13.5px",
-                        color: "#4b5563",
+                        color: "#5a5854",
                         fontWeight: 400,
                       }}
                     >
@@ -656,7 +656,7 @@ export function RolesManager({ initialRoles }: Props) {
                               border: "none",
                               cursor: "pointer",
                               padding: "4px 6px",
-                              color: "#1e293b",
+                              color: "#262421",
                               display: "inline-flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -709,7 +709,7 @@ export function RolesManager({ initialRoles }: Props) {
                                     border: "none",
                                     textAlign: "left",
                                     fontSize: "13px",
-                                    color: "#374151",
+                                    color: "#474541",
                                     cursor: "pointer",
                                     display: "block",
                                     lineHeight: 1.3,
@@ -717,7 +717,7 @@ export function RolesManager({ initialRoles }: Props) {
                                   }}
                                   onMouseOver={(e) =>
                                     (e.currentTarget.style.backgroundColor =
-                                      "#f8fafc")
+                                      "#fafafa")
                                   }
                                   onMouseOut={(e) =>
                                     (e.currentTarget.style.backgroundColor =
@@ -744,7 +744,7 @@ export function RolesManager({ initialRoles }: Props) {
                                   }}
                                   onMouseOver={(e) =>
                                     (e.currentTarget.style.backgroundColor =
-                                      "#f8fafc")
+                                      "#fafafa")
                                   }
                                   onMouseOut={(e) =>
                                     (e.currentTarget.style.backgroundColor =
@@ -800,7 +800,7 @@ export function RolesManager({ initialRoles }: Props) {
             <div
               style={{
                 padding: "18px 24px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: "1px solid #f6f5f4",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -811,7 +811,7 @@ export function RolesManager({ initialRoles }: Props) {
                   margin: 0,
                   fontSize: "16px",
                   fontWeight: 600,
-                  color: "#1e293b",
+                  color: "#262421",
                 }}
               >
                 Tambah User Level
@@ -823,7 +823,7 @@ export function RolesManager({ initialRoles }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#7c7873",
                   padding: "4px",
                 }}
               >
@@ -849,7 +849,7 @@ export function RolesManager({ initialRoles }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -869,7 +869,7 @@ export function RolesManager({ initialRoles }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                     }}
@@ -882,7 +882,7 @@ export function RolesManager({ initialRoles }: Props) {
                     style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "8px",
                     }}
                   >
@@ -894,7 +894,7 @@ export function RolesManager({ initialRoles }: Props) {
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13.5px",
-                      color: "#1e293b",
+                      color: "#262421",
                       cursor: "pointer",
                     }}
                   >
@@ -910,7 +910,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         width: "16px",
                         height: "16px",
-                        accentColor: "#007bff",
+                        accentColor: "#faa005",
                       }}
                     />
                     <span>Seluruh Akses Halaman</span>
@@ -923,7 +923,7 @@ export function RolesManager({ initialRoles }: Props) {
                     style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "8px",
                     }}
                   >
@@ -935,7 +935,7 @@ export function RolesManager({ initialRoles }: Props) {
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13.5px",
-                      color: "#1e293b",
+                      color: "#262421",
                       cursor: "pointer",
                     }}
                   >
@@ -951,7 +951,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         width: "16px",
                         height: "16px",
-                        accentColor: "#007bff",
+                        accentColor: "#faa005",
                       }}
                     />
                     <span>Seluruh Akses Divisi</span>
@@ -964,7 +964,7 @@ export function RolesManager({ initialRoles }: Props) {
                     style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "8px",
                     }}
                   >
@@ -976,7 +976,7 @@ export function RolesManager({ initialRoles }: Props) {
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13.5px",
-                      color: "#1e293b",
+                      color: "#262421",
                       cursor: "pointer",
                     }}
                   >
@@ -992,7 +992,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         width: "16px",
                         height: "16px",
-                        accentColor: "#007bff",
+                        accentColor: "#faa005",
                       }}
                     />
                     <span>Seluruh Akses Aksi</span>
@@ -1007,7 +1007,7 @@ export function RolesManager({ initialRoles }: Props) {
                           flexWrap: "wrap",
                           gap: "8px",
                           padding: "8px 12px",
-                          border: "1px solid #cbd5e1",
+                          border: "1px solid #d9d6d3",
                           borderRadius: "6px",
                           minHeight: "42px",
                           alignItems: "center",
@@ -1020,12 +1020,12 @@ export function RolesManager({ initialRoles }: Props) {
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "6px",
-                              backgroundColor: "#f1f5f9",
-                              color: "#334155",
-                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f6f5f4",
+                              color: "#484540",
+                              border: "1px solid #d9d6d3",
                               borderRadius: "4px",
                               padding: "3px 8px",
-                              fontSize: "12.5px",
+                              fontSize: "13px",
                             }}
                           >
                             {action}
@@ -1037,7 +1037,7 @@ export function RolesManager({ initialRoles }: Props) {
                                 border: "none",
                                 cursor: "pointer",
                                 padding: 0,
-                                color: "#64748b",
+                                color: "#7c7873",
                                 display: "flex",
                                 alignItems: "center",
                               }}
@@ -1062,10 +1062,10 @@ export function RolesManager({ initialRoles }: Props) {
                             height: "36px",
                             padding: "6px 12px",
                             fontSize: "13px",
-                            border: "1px solid #cbd5e1",
+                            border: "1px solid #d9d6d3",
                             borderRadius: "6px",
                             backgroundColor: "#ffffff",
-                            color: "#475569",
+                            color: "#5c5954",
                           }}
                         >
                           <option value="">+ Pilih Aksi Tambahan</option>
@@ -1087,7 +1087,7 @@ export function RolesManager({ initialRoles }: Props) {
               <div
                 style={{
                   padding: "16px 24px",
-                  borderTop: "1px solid #f1f5f9",
+                  borderTop: "1px solid #f6f5f4",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -1100,11 +1100,11 @@ export function RolesManager({ initialRoles }: Props) {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #d9d6d3",
                     backgroundColor: "#ffffff",
                     fontSize: "13px",
                     fontWeight: 500,
-                    color: "#475569",
+                    color: "#5c5954",
                     cursor: "pointer",
                   }}
                 >
@@ -1117,10 +1117,10 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "8px 22px",
                     borderRadius: "6px",
                     border: "none",
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "#1a1a1a",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1169,7 +1169,7 @@ export function RolesManager({ initialRoles }: Props) {
             <div
               style={{
                 padding: "18px 24px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: "1px solid #f6f5f4",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -1180,7 +1180,7 @@ export function RolesManager({ initialRoles }: Props) {
                   margin: 0,
                   fontSize: "16px",
                   fontWeight: 600,
-                  color: "#1e293b",
+                  color: "#262421",
                 }}
               >
                 Edit User Level
@@ -1192,7 +1192,7 @@ export function RolesManager({ initialRoles }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#7c7873",
                   padding: "4px",
                 }}
               >
@@ -1218,7 +1218,7 @@ export function RolesManager({ initialRoles }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1237,7 +1237,7 @@ export function RolesManager({ initialRoles }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                     }}
@@ -1250,7 +1250,7 @@ export function RolesManager({ initialRoles }: Props) {
                     style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "8px",
                     }}
                   >
@@ -1262,7 +1262,7 @@ export function RolesManager({ initialRoles }: Props) {
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13.5px",
-                      color: "#1e293b",
+                      color: "#262421",
                       cursor: "pointer",
                     }}
                   >
@@ -1278,7 +1278,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         width: "16px",
                         height: "16px",
-                        accentColor: "#007bff",
+                        accentColor: "#faa005",
                       }}
                     />
                     <span>Seluruh Akses Halaman</span>
@@ -1291,7 +1291,7 @@ export function RolesManager({ initialRoles }: Props) {
                     style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "8px",
                     }}
                   >
@@ -1303,7 +1303,7 @@ export function RolesManager({ initialRoles }: Props) {
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13.5px",
-                      color: "#1e293b",
+                      color: "#262421",
                       cursor: "pointer",
                     }}
                   >
@@ -1319,7 +1319,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         width: "16px",
                         height: "16px",
-                        accentColor: "#007bff",
+                        accentColor: "#faa005",
                       }}
                     />
                     <span>Seluruh Akses Divisi</span>
@@ -1332,7 +1332,7 @@ export function RolesManager({ initialRoles }: Props) {
                     style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "8px",
                     }}
                   >
@@ -1344,7 +1344,7 @@ export function RolesManager({ initialRoles }: Props) {
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13.5px",
-                      color: "#1e293b",
+                      color: "#262421",
                       cursor: "pointer",
                     }}
                   >
@@ -1360,7 +1360,7 @@ export function RolesManager({ initialRoles }: Props) {
                       style={{
                         width: "16px",
                         height: "16px",
-                        accentColor: "#007bff",
+                        accentColor: "#faa005",
                       }}
                     />
                     <span>Seluruh Akses Aksi</span>
@@ -1375,7 +1375,7 @@ export function RolesManager({ initialRoles }: Props) {
                           flexWrap: "wrap",
                           gap: "8px",
                           padding: "8px 12px",
-                          border: "1px solid #cbd5e1",
+                          border: "1px solid #d9d6d3",
                           borderRadius: "6px",
                           minHeight: "44px",
                           alignItems: "center",
@@ -1390,8 +1390,8 @@ export function RolesManager({ initialRoles }: Props) {
                               alignItems: "center",
                               gap: "6px",
                               backgroundColor: "#ffffff",
-                              color: "#1e293b",
-                              border: "1px solid #cbd5e1",
+                              color: "#262421",
+                              border: "1px solid #d9d6d3",
                               borderRadius: "4px",
                               padding: "4px 10px",
                               fontSize: "13px",
@@ -1406,7 +1406,7 @@ export function RolesManager({ initialRoles }: Props) {
                                 border: "none",
                                 cursor: "pointer",
                                 padding: 0,
-                                color: "#64748b",
+                                color: "#7c7873",
                                 display: "flex",
                                 alignItems: "center",
                               }}
@@ -1431,10 +1431,10 @@ export function RolesManager({ initialRoles }: Props) {
                             height: "36px",
                             padding: "6px 12px",
                             fontSize: "13px",
-                            border: "1px solid #cbd5e1",
+                            border: "1px solid #d9d6d3",
                             borderRadius: "6px",
                             backgroundColor: "#ffffff",
-                            color: "#475569",
+                            color: "#5c5954",
                           }}
                         >
                           <option value="">+ Tambah Aksi Lainnya</option>
@@ -1456,7 +1456,7 @@ export function RolesManager({ initialRoles }: Props) {
               <div
                 style={{
                   padding: "16px 24px",
-                  borderTop: "1px solid #f1f5f9",
+                  borderTop: "1px solid #f6f5f4",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -1469,11 +1469,11 @@ export function RolesManager({ initialRoles }: Props) {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #d9d6d3",
                     backgroundColor: "#ffffff",
                     fontSize: "13px",
                     fontWeight: 500,
-                    color: "#475569",
+                    color: "#5c5954",
                     cursor: "pointer",
                   }}
                 >
@@ -1486,10 +1486,10 @@ export function RolesManager({ initialRoles }: Props) {
                     padding: "8px 22px",
                     borderRadius: "6px",
                     border: "none",
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "#1a1a1a",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1565,7 +1565,7 @@ export function RolesManager({ initialRoles }: Props) {
               style={{
                 fontSize: "20px",
                 fontWeight: 700,
-                color: "#1e293b",
+                color: "#262421",
                 margin: "0 0 10px 0",
               }}
             >
@@ -1576,7 +1576,7 @@ export function RolesManager({ initialRoles }: Props) {
             <p
               style={{
                 fontSize: "14px",
-                color: "#64748b",
+                color: "#7c7873",
                 margin: "0 0 24px 0",
               }}
             >
@@ -1600,8 +1600,8 @@ export function RolesManager({ initialRoles }: Props) {
                   padding: "8px 28px",
                   borderRadius: "6px",
                   border: "none",
-                  backgroundColor: "#007bff",
-                  color: "#ffffff",
+                  backgroundColor: "#faa005",
+                  color: "#1a1a1a",
                   fontSize: "14px",
                   fontWeight: 600,
                   cursor: isPending ? "not-allowed" : "pointer",
@@ -1613,10 +1613,10 @@ export function RolesManager({ initialRoles }: Props) {
                   justifyContent: "center",
                 }}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#0069d9")
+                  (e.currentTarget.style.backgroundColor = "#e79405")
                 }
                 onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#007bff")
+                  (e.currentTarget.style.backgroundColor = "#faa005")
                 }
               >
                 {isPending && <Loader2 size={14} className="animate-spin" />}
@@ -1629,7 +1629,7 @@ export function RolesManager({ initialRoles }: Props) {
                   padding: "8px 28px",
                   borderRadius: "6px",
                   border: "none",
-                  backgroundColor: "#6c757d",
+                  backgroundColor: "#777572",
                   color: "#ffffff",
                   fontSize: "14px",
                   fontWeight: 600,
@@ -1639,10 +1639,10 @@ export function RolesManager({ initialRoles }: Props) {
                   transition: "background-color 0.15s ease",
                 }}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#5a6268")
+                  (e.currentTarget.style.backgroundColor = "#63615f")
                 }
                 onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#6c757d")
+                  (e.currentTarget.style.backgroundColor = "#777572")
                 }
               >
                 Batal

@@ -178,8 +178,8 @@ export function IpWhitelistManager({ initialItems }: Props) {
       <div style={{ marginBottom: "20px" }}>
         <div
           style={{
-            fontSize: "12px",
-            color: "#6b7280",
+            fontSize: "12.5px",
+            color: "#787673",
             marginBottom: "4px",
             fontWeight: 500,
           }}
@@ -190,7 +190,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
           style={{
             fontSize: "22px",
             fontWeight: 800,
-            color: "#111827",
+            color: "#181615",
             letterSpacing: "0.02em",
             margin: "0 0 6px 0",
           }}
@@ -203,24 +203,24 @@ export function IpWhitelistManager({ initialItems }: Props) {
             alignItems: "center",
             gap: "8px",
             fontSize: "13px",
-            color: "#4b5563",
+            color: "#5a5854",
           }}
         >
           <Link
             href="/dashboard"
-            style={{ color: "#6b7280", textDecoration: "none" }}
+            style={{ color: "#787673", textDecoration: "none" }}
           >
             Beranda
           </Link>
-          <span style={{ color: "#9ca3af" }}>/</span>
+          <span style={{ color: "#a8a6a3" }}>/</span>
           <Link
             href="/dashboard/pengaturan/profile"
-            style={{ color: "#6b7280", textDecoration: "none" }}
+            style={{ color: "#787673", textDecoration: "none" }}
           >
             Settings
           </Link>
-          <span style={{ color: "#9ca3af" }}>/</span>
-          <span style={{ color: "#374151", fontWeight: 500 }}>
+          <span style={{ color: "#a8a6a3" }}>/</span>
+          <span style={{ color: "#474541", fontWeight: 500 }}>
             Daftar IP Whitelist
           </span>
         </div>
@@ -265,7 +265,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
         style={{
           backgroundColor: "#ffffff",
           borderRadius: "12px",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #e9e8e7",
           boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)",
           padding: "20px 24px",
           marginBottom: "20px",
@@ -290,7 +290,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   left: "12px",
                   top: "50%",
                   transform: "translateY(-50%)",
-                  color: "#94a3b8",
+                  color: "#aba7a1",
                 }}
               />
               <input
@@ -303,11 +303,11 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   height: "38px",
                   padding: "6px 12px 6px 36px",
                   fontSize: "13.5px",
-                  border: "1px solid #cbd5e1",
+                  border: "1px solid #d9d6d3",
                   borderRadius: "6px",
                   outline: "none",
                   backgroundColor: "#ffffff",
-                  color: "#1e293b",
+                  color: "#262421",
                 }}
               />
             </div>
@@ -324,15 +324,15 @@ export function IpWhitelistManager({ initialItems }: Props) {
                 alignItems: "center",
                 justifyContent: "center",
                 backgroundColor: "#ffffff",
-                border: "1px solid #cbd5e1",
+                border: "1px solid #d9d6d3",
                 borderRadius: "6px",
-                color: "#475569",
+                color: "#5c5954",
                 cursor: "pointer",
                 boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                 transition: "background-color 0.15s ease",
               }}
               onMouseOver={(e) =>
-                (e.currentTarget.style.backgroundColor = "#f8fafc")
+                (e.currentTarget.style.backgroundColor = "#fafafa")
               }
               onMouseOut={(e) =>
                 (e.currentTarget.style.backgroundColor = "#ffffff")
@@ -349,10 +349,10 @@ export function IpWhitelistManager({ initialItems }: Props) {
             style={{
               height: "38px",
               padding: "0 20px",
-              backgroundColor: "#0066cc",
+              backgroundColor: "#e19005",
               border: "none",
               borderRadius: "6px",
-              color: "#ffffff",
+              color: "#1a1a1a",
               fontSize: "13px",
               fontWeight: 700,
               display: "inline-flex",
@@ -360,11 +360,11 @@ export function IpWhitelistManager({ initialItems }: Props) {
               gap: "6px",
               cursor: "pointer",
               letterSpacing: "0.02em",
-              boxShadow: "0 1px 2px rgba(0, 102, 204, 0.25)",
+              boxShadow: "0 1px 2px rgba(225, 144, 5, 0.25)",
               transition: "background-color 0.15s ease",
             }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0052a3")}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#0066cc")}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#cd8304")}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#e19005")}
           >
             + Tambah IP Whitelist
           </button>
@@ -376,7 +376,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
         style={{
           backgroundColor: "#ffffff",
           borderRadius: "12px",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #e9e8e7",
           boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)",
           overflow: "hidden",
           marginBottom: "16px",
@@ -393,7 +393,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
             <thead>
               <tr
                 style={{
-                  borderBottom: "1px solid #e5e7eb",
+                  borderBottom: "1px solid #e9e8e7",
                   backgroundColor: "#ffffff",
                 }}
               >
@@ -402,7 +402,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     padding: "16px 20px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "50px",
                   }}
                 >
@@ -413,7 +413,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     padding: "16px 20px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   IP Whitelist
@@ -423,7 +423,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     padding: "16px 20px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   Tanggal dibuat
@@ -433,7 +433,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     padding: "16px 20px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   Tanggal diubah
@@ -443,7 +443,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     padding: "16px 20px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "100px",
                     textAlign: "center",
                   }}
@@ -460,7 +460,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     style={{
                       padding: "48px 20px",
                       textAlign: "center",
-                      color: "#6b7280",
+                      color: "#787673",
                       fontSize: "14px",
                     }}
                   >
@@ -472,16 +472,16 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   <tr
                     key={item.id}
                     style={{
-                      borderBottom: "1px solid #f1f5f9",
-                      backgroundColor: idx % 2 === 0 ? "#ffffff" : "#fcfdfe",
+                      borderBottom: "1px solid #f6f5f4",
+                      backgroundColor: idx % 2 === 0 ? "#ffffff" : "#fdfdfd",
                       transition: "background-color 0.15s ease",
                     }}
                     onMouseOver={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#f8fafc")
+                      (e.currentTarget.style.backgroundColor = "#fafafa")
                     }
                     onMouseOut={(e) =>
                       (e.currentTarget.style.backgroundColor =
-                        idx % 2 === 0 ? "#ffffff" : "#fcfdfe")
+                        idx % 2 === 0 ? "#ffffff" : "#fdfdfd")
                     }
                   >
                     {/* # Index */}
@@ -490,7 +490,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                         padding: "16px 20px",
                         fontSize: "13.5px",
                         fontWeight: 600,
-                        color: "#374151",
+                        color: "#474541",
                       }}
                     >
                       {idx + 1}
@@ -501,7 +501,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                       style={{
                         padding: "16px 20px",
                         fontSize: "13.5px",
-                        color: "#111827",
+                        color: "#181615",
                         fontWeight: 500,
                       }}
                     >
@@ -513,7 +513,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                       style={{
                         padding: "16px 20px",
                         fontSize: "13.5px",
-                        color: "#475569",
+                        color: "#5c5954",
                       }}
                     >
                       {item.createdAt}
@@ -524,7 +524,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                       style={{
                         padding: "16px 20px",
                         fontSize: "13.5px",
-                        color: "#475569",
+                        color: "#5c5954",
                       }}
                     >
                       {item.updatedAt}
@@ -575,7 +575,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
       <div
         style={{
           fontSize: "13.5px",
-          color: "#475569",
+          color: "#5c5954",
           paddingLeft: "4px",
         }}
       >
@@ -615,7 +615,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
             <div
               style={{
                 padding: "18px 24px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: "1px solid #f6f5f4",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -626,7 +626,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   margin: 0,
                   fontSize: "16px",
                   fontWeight: 600,
-                  color: "#1e293b",
+                  color: "#262421",
                 }}
               >
                 Tambah IP Whitelist
@@ -638,7 +638,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#7c7873",
                   padding: "4px",
                 }}
               >
@@ -662,9 +662,9 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     htmlFor="select-ip-type"
                     style={{
                       display: "block",
-                      fontSize: "12.5px",
+                      fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -679,11 +679,11 @@ export function IpWhitelistManager({ initialItems }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                       backgroundColor: "#ffffff",
-                      color: "#1e293b",
+                      color: "#262421",
                     }}
                   >
                     <option value="">Pilih tipe input IP</option>
@@ -711,7 +711,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                             width: "48px",
                             fontSize: "13px",
                             fontWeight: 500,
-                            color: "#374151",
+                            color: "#474541",
                           }}
                         >
                           IP {idx + 1}
@@ -727,7 +727,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                             height: "40px",
                             padding: "8px 12px",
                             fontSize: "13.5px",
-                            border: "1px solid #cbd5e1",
+                            border: "1px solid #d9d6d3",
                             borderRadius: "6px",
                             outline: "none",
                           }}
@@ -741,10 +741,10 @@ export function IpWhitelistManager({ initialItems }: Props) {
                             style={{
                               width: "38px",
                               height: "38px",
-                              backgroundColor: "#007bff",
+                              backgroundColor: "#faa005",
                               border: "none",
                               borderRadius: "6px",
-                              color: "#ffffff",
+                              color: "#1a1a1a",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -752,10 +752,10 @@ export function IpWhitelistManager({ initialItems }: Props) {
                               transition: "background-color 0.15s ease",
                             }}
                             onMouseOver={(e) =>
-                              (e.currentTarget.style.backgroundColor = "#0069d9")
+                              (e.currentTarget.style.backgroundColor = "#e79405")
                             }
                             onMouseOut={(e) =>
-                              (e.currentTarget.style.backgroundColor = "#007bff")
+                              (e.currentTarget.style.backgroundColor = "#faa005")
                             }
                           >
                             <Plus size={18} />
@@ -802,9 +802,9 @@ export function IpWhitelistManager({ initialItems }: Props) {
                         htmlFor="range-from"
                         style={{
                           display: "block",
-                          fontSize: "12.5px",
+                          fontSize: "13px",
                           fontWeight: 500,
-                          color: "#374151",
+                          color: "#474541",
                           marginBottom: "6px",
                         }}
                       >
@@ -822,7 +822,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                           height: "40px",
                           padding: "8px 12px",
                           fontSize: "13.5px",
-                          border: "1px solid #cbd5e1",
+                          border: "1px solid #d9d6d3",
                           borderRadius: "6px",
                           outline: "none",
                         }}
@@ -833,9 +833,9 @@ export function IpWhitelistManager({ initialItems }: Props) {
                         htmlFor="range-to"
                         style={{
                           display: "block",
-                          fontSize: "12.5px",
+                          fontSize: "13px",
                           fontWeight: 500,
-                          color: "#374151",
+                          color: "#474541",
                           marginBottom: "6px",
                         }}
                       >
@@ -853,7 +853,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                           height: "40px",
                           padding: "8px 12px",
                           fontSize: "13.5px",
-                          border: "1px solid #cbd5e1",
+                          border: "1px solid #d9d6d3",
                           borderRadius: "6px",
                           outline: "none",
                         }}
@@ -867,7 +867,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
               <div
                 style={{
                   padding: "16px 24px",
-                  borderTop: "1px solid #f1f5f9",
+                  borderTop: "1px solid #f6f5f4",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -880,11 +880,11 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #d9d6d3",
                     backgroundColor: "#ffffff",
                     fontSize: "13px",
                     fontWeight: 500,
-                    color: "#475569",
+                    color: "#5c5954",
                     cursor: "pointer",
                   }}
                 >
@@ -897,10 +897,10 @@ export function IpWhitelistManager({ initialItems }: Props) {
                     padding: "8px 22px",
                     borderRadius: "6px",
                     border: "none",
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "#1a1a1a",
                     cursor: isPending || !inputType ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -977,7 +977,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
               style={{
                 fontSize: "20px",
                 fontWeight: 700,
-                color: "#1e293b",
+                color: "#262421",
                 margin: "0 0 10px 0",
               }}
             >
@@ -988,7 +988,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
             <p
               style={{
                 fontSize: "14px",
-                color: "#64748b",
+                color: "#7c7873",
                 margin: "0 0 24px 0",
               }}
             >
@@ -1012,8 +1012,8 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   padding: "8px 28px",
                   borderRadius: "6px",
                   border: "none",
-                  backgroundColor: "#007bff",
-                  color: "#ffffff",
+                  backgroundColor: "#faa005",
+                  color: "#1a1a1a",
                   fontSize: "14px",
                   fontWeight: 600,
                   cursor: isPending ? "not-allowed" : "pointer",
@@ -1025,10 +1025,10 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   transition: "background-color 0.15s ease",
                 }}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#0069d9")
+                  (e.currentTarget.style.backgroundColor = "#e79405")
                 }
                 onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#007bff")
+                  (e.currentTarget.style.backgroundColor = "#faa005")
                 }
               >
                 {isPending && <Loader2 size={14} className="animate-spin" />}
@@ -1041,7 +1041,7 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   padding: "8px 28px",
                   borderRadius: "6px",
                   border: "none",
-                  backgroundColor: "#6c757d",
+                  backgroundColor: "#777572",
                   color: "#ffffff",
                   fontSize: "14px",
                   fontWeight: 600,
@@ -1051,10 +1051,10 @@ export function IpWhitelistManager({ initialItems }: Props) {
                   transition: "background-color 0.15s ease",
                 }}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#5a6268")
+                  (e.currentTarget.style.backgroundColor = "#63615f")
                 }
                 onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#6c757d")
+                  (e.currentTarget.style.backgroundColor = "#777572")
                 }
               >
                 Batal

@@ -6,7 +6,7 @@ import { divisions, workSchedules } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
 
 type Params = { params: Promise<{ id: string }> };
-const schema = z.object({ name: z.string().trim().min(2).max(100), scheduleId: z.uuid(), payrollCalculation: z.enum(["hourly", "daily", "monthly"]), active: z.boolean() });
+const schema = z.object({ name: z.string().trim().min(2).max(100), scheduleId: z.uuid(), active: z.boolean() });
 
 export async function PATCH(request: Request, { params }: Params) {
   const context = await featureContext(request, "master/divisi", "write"); if ("error" in context) return context.error;

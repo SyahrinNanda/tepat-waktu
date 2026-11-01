@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { getAppSession } from "@/lib/app-session";
 import { db } from "@/db";
 import { companies, companyMembers, featureRecords, user } from "@/db/schema";
 import { canManageFeature, canReadFeature, canWriteFeature, isFeatureModule } from "@/features/generic-modules/config/feature-modules";
@@ -7,7 +7,7 @@ import { selectedCompanyFromRequest } from "@/lib/selected-company";
 
 export async function featureContext(request: Request, module: string, operation: "read" | "write" | "manage") {
   if (!isFeatureModule(module)) return { error: Response.json({ error: "Fitur tidak ditemukan." }, { status: 404 }) } as const;
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getAppSession(request.headers);
   if (!session) return { error: Response.json({ error: "Silakan masuk kembali." }, { status: 401 }) } as const;
   const [account] = await db.select({ platformRole: user.platformRole }).from(user).where(eq(user.id, session.user.id)).limit(1);
   if (account?.platformRole === "superadmin") {

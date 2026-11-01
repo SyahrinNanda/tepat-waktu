@@ -341,8 +341,8 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
         <div>
           <div
             style={{
-              fontSize: "12px",
-              color: "#6b7280",
+              fontSize: "12.5px",
+              color: "#787673",
               marginBottom: "4px",
               fontWeight: 500,
             }}
@@ -353,7 +353,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             style={{
               fontSize: "22px",
               fontWeight: 800,
-              color: "#111827",
+              color: "#181615",
               letterSpacing: "0.02em",
               margin: "0 0 6px 0",
             }}
@@ -366,19 +366,19 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
               alignItems: "center",
               gap: "8px",
               fontSize: "13px",
-              color: "#4b5563",
+              color: "#5a5854",
             }}
           >
             <Link
               href="/dashboard"
-              style={{ color: "#6b7280", textDecoration: "none" }}
+              style={{ color: "#787673", textDecoration: "none" }}
             >
               Beranda
             </Link>
-            <span style={{ color: "#9ca3af" }}>/</span>
-            <span style={{ color: "#6b7280" }}>Manajemen User</span>
-            <span style={{ color: "#9ca3af" }}>/</span>
-            <span style={{ color: "#374151", fontWeight: 500 }}>
+            <span style={{ color: "#a8a6a3" }}>/</span>
+            <span style={{ color: "#787673" }}>Manajemen User</span>
+            <span style={{ color: "#a8a6a3" }}>/</span>
+            <span style={{ color: "#474541", fontWeight: 500 }}>
               Daftar User
             </span>
           </div>
@@ -393,13 +393,13 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             width: "36px",
             height: "36px",
             borderRadius: "6px",
-            border: "1px solid #d1d5db",
+            border: "1px solid #d7d6d5",
             backgroundColor: "#ffffff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            color: "#0284c7",
+            color: "#b05c07",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
@@ -446,7 +446,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
         style={{
           backgroundColor: "#ffffff",
           borderRadius: "12px",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #e9e8e7",
           boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
           padding: "20px 24px",
           marginBottom: "20px",
@@ -471,9 +471,9 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
               htmlFor="filter-nama"
               style={{
                 display: "block",
-                fontSize: "12.5px",
+                fontSize: "13px",
                 fontWeight: 500,
-                color: "#4b5563",
+                color: "#5a5854",
                 marginBottom: "6px",
               }}
             >
@@ -490,7 +490,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                 height: "38px",
                 padding: "6px 12px",
                 fontSize: "13.5px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid #d9d6d3",
                 borderRadius: "6px",
                 outline: "none",
                 backgroundColor: "#ffffff",
@@ -503,9 +503,9 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             <label
               style={{
                 display: "block",
-                fontSize: "12.5px",
+                fontSize: "13px",
                 fontWeight: 500,
-                color: "#4b5563",
+                color: "#5a5854",
                 marginBottom: "6px",
               }}
             >
@@ -557,8 +557,8 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             style={{
               height: "38px",
               padding: "0 20px",
-              backgroundColor: "#007bff",
-              color: "#ffffff",
+              backgroundColor: "#faa005",
+              color: "#1a1a1a",
               border: "none",
               borderRadius: "6px",
               fontSize: "13px",
@@ -571,8 +571,8 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
               boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
               transition: "background-color 0.15s ease",
             }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0069d9")}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#007bff")}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#e79405")}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#faa005")}
           >
             + TAMBAH
           </button>
@@ -584,7 +584,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
         style={{
           backgroundColor: "#ffffff",
           borderRadius: "12px",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #e9e8e7",
           boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
           overflow: "visible",
         }}
@@ -598,13 +598,13 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             }}
           >
             <thead>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+              <tr style={{ borderBottom: "1px solid #e9e8e7" }}>
                 <th
                   style={{
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "48px",
                   }}
                 >
@@ -615,7 +615,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     minWidth: "220px",
                   }}
                 >
@@ -626,7 +626,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     minWidth: "140px",
                   }}
                 >
@@ -637,7 +637,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     minWidth: "150px",
                   }}
                 >
@@ -648,7 +648,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     minWidth: "160px",
                   }}
                 >
@@ -659,7 +659,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "100px",
                     textAlign: "center",
                   }}
@@ -671,7 +671,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "110px",
                     textAlign: "center",
                   }}
@@ -683,7 +683,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "16px 18px",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#1e293b",
+                    color: "#262421",
                     width: "80px",
                     textAlign: "center",
                   }}
@@ -700,7 +700,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     style={{
                       padding: "36px",
                       textAlign: "center",
-                      color: "#6b7280",
+                      color: "#787673",
                       fontSize: "14px",
                     }}
                   >
@@ -712,16 +712,16 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   <tr
                     key={user.id}
                     style={{
-                      borderBottom: "1px solid #f1f5f9",
-                      backgroundColor: idx % 2 === 0 ? "#ffffff" : "#fcfdfe",
+                      borderBottom: "1px solid #f6f5f4",
+                      backgroundColor: idx % 2 === 0 ? "#ffffff" : "#fdfdfd",
                       transition: "background-color 0.15s ease",
                     }}
                     onMouseOver={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#f8fafc")
+                      (e.currentTarget.style.backgroundColor = "#fafafa")
                     }
                     onMouseOut={(e) =>
                       (e.currentTarget.style.backgroundColor =
-                        idx % 2 === 0 ? "#ffffff" : "#fcfdfe")
+                        idx % 2 === 0 ? "#ffffff" : "#fdfdfd")
                     }
                   >
                     {/* # Index */}
@@ -730,7 +730,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         padding: "14px 18px",
                         fontSize: "13.5px",
                         fontWeight: 600,
-                        color: "#374151",
+                        color: "#474541",
                       }}
                     >
                       {idx + 1}
@@ -742,15 +742,15 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         style={{
                           fontSize: "13.5px",
                           fontWeight: 600,
-                          color: "#111827",
+                          color: "#181615",
                         }}
                       >
                         {user.name}
                       </div>
                       <div
                         style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
+                          fontSize: "12.5px",
+                          color: "#787673",
                           marginTop: "2px",
                         }}
                       >
@@ -763,7 +763,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       style={{
                         padding: "14px 18px",
                         fontSize: "13.5px",
-                        color: "#374151",
+                        color: "#474541",
                       }}
                     >
                       {user.phone || "-"}
@@ -774,7 +774,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       style={{
                         padding: "14px 18px",
                         fontSize: "13.5px",
-                        color: "#374151",
+                        color: "#474541",
                       }}
                     >
                       {user.roleLabel}
@@ -786,15 +786,15 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         style={{
                           fontSize: "13px",
                           fontWeight: 500,
-                          color: "#374151",
+                          color: "#474541",
                         }}
                       >
                         {user.lastLoginTime}
                       </div>
                       <div
                         style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
+                          fontSize: "12.5px",
+                          color: "#787673",
                           marginTop: "2px",
                         }}
                       >
@@ -824,7 +824,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                           height: "24px",
                           borderRadius: "12px",
                           backgroundColor: user.isActive
-                            ? "#007bff"
+                            ? "#faa005"
                             : "#ef4444",
                           transition: "background-color 0.2s ease",
                           border: "none",
@@ -895,7 +895,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                           height: "24px",
                           borderRadius: "12px",
                           backgroundColor: user.isOtpLogin
-                            ? "#007bff"
+                            ? "#faa005"
                             : "#ef4444",
                           transition: "background-color 0.2s ease",
                           border: "none",
@@ -970,13 +970,13 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                             cursor: "pointer",
                             padding: "6px",
                             borderRadius: "4px",
-                            color: "#374151",
+                            color: "#474541",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                           }}
                           onMouseOver={(e) =>
-                            (e.currentTarget.style.backgroundColor = "#e2e8f0")
+                            (e.currentTarget.style.backgroundColor = "#ebe9e7")
                           }
                           onMouseOut={(e) =>
                             (e.currentTarget.style.backgroundColor = "transparent")
@@ -996,7 +996,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                               backgroundColor: "#ffffff",
                               borderRadius: "6px",
                               boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                              border: "1px solid #e2e8f0",
+                              border: "1px solid #ebe9e7",
                               minWidth: "140px",
                               zIndex: 100,
                               padding: "6px 0",
@@ -1013,13 +1013,13 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                                 border: "none",
                                 textAlign: "left",
                                 fontSize: "13px",
-                                color: "#374151",
+                                color: "#474541",
                                 cursor: "pointer",
                                 display: "block",
                               }}
                               onMouseOver={(e) =>
                                 (e.currentTarget.style.backgroundColor =
-                                  "#f1f5f9")
+                                  "#f6f5f4")
                               }
                               onMouseOut={(e) =>
                                 (e.currentTarget.style.backgroundColor =
@@ -1038,13 +1038,13 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                                 border: "none",
                                 textAlign: "left",
                                 fontSize: "13px",
-                                color: "#374151",
+                                color: "#474541",
                                 cursor: "pointer",
                                 display: "block",
                               }}
                               onMouseOver={(e) =>
                                 (e.currentTarget.style.backgroundColor =
-                                  "#f1f5f9")
+                                  "#f6f5f4")
                               }
                               onMouseOut={(e) =>
                                 (e.currentTarget.style.backgroundColor =
@@ -1123,7 +1123,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             <div
               style={{
                 padding: "18px 24px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: "1px solid #f6f5f4",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -1134,7 +1134,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   margin: 0,
                   fontSize: "16px",
                   fontWeight: 600,
-                  color: "#1e293b",
+                  color: "#262421",
                 }}
               >
                 Tambah User
@@ -1146,7 +1146,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#7c7873",
                   padding: "4px",
                 }}
               >
@@ -1165,7 +1165,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1185,7 +1185,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                     }}
@@ -1200,7 +1200,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1220,7 +1220,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                     }}
@@ -1235,7 +1235,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1254,7 +1254,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                     }}
@@ -1269,7 +1269,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1294,7 +1294,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         height: "40px",
                         padding: "8px 40px 8px 12px",
                         fontSize: "13.5px",
-                        border: "1px solid #cbd5e1",
+                        border: "1px solid #d9d6d3",
                         borderRadius: "6px",
                         outline: "none",
                       }}
@@ -1310,7 +1310,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "#94a3b8",
+                        color: "#aba7a1",
                         padding: 0,
                       }}
                     >
@@ -1327,7 +1327,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1348,7 +1348,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                       backgroundColor: "#ffffff",
@@ -1370,7 +1370,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
               <div
                 style={{
                   padding: "16px 24px",
-                  borderTop: "1px solid #f1f5f9",
+                  borderTop: "1px solid #f6f5f4",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -1383,11 +1383,11 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #d9d6d3",
                     backgroundColor: "#ffffff",
                     fontSize: "13px",
                     fontWeight: 500,
-                    color: "#475569",
+                    color: "#5c5954",
                     cursor: "pointer",
                   }}
                 >
@@ -1400,10 +1400,10 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "8px 22px",
                     borderRadius: "6px",
                     border: "none",
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "#1a1a1a",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1452,7 +1452,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             <div
               style={{
                 padding: "18px 24px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: "1px solid #f6f5f4",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -1463,7 +1463,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   margin: 0,
                   fontSize: "16px",
                   fontWeight: 600,
-                  color: "#1e293b",
+                  color: "#262421",
                 }}
               >
                 Edit User
@@ -1475,7 +1475,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#7c7873",
                   padding: "4px",
                 }}
               >
@@ -1494,7 +1494,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1513,7 +1513,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                     }}
@@ -1528,7 +1528,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1544,10 +1544,10 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid #ebe9e7",
                       borderRadius: "6px",
-                      backgroundColor: "#f8fafc",
-                      color: "#64748b",
+                      backgroundColor: "#fafafa",
+                      color: "#7c7873",
                       cursor: "not-allowed",
                     }}
                   />
@@ -1561,7 +1561,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1580,7 +1580,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                     }}
@@ -1595,7 +1595,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1616,7 +1616,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       height: "40px",
                       padding: "8px 12px",
                       fontSize: "13.5px",
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #d9d6d3",
                       borderRadius: "6px",
                       outline: "none",
                       backgroundColor: "#ffffff",
@@ -1635,7 +1635,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
               <div
                 style={{
                   padding: "16px 24px",
-                  borderTop: "1px solid #f1f5f9",
+                  borderTop: "1px solid #f6f5f4",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -1648,11 +1648,11 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #d9d6d3",
                     backgroundColor: "#ffffff",
                     fontSize: "13px",
                     fontWeight: 500,
-                    color: "#475569",
+                    color: "#5c5954",
                     cursor: "pointer",
                   }}
                 >
@@ -1665,10 +1665,10 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "8px 22px",
                     borderRadius: "6px",
                     border: "none",
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "#1a1a1a",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1717,7 +1717,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             <div
               style={{
                 padding: "18px 24px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: "1px solid #f6f5f4",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -1729,15 +1729,15 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     margin: 0,
                     fontSize: "16px",
                     fontWeight: 600,
-                    color: "#1e293b",
+                    color: "#262421",
                   }}
                 >
                   Ubah Password User
                 </h2>
                 <div
                   style={{
-                    fontSize: "12px",
-                    color: "#64748b",
+                    fontSize: "12.5px",
+                    color: "#7c7873",
                     marginTop: "2px",
                   }}
                 >
@@ -1751,7 +1751,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#7c7873",
                   padding: "4px",
                 }}
               >
@@ -1770,7 +1770,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1795,7 +1795,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         height: "40px",
                         padding: "8px 40px 8px 12px",
                         fontSize: "13.5px",
-                        border: "1px solid #cbd5e1",
+                        border: "1px solid #d9d6d3",
                         borderRadius: "6px",
                         outline: "none",
                       }}
@@ -1811,7 +1811,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "#94a3b8",
+                        color: "#aba7a1",
                         padding: 0,
                       }}
                     >
@@ -1828,7 +1828,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       display: "block",
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "#374151",
+                      color: "#474541",
                       marginBottom: "6px",
                     }}
                   >
@@ -1853,7 +1853,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         height: "40px",
                         padding: "8px 40px 8px 12px",
                         fontSize: "13.5px",
-                        border: "1px solid #cbd5e1",
+                        border: "1px solid #d9d6d3",
                         borderRadius: "6px",
                         outline: "none",
                       }}
@@ -1871,7 +1871,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "#94a3b8",
+                        color: "#aba7a1",
                         padding: 0,
                       }}
                     >
@@ -1889,7 +1889,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
               <div
                 style={{
                   padding: "16px 24px",
-                  borderTop: "1px solid #f1f5f9",
+                  borderTop: "1px solid #f6f5f4",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -1902,11 +1902,11 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #d9d6d3",
                     backgroundColor: "#ffffff",
                     fontSize: "13px",
                     fontWeight: 500,
-                    color: "#475569",
+                    color: "#5c5954",
                     cursor: "pointer",
                   }}
                 >
@@ -1919,10 +1919,10 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     padding: "8px 22px",
                     borderRadius: "6px",
                     border: "none",
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "#1a1a1a",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1998,7 +1998,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
               style={{
                 fontSize: "20px",
                 fontWeight: 700,
-                color: "#1e293b",
+                color: "#262421",
                 margin: "0 0 10px 0",
               }}
             >
@@ -2009,7 +2009,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
             <p
               style={{
                 fontSize: "14px",
-                color: "#64748b",
+                color: "#7c7873",
                 margin: "0 0 24px 0",
               }}
             >
@@ -2033,8 +2033,8 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   padding: "8px 28px",
                   borderRadius: "6px",
                   border: "none",
-                  backgroundColor: "#007bff",
-                  color: "#ffffff",
+                  backgroundColor: "#faa005",
+                  color: "#1a1a1a",
                   fontSize: "14px",
                   fontWeight: 600,
                   cursor: isPending ? "not-allowed" : "pointer",
@@ -2044,10 +2044,10 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   transition: "background-color 0.15s ease",
                 }}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#0069d9")
+                  (e.currentTarget.style.backgroundColor = "#e79405")
                 }
                 onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#007bff")
+                  (e.currentTarget.style.backgroundColor = "#faa005")
                 }
               >
                 {isPending && <Loader2 size={14} className="animate-spin" />}
@@ -2060,7 +2060,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   padding: "8px 24px",
                   borderRadius: "6px",
                   border: "none",
-                  backgroundColor: "#6c757d",
+                  backgroundColor: "#777572",
                   color: "#ffffff",
                   fontSize: "14px",
                   fontWeight: 600,
@@ -2068,10 +2068,10 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   transition: "background-color 0.15s ease",
                 }}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#5a6268")
+                  (e.currentTarget.style.backgroundColor = "#63615f")
                 }
                 onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#6c757d")
+                  (e.currentTarget.style.backgroundColor = "#777572")
                 }
               >
                 Batal
@@ -2123,7 +2123,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   margin: 0,
                   fontSize: "16px",
                   fontWeight: 700,
-                  color: "#0f172a",
+                  color: "#181715",
                 }}
               >
                 Informasi Manajemen User
@@ -2135,14 +2135,14 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#7c7873",
                   padding: "4px",
                 }}
               >
                 <X size={18} />
               </button>
             </div>
-            <div style={{ fontSize: "13.5px", color: "#475569", lineHeight: 1.6 }}>
+            <div style={{ fontSize: "13.5px", color: "#5c5954", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 10px 0" }}>
                 Halaman <strong>Daftar User</strong> memungkinkan Administrator
                 mengelola akun anggota perusahaan.
@@ -2176,8 +2176,8 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   padding: "8px 18px",
                   borderRadius: "6px",
                   border: "none",
-                  backgroundColor: "#007bff",
-                  color: "#ffffff",
+                  backgroundColor: "#faa005",
+                  color: "#1a1a1a",
                   fontSize: "13px",
                   fontWeight: 600,
                   cursor: "pointer",

@@ -91,9 +91,9 @@ const screens: Record<string, ScreenConfig> = {
     action: "Atur Jam Kerja",
     columns: ["Shift", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Aksi"],
     rows: [
-      ["Shift Pagi", "08:00–17:00", "08:00–17:00", "08:00–17:00", "08:00–17:00", "08:00–16:00", ""],
-      ["Shift Siang", "12:00–20:00", "12:00–20:00", "12:00–20:00", "12:00–20:00", "12:00–20:00", ""],
-      ["Shift Lapangan", "07:30–16:30", "07:30–16:30", "07:30–16:30", "07:30–16:30", "07:30–16:00", ""],
+      ["Shift Pagi", "08:00â€“17:00", "08:00â€“17:00", "08:00â€“17:00", "08:00â€“17:00", "08:00â€“16:00", ""],
+      ["Shift Siang", "12:00â€“20:00", "12:00â€“20:00", "12:00â€“20:00", "12:00â€“20:00", "12:00â€“20:00", ""],
+      ["Shift Lapangan", "07:30â€“16:30", "07:30â€“16:30", "07:30â€“16:30", "07:30â€“16:30", "07:30â€“16:00", ""],
     ],
     filters: ["Semua Shift"],
     form: ["Pilih Shift", "Hari Kerja", "Jam Masuk", "Jam Pulang"],
@@ -151,20 +151,6 @@ const screens: Record<string, ScreenConfig> = {
     ],
     form: ["Nama Lokasi", "Nama Pemilik", "Email", "No. Telepon", "Alamat", "Radius", "Karyawan"],
   },
-  "master/istilah-gaji": {
-    title: "Daftar Istilah Gaji",
-    description: "Kelola komponen pendapatan, kompensasi, dan potongan.",
-    breadcrumb: "Beranda / Master Data / Istilah Gaji",
-    action: "Tambah Istilah",
-    columns: ["Nama Istilah", "Tipe", "Digunakan Pada", "Status", "Aksi"],
-    rows: [
-      ["Tunjangan Transport", "Kompensasi", "18 karyawan", "Aktif", ""],
-      ["Uang Makan", "Kompensasi", "30 karyawan", "Aktif", ""],
-      ["Potongan Keterlambatan", "Potongan", "Semua Karyawan", "Aktif", ""],
-    ],
-    filters: ["Semua Tipe"],
-    form: ["Nama Istilah", "Tipe Istilah", "Status"],
-  },
   karyawan: {
     title: "Daftar Karyawan",
     description: "Kelola identitas, penempatan, dan status seluruh anggota tim.",
@@ -173,10 +159,10 @@ const screens: Record<string, ScreenConfig> = {
     exportable: true,
     columns: ["Karyawan", "Nomor Induk", "Jabatan / Divisi", "Lokasi Presensi", "Mulai Kerja", "Status", "Aksi"],
     rows: [
-      ["Ardi Kurniawan", "EMP-001", "Software Engineer · Engineering", "Kantor Utama", "12 Jan 2024", "Aktif", ""],
-      ["Nadia Safitri", "EMP-002", "HR Specialist · Human Resource", "Kantor Utama", "08 Mar 2024", "Aktif", ""],
-      ["Rizky Fauzan", "EMP-003", "Finance Officer · Finance", "Kantor Utama", "19 Jun 2024", "Aktif", ""],
-      ["Dian Anggraini", "EMP-004", "Field Officer · Operations", "Gudang Timur", "02 Sep 2024", "Nonaktif", ""],
+      ["Ardi Kurniawan", "EMP-001", "Software Engineer Â· Engineering", "Kantor Utama", "12 Jan 2024", "Aktif", ""],
+      ["Nadia Safitri", "EMP-002", "HR Specialist Â· Human Resource", "Kantor Utama", "08 Mar 2024", "Aktif", ""],
+      ["Rizky Fauzan", "EMP-003", "Finance Officer Â· Finance", "Kantor Utama", "19 Jun 2024", "Aktif", ""],
+      ["Dian Anggraini", "EMP-004", "Field Officer Â· Operations", "Gudang Timur", "02 Sep 2024", "Nonaktif", ""],
     ],
     filters: ["Semua Divisi", "Semua Jabatan", "Semua Status"],
     stats: [
@@ -221,22 +207,14 @@ const screens: Record<string, ScreenConfig> = {
     ],
   },
   "pengajuan/izin-cuti": requestScreen("Daftar Pengajuan Izin / Cuti", "Kelola permohonan izin, sakit, dan cuti karyawan.", ["Karyawan", "Jenis", "Periode", "Durasi", "Alasan", "Status", "Aksi"], [
-    ["Nadia Safitri", "Cuti Tahunan", "21–22 Okt 2026", "2 hari", "Acara keluarga", "Menunggu", ""],
+    ["Nadia Safitri", "Cuti Tahunan", "21â€“22 Okt 2026", "2 hari", "Acara keluarga", "Menunggu", ""],
     ["Rizky Fauzan", "Sakit", "15 Okt 2026", "1 hari", "Pemulihan", "Disetujui", ""],
     ["Dian Anggraini", "Izin", "11 Okt 2026", "1 hari", "Keperluan pribadi", "Ditolak", ""],
   ], "Tambah Pengajuan"),
-  "pengajuan/lembur": requestScreen("Daftar Pengajuan Lembur", "Tinjau durasi dan deskripsi lembur karyawan.", ["Karyawan", "Tanggal", "Jam Masuk–Keluar", "Durasi", "Deskripsi", "Status", "Aksi"], [
-    ["Ardi Kurniawan", "18 Okt 2026", "17:30–20:30", "3 jam", "Deployment aplikasi", "Menunggu", ""],
-    ["Dian Anggraini", "16 Okt 2026", "17:00–19:00", "2 jam", "Stock opname", "Disetujui", ""],
+  "pengajuan/lembur": requestScreen("Daftar Pengajuan Lembur", "Tinjau durasi dan deskripsi lembur karyawan.", ["Karyawan", "Tanggal", "Jam Masukâ€“Keluar", "Durasi", "Deskripsi", "Status", "Aksi"], [
+    ["Ardi Kurniawan", "18 Okt 2026", "17:30â€“20:30", "3 jam", "Deployment aplikasi", "Menunggu", ""],
+    ["Dian Anggraini", "16 Okt 2026", "17:00â€“19:00", "2 jam", "Stock opname", "Disetujui", ""],
   ], "Tambah Lembur", ["Nama Karyawan", "Tanggal Lembur", "Jam", "Menit", "Deskripsi Lembur"]),
-  "pengajuan/kasbon": requestScreen("Daftar Pengajuan Kasbon", "Kelola pengajuan kasbon dan estimasi cicilan.", ["Karyawan", "Tanggal", "Nominal", "Tenor", "Cicilan", "Status", "Aksi"], [
-    ["Dian Anggraini", "13 Okt 2026", "Rp 3.000.000", "3 bulan", "Rp 1.000.000", "Menunggu", ""],
-    ["Rizky Fauzan", "02 Okt 2026", "Rp 2.400.000", "6 bulan", "Rp 400.000", "Disetujui", ""],
-  ], "Tambah Kasbon", ["Nama Karyawan", "Tanggal Kasbon", "Nominal Kasbon", "Tenor", "Deskripsi Kasbon"]),
-  "pengajuan/klaim-beban": requestScreen("Daftar Pengajuan Klaim Beban", "Tinjau klaim pengeluaran dan bukti transaksi karyawan.", ["Tanggal", "Karyawan", "Nominal", "Deskripsi", "Bukti", "Status", "Aksi"], [
-    ["17 Okt 2026", "Ardi Kurniawan", "Rp 425.000", "Transportasi dinas", "1 foto", "Menunggu", ""],
-    ["12 Okt 2026", "Nadia Safitri", "Rp 780.000", "Konsumsi pelatihan", "2 foto", "Disetujui", ""],
-  ], "Tambah Klaim", ["Nama Karyawan", "Tanggal", "Nominal", "Deskripsi", "Catatan", "Foto Bukti"]),
   "presensi/harian": {
     title: "Presensi Harian",
     description: "Pantau waktu masuk, pulang, dan status presensi hari ini.",
@@ -245,10 +223,10 @@ const screens: Record<string, ScreenConfig> = {
     exportable: true,
     columns: ["Karyawan", "Shift", "Jadwal", "Jam Masuk", "Jam Pulang", "Keterlambatan", "Status", "Aksi"],
     rows: [
-      ["Ardi Kurniawan", "Shift Pagi", "08:00–17:00", "07:54", "17:06", "—", "Tepat Waktu", ""],
-      ["Nadia Safitri", "Shift Pagi", "08:00–17:00", "08:07", "17:02", "—", "Tepat Waktu", ""],
-      ["Rizky Fauzan", "Shift Pagi", "08:00–17:00", "08:24", "17:15", "14 menit", "Terlambat", ""],
-      ["Dian Anggraini", "Shift Lapangan", "07:30–16:30", "—", "—", "—", "Izin", ""],
+      ["Ardi Kurniawan", "Shift Pagi", "08:00â€“17:00", "07:54", "17:06", "â€”", "Tepat Waktu", ""],
+      ["Nadia Safitri", "Shift Pagi", "08:00â€“17:00", "08:07", "17:02", "â€”", "Tepat Waktu", ""],
+      ["Rizky Fauzan", "Shift Pagi", "08:00â€“17:00", "08:24", "17:15", "14 menit", "Terlambat", ""],
+      ["Dian Anggraini", "Shift Lapangan", "07:30â€“16:30", "â€”", "â€”", "â€”", "Izin", ""],
     ],
     filters: ["16 Okt 2026", "Semua Divisi", "Semua Status"],
     stats: [
@@ -280,8 +258,8 @@ const screens: Record<string, ScreenConfig> = {
     columns: ["Karyawan", "Lokasi", "Tanggal", "Jadwal", "Check-in", "Status", "Aksi"],
     rows: [
       ["Dian Anggraini", "Mitra Sejahtera", "18 Okt 2026", "09:00", "08:56", "Selesai", ""],
-      ["Ardi Kurniawan", "Cabang Utara", "20 Okt 2026", "10:00", "—", "Terjadwal", ""],
-      ["Nadia Safitri", "Toko Sentosa", "21 Okt 2026", "13:30", "—", "Terjadwal", ""],
+      ["Ardi Kurniawan", "Cabang Utara", "20 Okt 2026", "10:00", "â€”", "Terjadwal", ""],
+      ["Nadia Safitri", "Toko Sentosa", "21 Okt 2026", "13:30", "â€”", "Terjadwal", ""],
     ],
     filters: ["Bulan Ini", "Semua Status"],
     form: ["Tanggal Kunjungan", "Karyawan", "Lokasi", "Jam", "Catatan"],
@@ -295,87 +273,9 @@ const screens: Record<string, ScreenConfig> = {
     rows: [
       ["Dian Anggraini", "Mitra Sejahtera", "18 Okt 2026", "08:56", "10:22", "1j 26m", "18 m", "Selesai"],
       ["Ardi Kurniawan", "Toko Sentosa", "14 Okt 2026", "13:05", "14:40", "1j 35m", "9 m", "Selesai"],
-      ["Rizky Fauzan", "Cabang Utara", "09 Okt 2026", "10:21", "—", "—", "142 m", "Tidak Lengkap"],
+      ["Rizky Fauzan", "Cabang Utara", "09 Okt 2026", "10:21", "â€”", "â€”", "142 m", "Tidak Lengkap"],
     ],
     filters: ["Oktober", "2026", "Semua Karyawan", "Semua Lokasi"],
-  },
-  "payroll/istilah": {
-    title: "Daftar Istilah Gaji",
-    description: "Kelola istilah yang digunakan dalam komponen payroll.",
-    breadcrumb: "Beranda / Payroll / Daftar Istilah",
-    action: "Tambah Istilah",
-    columns: ["Nama Istilah", "Tipe", "Jumlah Pengguna", "Status", "Aksi"],
-    rows: [
-      ["Gaji Pokok", "Pendapatan", "38", "Aktif", ""],
-      ["Upah Lembur", "Kompensasi", "24", "Aktif", ""],
-      ["Potongan Kasbon", "Potongan", "4", "Aktif", ""],
-    ],
-    form: ["Nama Istilah", "Tipe Istilah", "Status"],
-  },
-  payroll: {
-    title: "Laporan Daftar Payroll",
-    description: "Buat, tinjau, dan finalisasi payroll setiap periode.",
-    breadcrumb: "Beranda / Payroll / Daftar Payroll",
-    action: "Tambah Payroll",
-    exportable: true,
-    columns: ["Periode", "Karyawan", "Pendapatan", "Potongan", "Gaji Bersih", "Status", "Aksi"],
-    rows: [
-      ["Oktober 2026", "Ardi Kurniawan", "Rp 9.400.000", "Rp 550.000", "Rp 8.850.000", "Draft", ""],
-      ["Oktober 2026", "Nadia Safitri", "Rp 7.980.000", "Rp 100.000", "Rp 7.880.000", "Final", ""],
-      ["September 2026", "Rizky Fauzan", "Rp 8.520.000", "Rp 525.000", "Rp 7.995.000", "Dibayar", ""],
-    ],
-    filters: ["Oktober", "2026", "Semua Status"],
-    stats: [
-      { label: "Total Payroll", value: "Rp 284,6 jt", meta: "Oktober 2026", tone: "blue" },
-      { label: "Sudah Final", value: "30", meta: "dari 38 karyawan", tone: "green" },
-      { label: "Masih Draft", value: "8", meta: "perlu diperiksa", tone: "orange" },
-      { label: "Total Potongan", value: "Rp 18,2 jt", meta: "seluruh komponen", tone: "red" },
-    ],
-    form: ["Bulan", "Tahun", "Karyawan", "Tipe Gaji", "Jumlah", "Nominal"],
-  },
-  "kasbon/pembayaran": {
-    title: "Daftar Pembayaran Kasbon",
-    description: "Pantau cicilan, pembayaran, dan saldo kasbon karyawan.",
-    breadcrumb: "Beranda / Kasbon / Pembayaran",
-    action: "Catat Pembayaran",
-    exportable: true,
-    columns: ["Karyawan", "Kasbon Awal", "Cicilan", "Sudah Dibayar", "Sisa", "Jatuh Tempo", "Status", "Aksi"],
-    rows: [
-      ["Rizky Fauzan", "Rp 2.400.000", "Rp 400.000", "Rp 800.000", "Rp 1.600.000", "28 Okt 2026", "Berjalan", ""],
-      ["Dian Anggraini", "Rp 3.000.000", "Rp 1.000.000", "Rp 1.000.000", "Rp 2.000.000", "28 Okt 2026", "Berjalan", ""],
-      ["Bagus Pratama", "Rp 1.500.000", "Rp 500.000", "Rp 1.500.000", "Rp 0", "—", "Lunas", ""],
-    ],
-    filters: ["Semua Karyawan", "Semua Status"],
-    form: ["Karyawan", "Tanggal Pembayaran", "Nominal", "Metode", "Catatan"],
-  },
-  "perusahaan/laporan-keuangan": {
-    title: "Daftar Laporan Keuangan",
-    description: "Catat pemasukan dan pengeluaran operasional perusahaan.",
-    breadcrumb: "Beranda / Perusahaan / Laporan Keuangan",
-    action: "Tambah Laporan",
-    exportable: true,
-    columns: ["Tanggal", "Istilah", "Keterangan", "Tipe", "Nominal", "Dibuat Oleh", "Aksi"],
-    rows: [
-      ["16 Okt 2026", "Pendapatan Jasa", "Proyek Oktober", "Pemasukan", "Rp 42.500.000", "Nadia", ""],
-      ["14 Okt 2026", "Operasional", "Internet dan utilitas", "Pengeluaran", "Rp 4.250.000", "Rizky", ""],
-      ["10 Okt 2026", "Perlengkapan", "Peralatan kantor", "Pengeluaran", "Rp 2.800.000", "Rizky", ""],
-    ],
-    filters: ["Oktober", "2026", "Semua Tipe"],
-    form: ["Istilah Keuangan", "Tanggal", "Nominal", "Keterangan"],
-  },
-  "perusahaan/istilah-keuangan": {
-    title: "Daftar Istilah Keuangan",
-    description: "Kelola kategori pemasukan dan pengeluaran perusahaan.",
-    breadcrumb: "Beranda / Perusahaan / Istilah Keuangan",
-    action: "Tambah Istilah",
-    columns: ["Nama Istilah", "Tipe", "Jumlah Transaksi", "Status", "Aksi"],
-    rows: [
-      ["Pendapatan Jasa", "Pemasukan", "8", "Aktif", ""],
-      ["Operasional", "Pengeluaran", "12", "Aktif", ""],
-      ["Perlengkapan", "Pengeluaran", "4", "Aktif", ""],
-    ],
-    filters: ["Semua Tipe"],
-    form: ["Nama Istilah", "Tipe Keuangan", "Status"],
   },
   "pengaturan/users": {
     title: "Daftar User",
@@ -401,7 +301,7 @@ const screens: Record<string, ScreenConfig> = {
     rows: [
       ["Admin Perusahaan", "1 perusahaan", "Seluruh modul perusahaan", "Tidak dapat mengakses perusahaan lain", "1", ""],
       ["General Manager", "1 perusahaan", "Monitor, laporan, persetujuan", "Tanpa pengaturan platform", "1", ""],
-      ["HRD", "1 perusahaan", "Karyawan, presensi, payroll", "Tanpa billing dan pengaturan platform", "3", ""],
+      ["HRD", "1 perusahaan", "Karyawan dan presensi", "Tanpa billing dan pengaturan platform", "3", ""],
       ["Manager", "Divisi / tim", "Tim, presensi, persetujuan", "Hanya divisi yang ditugaskan", "4", ""],
       ["Karyawan / Staf", "Data pribadi", "Presensi dan pengajuan sendiri", "Tidak dapat melihat data karyawan lain", "29", ""],
     ],
@@ -423,12 +323,10 @@ const screens: Record<string, ScreenConfig> = {
 export function ProductModulePage({ slug }: { slug: string }) {
   if (slug === "monitor") return <MonitorPage />;
   if (slug === "karyawan/tambah") return <EmployeeFormPage />;
-  if (slug === "payroll/pengaturan") return <PayrollSettingsPage />;
   if (slug === "pengaturan/profile") return <ProfilePage />;
   if (slug === "pengaturan/aplikasi") return <ApplicationSettingsPage />;
   if (slug === "langganan") return <SubscriptionPage />;
   if (slug === "langganan/paket") return <PlansPage />;
-  if (slug === "payroll/tambah") return <CreatePayrollPage />;
   if (slug === "langganan/checkout") return <SubscriptionCheckoutPage />;
   if (slug === "langganan/pembayaran/berhasil") return <PaymentResultPage success />;
   if (slug === "langganan/pembayaran/gagal") return <PaymentResultPage success={false} />;
@@ -446,7 +344,6 @@ export function FeatureDetailPage({ module, id }: { module: string; id: string }
   const title = config?.title.replace(/^Daftar\s+/, "") ?? productScreenTitle(module);
   const row = config?.rows[0] ?? ["Data Utama", "Informasi", "Aktif"];
   const requestDetail = module.startsWith("pengajuan/");
-  const payrollDetail = module === "payroll" || module === "karyawan/gaji";
   const employeeDetail = module === "karyawan";
 
   return (
@@ -466,7 +363,7 @@ export function FeatureDetailPage({ module, id }: { module: string; id: string }
       <section className="detail-hero module-card">
         <div className="detail-identity">
           <span className="detail-avatar">{employeeDetail ? "AK" : title.slice(0, 2).toUpperCase()}</span>
-          <div><span className="eyebrow">ID · {id.toUpperCase()}</span><h2>{row[0]}</h2><p>{row[1] ?? "Data tercatat pada ruang kerja utama"}</p></div>
+          <div><span className="eyebrow">ID Â· {id.toUpperCase()}</span><h2>{row[0]}</h2><p>{row[1] ?? "Data tercatat pada ruang kerja utama"}</p></div>
         </div>
         <StatusPill value={row.find(isStatus) ?? "Aktif"} />
       </section>
@@ -477,20 +374,19 @@ export function FeatureDetailPage({ module, id }: { module: string; id: string }
             <div className="detail-section-head"><div><FileText size={17} /><h2>Informasi Utama</h2></div><span>Terakhir diperbarui hari ini</span></div>
             <div className="detail-grid">
               {(config?.columns ?? ["Nama", "Keterangan", "Status"]).filter((column) => column !== "Aksi").map((column, index) => (
-                <div className="detail-field" key={column}><small>{column}</small><strong>{row[index] || "—"}</strong></div>
+                <div className="detail-field" key={column}><small>{column}</small><strong>{row[index] || "â€”"}</strong></div>
               ))}
             </div>
           </section>
 
           {employeeDetail ? <EmployeeDetailSections /> : null}
           {requestDetail ? <RequestDetailSections /> : null}
-          {payrollDetail ? <PayrollDetailSections /> : null}
 
           <section className="module-card detail-section">
             <div className="detail-section-head"><div><FileText size={17} /><h2>Catatan & Lampiran</h2></div><button className="text-action">Tambah Catatan</button></div>
             <div className="attachment-list">
-              <div><span className="attachment-icon"><FileText size={17} /></span><span><strong>Dokumen pendukung.pdf</strong><small>PDF · 284 KB · diunggah 16 Okt 2026</small></span><button><Download size={15} /></button></div>
-              <div><span className="attachment-icon image"><ImageIconFallback /></span><span><strong>Bukti dokumentasi.jpg</strong><small>JPG · 1,2 MB · diunggah 16 Okt 2026</small></span><button><Eye size={15} /></button></div>
+              <div><span className="attachment-icon"><FileText size={17} /></span><span><strong>Dokumen pendukung.pdf</strong><small>PDF Â· 284 KB Â· diunggah 16 Okt 2026</small></span><button><Download size={15} /></button></div>
+              <div><span className="attachment-icon image"><ImageIconFallback /></span><span><strong>Bukti dokumentasi.jpg</strong><small>JPG Â· 1,2 MB Â· diunggah 16 Okt 2026</small></span><button><Eye size={15} /></button></div>
             </div>
           </section>
         </div>
@@ -500,9 +396,9 @@ export function FeatureDetailPage({ module, id }: { module: string; id: string }
           <section className="module-card timeline-card">
             <div className="detail-section-head"><div><Clock3 size={17} /><h2>Riwayat Aktivitas</h2></div></div>
             <ol className="activity-timeline">
-              <li><i className="green" /><div><strong>Data diperbarui</strong><span>Administrator · Hari ini, 09:42</span><p>Informasi utama berhasil diperbarui.</p></div></li>
-              <li><i className="blue" /><div><strong>Data ditinjau</strong><span>Nadia Safitri · Kemarin, 15:18</span><p>Pemeriksaan dokumen telah selesai.</p></div></li>
-              <li><i /><div><strong>Data dibuat</strong><span>Administrator · 12 Okt 2026</span><p>Record pertama kali ditambahkan.</p></div></li>
+              <li><i className="green" /><div><strong>Data diperbarui</strong><span>Administrator Â· Hari ini, 09:42</span><p>Informasi utama berhasil diperbarui.</p></div></li>
+              <li><i className="blue" /><div><strong>Data ditinjau</strong><span>Nadia Safitri Â· Kemarin, 15:18</span><p>Pemeriksaan dokumen telah selesai.</p></div></li>
+              <li><i /><div><strong>Data dibuat</strong><span>Administrator Â· 12 Okt 2026</span><p>Record pertama kali ditambahkan.</p></div></li>
             </ol>
           </section>
           <section className="module-card audit-mini"><ShieldCheck size={18} /><div><strong>Audit tercatat</strong><span>Semua perubahan pada data ini disimpan dalam audit log.</span></div></section>
@@ -545,8 +441,8 @@ function LiveFeatureDetail({ module, id }: { module: string; id: string }) {
   return <>
     <PageHeader title={`Detail ${title}`} description="Rincian data tersimpan untuk perusahaan aktif." breadcrumb={`Beranda / ${title} / Detail`} actions={<><Link className="btn btn-outline btn-compact" href={`/dashboard/${module}` as Route}>Kembali</Link>{permissions.write && (permissions.manage || permissions.userId === record.createdBy) ? <button className="btn btn-primary btn-compact" onClick={() => setEditing(true)}><Pencil size={15} /> Ubah Data</button> : null}</>} />
     {error ? <div className="error-box" role="alert">{error}</div> : null}
-    <section className="detail-hero module-card"><div className="detail-identity"><span className="detail-avatar">{title.slice(0, 2).toUpperCase()}</span><div><span className="eyebrow">ID · {record.id}</span><h2>{Object.values(record.fields)[0] || title}</h2><p>Dibuat {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(record.createdAt))}</p></div></div><StatusPill value={record.status} /></section>
-    <section className="detail-layout"><div className="detail-main"><div className="module-card detail-section"><div className="detail-section-head"><div><FileText size={17} /><h2>Informasi Utama</h2></div></div><div className="detail-grid">{Object.entries(record.fields).map(([label, value]) => <div className="detail-field" key={label}><small>{label}</small><strong>{value.startsWith("/api/files/") ? <a className="text-link" href={value} target="_blank" rel="noreferrer">Buka lampiran</a> : value || "—"}</strong></div>)}</div></div></div>
+    <section className="detail-hero module-card"><div className="detail-identity"><span className="detail-avatar">{title.slice(0, 2).toUpperCase()}</span><div><span className="eyebrow">ID Â· {record.id}</span><h2>{Object.values(record.fields)[0] || title}</h2><p>Dibuat {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(record.createdAt))}</p></div></div><StatusPill value={record.status} /></section>
+    <section className="detail-layout"><div className="detail-main"><div className="module-card detail-section"><div className="detail-section-head"><div><FileText size={17} /><h2>Informasi Utama</h2></div></div><div className="detail-grid">{Object.entries(record.fields).map(([label, value]) => <div className="detail-field" key={label}><small>{label}</small><strong>{value.startsWith("/api/files/") ? <a className="text-link" href={value} target="_blank" rel="noreferrer">Buka lampiran</a> : value || "â€”"}</strong></div>)}</div></div></div>
       <aside className="detail-side"><section className="module-card detail-action-card"><span className="eyebrow">STATUS</span><h2>{record.status}</h2><p>Terakhir diperbarui {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(record.updatedAt))}.</p>{permissions.manage && module.startsWith("pengajuan/") && record.status === "Menunggu" ? <><button className="btn btn-primary btn-block" onClick={() => void changeStatus("Disetujui")}>Setujui</button><button className="btn btn-danger btn-block" onClick={() => void changeStatus("Ditolak")}>Tolak</button></> : null}</section></aside>
     </section>
     {editing ? <DemoModal module={module} title="Ubah Data" fields={config?.form ?? Object.keys(record.fields)} initial={record.fields} onSave={(fields) => update(fields)} onClose={() => setEditing(false)} /> : null}
@@ -557,12 +453,10 @@ export function hasProductScreen(slug: string) {
   return Boolean(screens[slug]) || [
     "monitor",
     "karyawan/tambah",
-    "payroll/pengaturan",
     "pengaturan/profile",
     "pengaturan/aplikasi",
     "langganan",
     "langganan/paket",
-    "payroll/tambah",
     "langganan/checkout",
     "langganan/pembayaran/berhasil",
     "langganan/pembayaran/gagal",
@@ -574,12 +468,10 @@ export function productScreenTitle(slug: string) {
   const names: Record<string, string> = {
     monitor: "Monitor Perusahaan",
     "karyawan/tambah": "Tambah Karyawan",
-    "payroll/pengaturan": "Pengaturan Payroll",
     "pengaturan/profile": "Profile",
     "pengaturan/aplikasi": "Pengaturan Aplikasi",
     langganan: "Langganan",
     "langganan/paket": "Daftar Paket",
-    "payroll/tambah": "Tambah Payroll",
     "langganan/checkout": "Checkout Langganan",
     "langganan/pembayaran/berhasil": "Pembayaran Berhasil",
     "langganan/pembayaran/gagal": "Pembayaran Gagal",
@@ -731,7 +623,7 @@ function EmployeeFormPage() {
       <section className="module-card employee-form-card">
         <div className="form-section-head"><div><span>01</span><div><h2>Dokumen Karyawan</h2><p>Unggah foto dan dokumen pendukung.</p></div></div></div>
         <div className="upload-grid">
-          {uploads.map((item) => <button className="upload-tile" key={item}><UploadCloud size={24} /><strong>{item}</strong><small>PNG, JPG, atau PDF · Maks. 5 MB</small><span>Cari File</span></button>)}
+          {uploads.map((item) => <button className="upload-tile" key={item}><UploadCloud size={24} /><strong>{item}</strong><small>PNG, JPG, atau PDF Â· Maks. 5 MB</small><span>Cari File</span></button>)}
         </div>
         <div className="form-divider" />
         <div className="form-section-head"><div><span>02</span><div><h2>Informasi Personal</h2><p>Data identitas dan kontak karyawan.</p></div></div></div>
@@ -755,39 +647,14 @@ function EmployeeFormPage() {
   );
 }
 
-function PayrollSettingsPage() {
-  return (
-    <>
-      <PageHeader title="Pengaturan Payroll" description="Konfigurasikan cara komponen payroll dihitung dan ditampilkan." breadcrumb="Beranda / Payroll / Pengaturan" actions={<button className="btn btn-primary btn-compact"><Check size={16} />Simpan Pengaturan</button>} />
-      <section className="settings-layout">
-        <aside className="settings-index"><span>Pengaturan</span><a className="active" href="#calculation">Perhitungan Payroll</a><a href="#display">Tampilan Slip</a><a href="#notes">Catatan Payroll</a></aside>
-        <div className="module-card settings-panel">
-          <SettingsSection title="Perhitungan Payroll" description="Tentukan data yang ikut dalam kalkulasi payroll." id="calculation">
-            <ToggleRow label="Perhitungan cuti" description="Hitung cuti tidak dibayar sebagai potongan payroll." enabled={false} />
-            <ToggleRow label="Perhitungan lembur" description="Masukkan lembur yang telah disetujui ke komponen pendapatan." enabled />
-            <ToggleRow label="Potongan kasbon otomatis" description="Potong cicilan aktif pada periode payroll berjalan." enabled />
-          </SettingsSection>
-          <SettingsSection title="Tampilan Slip Gaji" description="Atur rincian yang terlihat pada slip karyawan." id="display">
-            <ToggleRow label="Tampilkan kompensasi dan potongan" description="Tampilkan rincian setiap komponen pada slip." enabled />
-            <ToggleRow label="Tampilkan ringkasan presensi" description="Tambahkan jumlah hadir, izin, dan terlambat." enabled />
-          </SettingsSection>
-          <SettingsSection title="Catatan Payroll" description="Catatan default pada slip gaji." id="notes">
-            <label className="field"><span className="field-label">Catatan</span><textarea className="input" defaultValue="Terima kasih atas kontribusi Anda. Dokumen ini diterbitkan secara elektronik." /></label>
-          </SettingsSection>
-        </div>
-      </section>
-    </>
-  );
-}
-
 function ApplicationSettingsPage() {
-  const menuItems = ["Istirahat", "Laporan", "Kunjungan", "Payroll", "Klaim Beban", "Tugas", "Lembur", "Izin", "Kasbon"];
+  const menuItems = ["Istirahat", "Laporan", "Kunjungan", "Tugas", "Lembur", "Izin"];
   return (
     <>
       <PageHeader title="Pengaturan Aplikasi" description="Sesuaikan pengalaman aplikasi untuk seluruh karyawan." breadcrumb="Beranda / Pengaturan / Aplikasi" actions={<button className="btn btn-primary btn-compact"><Check size={16} />Simpan Perubahan</button>} />
       <section className="module-card settings-panel standalone">
         <SettingsSection title="Kata Sapaan" description="Gunakan token $nama untuk menampilkan nama lengkap karyawan.">
-          <div className="wide-form-grid"><Field label="Kalimat Sapaan" placeholder="Halo 👋 $nama" /><Field label="Kalimat Kutipan" placeholder="Semangat kerja hari ini!" /></div>
+          <div className="wide-form-grid"><Field label="Kalimat Sapaan" placeholder="Halo ðŸ‘‹ $nama" /><Field label="Kalimat Kutipan" placeholder="Semangat kerja hari ini!" /></div>
         </SettingsSection>
         <SettingsSection title="Menu Halaman Depan" description="Pilih menu yang tersedia pada aplikasi karyawan.">
           <div className="toggle-grid">{menuItems.map((item) => <ToggleRow label={item} description={`Tampilkan menu ${item.toLowerCase()}`} enabled key={item} />)}</div>
@@ -845,7 +712,7 @@ function PlansPage() {
   const plans = [
     ["Free", "Rp 0", "5", "Presensi dasar", "Laporan harian"],
     ["Basic", "Rp 36.000", "15", "Semua fitur Free", "Pengajuan karyawan"],
-    ["Basic+", "Rp 60.000", "50", "Fitur premium", "Payroll & kunjungan"],
+    ["Basic+", "Rp 60.000", "50", "Fitur premium", "Kunjungan"],
     ["Silver", "Rp 137.000", "75", "Semua fitur Basic+", "Kontrol akses"],
     ["Gold", "Rp 165.000", "100", "Semua fitur Silver", "Laporan lanjutan"],
     ["Platinum", "Rp 253.000", "125", "Semua fitur Gold", "Prioritas dukungan"],
@@ -861,37 +728,19 @@ function PlansPage() {
   );
 }
 
-function CreatePayrollPage() {
-  const [tab, setTab] = useState<"salary" | "upload">("salary");
-  return <>
-    <PageHeader title="Tambah Payroll" description="Buat payroll baru melalui rincian komponen atau unggah slip." breadcrumb="Beranda / Payroll / Tambah Payroll" actions={<Link href={"/dashboard/payroll" as Route} className="btn btn-outline btn-compact">Batalkan</Link>} />
-    <div className="payroll-create-layout">
-      <section className="module-card payroll-create-card">
-        <div className="feature-tabs"><button className={tab === "salary" ? "active" : ""} onClick={() => setTab("salary")}><ReceiptText size={16} />Salary Details</button><button className={tab === "upload" ? "active" : ""} onClick={() => setTab("upload")}><UploadCloud size={16} />Upload Slip</button></div>
-        {tab === "salary" ? <>
-          <div className="payroll-period"><Field label="Bulan" placeholder="Oktober" select /><Field label="Tahun" placeholder="2026" select /><Field label="Karyawan" placeholder="Pilih karyawan" select /></div>
-          <div className="payroll-form-head"><span>Form Input Gaji</span><button className="btn btn-outline btn-compact"><Plus size={15} />Tambah Komponen</button></div>
-          <div className="payroll-line-table"><div className="head"><span>Komponen</span><span>Jumlah</span><span>Nominal</span><span>Total</span><span /></div>{[["Gaji Pokok", "1", "Rp 8.500.000", "Rp 8.500.000"], ["Upah Lembur", "9 jam", "Rp 50.000", "Rp 450.000"], ["Tunjangan Transport", "1", "Rp 750.000", "Rp 750.000"]].map((item) => <div key={item[0]}>{item.map((value) => <span key={value}>{value}</span>)}<button><Trash2 size={15} /></button></div>)}</div>
-        </> : <div className="payroll-upload-state"><UploadCloud size={35} /><h2>Unggah slip payroll</h2><p>Tarik file ke area ini atau pilih file dari perangkat. Format PDF, XLSX, atau CSV maksimal 10 MB.</p><button className="btn btn-primary btn-compact">Pilih File Payroll</button><span>Unduh template payroll terlebih dahulu jika diperlukan.</span></div>}
-      </section>
-      <aside className="module-card payroll-summary"><span className="eyebrow">RINGKASAN PAYROLL</span><h2>Oktober 2026</h2><div><span>Gaji Pokok <strong>Rp 8.500.000</strong></span><span>Kompensasi <strong>Rp 1.200.000</strong></span><span>Potongan <strong className="danger">− Rp 550.000</strong></span><span className="total">Gaji Bersih <strong>Rp 9.150.000</strong></span></div><button className="btn btn-primary btn-block"><Check size={16} />Simpan Payroll</button><p>Payroll akan disimpan sebagai draft dan masih dapat diperbarui.</p></aside>
-    </div>
-  </>;
-}
-
 function SubscriptionCheckoutPage() {
   const [method, setMethod] = useState("Virtual Account");
   return <>
     <PageHeader title="Konfirmasi Langganan" description="Periksa paket dan metode pembayaran sebelum melanjutkan." breadcrumb="Beranda / Langganan / Checkout" actions={<Link href={"/dashboard/langganan/paket" as Route} className="btn btn-outline btn-compact">Pilih Paket Lain</Link>} />
     <div className="checkout-layout">
-      <section className="module-card checkout-main"><div className="checkout-plan"><div className="plan-icon"><WalletCards size={22} /></div><div><span className="eyebrow">PAKET PILIHAN</span><h2>Silver</h2><p>Maksimal 75 karyawan · Seluruh fitur premium</p></div><strong>Rp 137.000<small>/bulan</small></strong></div><div className="checkout-section"><h3>Durasi langganan</h3><div className="duration-options"><button className="active"><strong>1 Bulan</strong><span>Rp 137.000</span></button><button><strong>6 Bulan</strong><span>Hemat 5%</span></button><button><strong>12 Bulan</strong><span>Hemat 15%</span></button></div></div><div className="checkout-section"><h3>Metode pembayaran</h3><div className="payment-options">{["Virtual Account", "QRIS", "E-Wallet"].map((item) => <button className={method === item ? "active" : ""} onClick={() => setMethod(item)} key={item}><CreditCard size={18} /><span><strong>{item}</strong><small>Konfirmasi otomatis</small></span><i>{method === item ? "✓" : ""}</i></button>)}</div></div></section>
+      <section className="module-card checkout-main"><div className="checkout-plan"><div className="plan-icon"><WalletCards size={22} /></div><div><span className="eyebrow">PAKET PILIHAN</span><h2>Silver</h2><p>Maksimal 75 karyawan Â· Seluruh fitur premium</p></div><strong>Rp 137.000<small>/bulan</small></strong></div><div className="checkout-section"><h3>Durasi langganan</h3><div className="duration-options"><button className="active"><strong>1 Bulan</strong><span>Rp 137.000</span></button><button><strong>6 Bulan</strong><span>Hemat 5%</span></button><button><strong>12 Bulan</strong><span>Hemat 15%</span></button></div></div><div className="checkout-section"><h3>Metode pembayaran</h3><div className="payment-options">{["Virtual Account", "QRIS", "E-Wallet"].map((item) => <button className={method === item ? "active" : ""} onClick={() => setMethod(item)} key={item}><CreditCard size={18} /><span><strong>{item}</strong><small>Konfirmasi otomatis</small></span><i>{method === item ? "âœ“" : ""}</i></button>)}</div></div></section>
       <aside className="module-card checkout-summary"><span className="eyebrow">RINGKASAN PESANAN</span><h2>Paket Silver</h2><div><span>Harga paket <strong>Rp 137.000</strong></span><span>Durasi <strong>1 bulan</strong></span><span>Biaya admin <strong>Rp 0</strong></span><span className="total">Total <strong>Rp 137.000</strong></span></div><Link href={"/dashboard/langganan/pembayaran/berhasil" as Route} className="btn btn-primary btn-block"><LockKeyhole size={15} />Bayar Sekarang</Link><p><ShieldCheck size={14} />Pembayaran diproses melalui koneksi aman.</p></aside>
     </div>
   </>;
 }
 
 function PaymentResultPage({ success }: { success: boolean }) {
-  return <div className="payment-result-wrap"><section className={`module-card payment-result ${success ? "success" : "failed"}`}><div className="result-icon">{success ? <CheckCircle2 size={38} /> : <AlertTriangle size={38} />}</div><span className="eyebrow">STATUS PEMBAYARAN</span><h1>{success ? "Pembayaran berhasil" : "Pembayaran belum berhasil"}</h1><p>{success ? "Paket Silver telah aktif dan kapasitas perusahaan sudah diperbarui." : "Transaksi tidak dapat diproses. Silakan periksa metode pembayaran atau coba kembali."}</p><div className="result-reference"><span>No. Invoice <strong>#INV-10282</strong></span><span>Total Pembayaran <strong>Rp 137.000</strong></span><span>Waktu <strong>16 Okt 2026 · 10:24 WITA</strong></span></div><div className="result-actions">{success ? <><Link href={"/dashboard/langganan/invoice/inv-10282" as Route} className="btn btn-outline">Lihat Invoice</Link><Link href={"/dashboard/langganan" as Route} className="btn btn-primary">Kembali ke Langganan</Link></> : <><Link href={"/dashboard/langganan/paket" as Route} className="btn btn-outline">Ubah Paket</Link><Link href={"/dashboard/langganan/checkout" as Route} className="btn btn-primary">Coba Lagi</Link></>}</div></section></div>;
+  return <div className="payment-result-wrap"><section className={`module-card payment-result ${success ? "success" : "failed"}`}><div className="result-icon">{success ? <CheckCircle2 size={38} /> : <AlertTriangle size={38} />}</div><span className="eyebrow">STATUS PEMBAYARAN</span><h1>{success ? "Pembayaran berhasil" : "Pembayaran belum berhasil"}</h1><p>{success ? "Paket Silver telah aktif dan kapasitas perusahaan sudah diperbarui." : "Transaksi tidak dapat diproses. Silakan periksa metode pembayaran atau coba kembali."}</p><div className="result-reference"><span>No. Invoice <strong>#INV-10282</strong></span><span>Total Pembayaran <strong>Rp 137.000</strong></span><span>Waktu <strong>16 Okt 2026 Â· 10:24 WITA</strong></span></div><div className="result-actions">{success ? <><Link href={"/dashboard/langganan/invoice/inv-10282" as Route} className="btn btn-outline">Lihat Invoice</Link><Link href={"/dashboard/langganan" as Route} className="btn btn-primary">Kembali ke Langganan</Link></> : <><Link href={"/dashboard/langganan/paket" as Route} className="btn btn-outline">Ubah Paket</Link><Link href={"/dashboard/langganan/checkout" as Route} className="btn btn-primary">Coba Lagi</Link></>}</div></section></div>;
 }
 
 function PageHeader({ title, description, breadcrumb, actions }: { title: string; description: string; breadcrumb: string; actions?: React.ReactNode }) {
@@ -900,7 +749,7 @@ function PageHeader({ title, description, breadcrumb, actions }: { title: string
 
 function StatsGrid({ stats }: { stats: Stat[] }) {
   const icons = [Users, CheckCircle2, Clock3, FileText];
-  return <section className="stats-grid product-stats">{stats.map((stat, index) => { const Icon = icons[index % icons.length]; return <article className="stat-card" key={stat.label}><div className="stat-top"><span className={`stat-icon ${stat.tone ?? "blue"}`}><Icon size={19} /></span><span className="mini-trend">•••</span></div><div className="stat-label">{stat.label}</div><div className="stat-value">{stat.value}</div><div className="stat-meta">{stat.meta}</div></article>; })}</section>;
+  return <section className="stats-grid product-stats">{stats.map((stat, index) => { const Icon = icons[index % icons.length]; return <article className="stat-card" key={stat.label}><div className="stat-top"><span className={`stat-icon ${stat.tone ?? "blue"}`}><Icon size={19} /></span><span className="mini-trend">â€¢â€¢â€¢</span></div><div className="stat-label">{stat.label}</div><div className="stat-value">{stat.value}</div><div className="stat-meta">{stat.meta}</div></article>; })}</section>;
 }
 
 function DemoModal({ module, title, fields, initial, onSave, onClose }: { module: string; title: string; fields: string[]; initial?: Record<string, string>; onSave: (fields: Record<string, string>) => Promise<void>; onClose: () => void }) {
@@ -954,10 +803,10 @@ function displayValue(record: FeatureRecord, column: string, index: number, form
   const normalized = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
   const target = normalized(column).replace(/^(nama|daftar)/, "");
   const key = Object.keys(values).find((field) => normalized(field) === normalized(column) || normalized(field).includes(target) || target.includes(normalized(field)));
-  if (key) return values[key] || "—";
+  if (key) return values[key] || "â€”";
   if (/tanggal dibuat|terdaftar/i.test(column)) return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(record.createdAt));
   const fallback = formFields?.[index];
-  return fallback && values[fallback] ? values[fallback] : "—";
+  return fallback && values[fallback] ? values[fallback] : "â€”";
 }
 
 function downloadCsv(columns: string[], records: FeatureRecord[], slug: string) {
@@ -970,7 +819,7 @@ function downloadCsv(columns: string[], records: FeatureRecord[], slug: string) 
 }
 
 function InvoiceModal({ onClose }: { onClose: () => void }) {
-  return <div className="modal-backdrop"><section className="demo-modal invoice-modal" role="dialog" aria-modal="true"><header><div><span className="eyebrow">INVOICE</span><h2>#INV-10261</h2></div><button className="icon-button" onClick={onClose}><X size={20} /></button></header><div className="invoice-sheet"><div className="invoice-brand"><div className="plan-icon"><ReceiptText size={20} /></div><div><strong>TepatWaktu</strong><small>Langganan HRIS</small></div><StatusPill value="Menunggu Pembayaran" /></div><div className="invoice-customer"><span><small>Ditagihkan kepada</small><strong>Ruang Kerja Utama</strong></span><span><small>Tanggal invoice</small><strong>16 Oktober 2026</strong></span></div><div className="invoice-lines"><span>Paket Basic+ · 1 bulan <strong>Rp 60.000</strong></span><span>Biaya admin <strong>Rp 0</strong></span><span className="total">Total Pembayaran <strong>Rp 60.000</strong></span></div></div><div className="payment-row"><button className="filter-control">Pilih Metode Bayar <ChevronDownMini /></button><button className="btn btn-primary btn-compact"><CreditCard size={16} />Bayar Sekarang</button></div></section></div>;
+  return <div className="modal-backdrop"><section className="demo-modal invoice-modal" role="dialog" aria-modal="true"><header><div><span className="eyebrow">INVOICE</span><h2>#INV-10261</h2></div><button className="icon-button" onClick={onClose}><X size={20} /></button></header><div className="invoice-sheet"><div className="invoice-brand"><div className="plan-icon"><ReceiptText size={20} /></div><div><strong>TepatWaktu</strong><small>Langganan HRIS</small></div><StatusPill value="Menunggu Pembayaran" /></div><div className="invoice-customer"><span><small>Ditagihkan kepada</small><strong>Ruang Kerja Utama</strong></span><span><small>Tanggal invoice</small><strong>16 Oktober 2026</strong></span></div><div className="invoice-lines"><span>Paket Basic+ Â· 1 bulan <strong>Rp 60.000</strong></span><span>Biaya admin <strong>Rp 0</strong></span><span className="total">Total Pembayaran <strong>Rp 60.000</strong></span></div></div><div className="payment-row"><button className="filter-control">Pilih Metode Bayar <ChevronDownMini /></button><button className="btn btn-primary btn-compact"><CreditCard size={16} />Bayar Sekarang</button></div></section></div>;
 }
 
 function Field({ label, placeholder, select = false, full = false }: { label: string; placeholder: string; select?: boolean; full?: boolean }) {
@@ -1009,7 +858,7 @@ function MissingPage({ slug }: { slug: string }) {
 }
 
 function ChevronDownMini() {
-  return <span aria-hidden="true" style={{ fontSize: 10 }}>▼</span>;
+  return <span aria-hidden="true" style={{ fontSize: 11 }}>â–¼</span>;
 }
 
 function requestScreen(title: string, description: string, columns: string[], rows: string[][], action: string, form = ["Nama Karyawan", "Jenis Pengajuan", "Tanggal Mulai", "Tanggal Selesai", "Alasan"]): ScreenConfig {
@@ -1028,10 +877,6 @@ function RequestDetailSections() {
   return <section className="module-card detail-section"><div className="detail-section-head"><div><CalendarDays size={17} /><h2>Validasi Pengajuan</h2></div><StatusPill value="Menunggu" /></div><div className="validation-list"><div><CheckCircle2 size={16} /><span><strong>Data karyawan valid</strong><small>Karyawan aktif pada periode pengajuan.</small></span></div><div><CheckCircle2 size={16} /><span><strong>Tidak ada benturan periode</strong><small>Pengajuan tidak bertabrakan dengan jadwal lain.</small></span></div><div><AlertTriangle size={16} /><span><strong>Memerlukan persetujuan manager</strong><small>Nilai atau durasi melewati batas persetujuan langsung.</small></span></div></div></section>;
 }
 
-function PayrollDetailSections() {
-  return <section className="module-card detail-section"><div className="detail-section-head"><div><ReceiptText size={17} /><h2>Rincian Perhitungan</h2></div><StatusPill value="Draft" /></div><div className="payroll-breakdown"><div><span>Gaji Pokok</span><strong>Rp 8.500.000</strong></div><div><span>Upah Lembur</span><strong>Rp 450.000</strong></div><div><span>Tunjangan & Kompensasi</span><strong>Rp 750.000</strong></div><div className="negative"><span>Potongan</span><strong>− Rp 550.000</strong></div><div className="total"><span>Gaji Bersih</span><strong>Rp 9.150.000</strong></div></div></section>;
-}
-
 function InvoiceDetailPage({ id }: { id: string }) {
   return <>
     <PageHeader title="Detail Invoice" description="Rincian paket, periode, nominal, dan status pembayaran langganan." breadcrumb="Beranda / Langganan / Invoice / Detail" actions={<><Link className="btn btn-outline btn-compact" href={"/dashboard/langganan" as Route}>Kembali</Link><button className="btn btn-outline btn-compact"><Download size={15} />Unduh Invoice</button></>} />
@@ -1039,11 +884,11 @@ function InvoiceDetailPage({ id }: { id: string }) {
       <section className="module-card invoice-detail-sheet">
         <div className="invoice-detail-brand"><div><span className="plan-icon"><ReceiptText size={20} /></span><span><strong>TepatWaktu</strong><small>Solusi Presensi & HRIS</small></span></div><div><span className="eyebrow">INVOICE</span><h2>#{id.toUpperCase()}</h2><StatusPill value="Lunas" /></div></div>
         <div className="invoice-addresses"><div><small>DITAGIHKAN KEPADA</small><strong>Ruang Kerja Utama</strong><span>admin@tepatwaktu.id</span><span>Makassar, Sulawesi Selatan</span></div><div><small>INFORMASI TAGIHAN</small><span>Tanggal invoice <strong>16 September 2026</strong></span><span>Jatuh tempo <strong>16 September 2026</strong></span><span>Metode <strong>Virtual Account</strong></span></div></div>
-        <table className="invoice-detail-table"><thead><tr><th>Deskripsi</th><th>Periode</th><th>Qty</th><th>Jumlah</th></tr></thead><tbody><tr><td><strong>Paket Basic+</strong><small>Akses fitur premium · maksimal 50 karyawan</small></td><td>Sep–Okt 2026</td><td>1</td><td>Rp 60.000</td></tr></tbody></table>
+        <table className="invoice-detail-table"><thead><tr><th>Deskripsi</th><th>Periode</th><th>Qty</th><th>Jumlah</th></tr></thead><tbody><tr><td><strong>Paket Basic+</strong><small>Akses fitur premium Â· maksimal 50 karyawan</small></td><td>Sepâ€“Okt 2026</td><td>1</td><td>Rp 60.000</td></tr></tbody></table>
         <div className="invoice-totals"><span>Subtotal <strong>Rp 60.000</strong></span><span>Potongan <strong>Rp 0</strong></span><span>Biaya admin <strong>Rp 0</strong></span><span className="total">Total Pembayaran <strong>Rp 60.000</strong></span></div>
         <div className="invoice-note"><ShieldCheck size={17} /><span><strong>Pembayaran terverifikasi</strong><small>Transaksi berhasil dikonfirmasi pada 16 September 2026, 10:24 WITA.</small></span></div>
       </section>
-      <aside className="detail-side"><section className="module-card timeline-card"><div className="detail-section-head"><div><Clock3 size={17} /><h2>Status Pembayaran</h2></div></div><ol className="activity-timeline"><li><i className="green" /><div><strong>Pembayaran berhasil</strong><span>16 Sep 2026 · 10:24 WITA</span><p>Langganan diperpanjang otomatis.</p></div></li><li><i className="blue" /><div><strong>Pembayaran diterima</strong><span>16 Sep 2026 · 10:23 WITA</span><p>Gateway mengirim konfirmasi transaksi.</p></div></li><li><i /><div><strong>Invoice dibuat</strong><span>16 Sep 2026 · 10:20 WITA</span></div></li></ol></section></aside>
+      <aside className="detail-side"><section className="module-card timeline-card"><div className="detail-section-head"><div><Clock3 size={17} /><h2>Status Pembayaran</h2></div></div><ol className="activity-timeline"><li><i className="green" /><div><strong>Pembayaran berhasil</strong><span>16 Sep 2026 Â· 10:24 WITA</span><p>Langganan diperpanjang otomatis.</p></div></li><li><i className="blue" /><div><strong>Pembayaran diterima</strong><span>16 Sep 2026 Â· 10:23 WITA</span><p>Gateway mengirim konfirmasi transaksi.</p></div></li><li><i /><div><strong>Invoice dibuat</strong><span>16 Sep 2026 Â· 10:20 WITA</span></div></li></ol></section></aside>
     </div>
   </>;
 }
