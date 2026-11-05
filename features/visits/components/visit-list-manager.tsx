@@ -14,17 +14,16 @@ import {
   X,
 } from "lucide-react";
 import { VisitDatePopover } from "@/features/visits/components/visit-date-popover";
-import type { VisitEmployeeOption, VisitLocationOption, VisitRow } from "@/features/visits/types";
+import type { VisitEmployeeOption, VisitRow } from "@/features/visits/types";
 
 type Props = {
   initialRows: VisitRow[];
   employees: VisitEmployeeOption[];
-  locations: VisitLocationOption[];
   today: string;
   canWrite: boolean;
 };
 
-export function VisitListManager({ initialRows, employees, locations, today, canWrite }: Props) {
+export function VisitListManager({ initialRows, employees, today, canWrite }: Props) {
   const [rows, setRows] = useState<VisitRow[]>(initialRows);
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState("");
@@ -52,7 +51,7 @@ export function VisitListManager({ initialRows, employees, locations, today, can
   const [selectedEmployee, setSelectedEmployee] = useState<VisitEmployeeOption | null>(null);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
-  const [selectedLocationId, setSelectedLocationId] = useState("");
+  const [outletName, setOutletName] = useState("");
   const [formNote, setFormNote] = useState("");
 
   // Files
@@ -175,9 +174,10 @@ export function VisitListManager({ initialRows, employees, locations, today, can
   };
 
   const openAddModal = () => {
-    setSelectedEmployee(null);
+    // Employees can only record their own visits, so their single option is preselected.
+    setSelectedEmployee(employees.length === 1 ? employees[0] : null);
     setEmployeeSearch("");
-    setSelectedLocationId("");
+    setOutletName("");
     setFormDate(today);
     const now = new Date();
     setFormTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
@@ -208,22 +208,19 @@ export function VisitListManager({ initialRows, employees, locations, today, can
       setError("Silakan pilih karyawan terlebih dahulu.");
       return;
     }
-    const loc = locations.find((l) => l.id === selectedLocationId);
-    const outletName = loc ? loc.name : "Kunjungan";
+    if (!outletName.trim()) {
+      setError("Lokasi outlet wajib diisi.");
+      return;
+    }
 
     setSaving(true);
     setError("");
 
     const formData = new FormData();
     formData.append("employeeId", selectedEmployee.id);
-    if (selectedLocationId) formData.append("locationId", selectedLocationId);
     formData.append("visitDate", formDate);
     formData.append("visitTime", formTime);
-    formData.append("outletName", outletName);
-    if (loc) {
-      formData.append("latitude", String(loc.latitude));
-      formData.append("longitude", String(loc.longitude));
-    }
+    formData.append("outletName", outletName.trim());
     if (formNote) formData.append("note", formNote);
 
     if (selfieFile) formData.append("selfie", selfieFile);
@@ -544,18 +541,15 @@ export function VisitListManager({ initialRows, employees, locations, today, can
                     <div className="visit-card-fields">
                       <div className="visit-field-group">
                         <label className="visit-label">Lokasi Outlet</label>
-                        <select
-                          className="visit-select"
-                          value={selectedLocationId}
-                          onChange={(e) => setSelectedLocationId(e.target.value)}
-                        >
-                          <option value="">Pilih Lokasi</option>
-                          {locations.map((loc) => (
-                            <option key={loc.id} value={loc.id}>
-                              {loc.name}
-                            </option>
-                          ))}
-                        </select>
+                        <input
+                          type="text"
+                          value={outletName}
+                          onChange={(e) => setOutletName(e.target.value)}
+                          className="visit-input"
+                          placeholder="Contoh: Toko Sumber Rezeki, Jl. Merdeka 12"
+                          maxLength={160}
+                          required
+                        />
                       </div>
 
                       <div className="visit-field-group">

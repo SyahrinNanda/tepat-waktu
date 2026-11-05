@@ -23,11 +23,11 @@ export async function POST(request: Request) {
     const [row] = await db.insert(workSchedules).values({ companyId: context.companyId, name: parsed.data.name, graceMinutes: parsed.data.graceMinutes, active: parsed.data.active, workDays: "Senin–Minggu", startTime: "08:00:00", endTime: "17:00:00" }).returning();
     revalidatePath("/dashboard/master/shift"); revalidatePath("/dashboard/master/jam-kerja"); revalidatePath("/dashboard/master/divisi");
     return Response.json({ row }, { status: 201 });
-  } catch (error) { return databaseError(error, "Shift dengan nama tersebut sudah tersedia."); }
+  } catch (error) { return databaseError(error, "Jadwal kerja dengan nama tersebut sudah tersedia."); }
 }
 
 function databaseError(error: unknown, duplicate: string) {
   const code = typeof error === "object" && error && "cause" in error && typeof error.cause === "object" && error.cause && "code" in error.cause ? error.cause.code : undefined;
   if (code === "23505") return Response.json({ error: duplicate }, { status: 409 });
-  console.error("Shift mutation failed", error); return Response.json({ error: "Data shift belum dapat disimpan." }, { status: 500 });
+  console.error("Jadwal kerja mutation failed", error); return Response.json({ error: "Data shift belum dapat disimpan." }, { status: 500 });
 }

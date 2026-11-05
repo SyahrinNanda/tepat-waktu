@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { workScheduleDays, workSchedules } from "@/db/schema";
 import { requireCompanyRole } from "@/lib/current-company";
 
-export const metadata: Metadata = { title: "Daftar Jam Kerja" };
+export const metadata: Metadata = { title: "Daftar Hari dan Waktu Kerja" };
 
 export default async function Page() {
   const context=await requireCompanyRole(["admin","general_manager","hrd","manager"]);

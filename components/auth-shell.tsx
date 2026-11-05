@@ -19,7 +19,7 @@ export function AuthShell({ children, variant = "default" }: { children: React.R
                 <span><i><UsersRound size={16} /></i><small>Tim aktif</small><strong>48</strong><em>+3 minggu ini</em></span>
                 <span><i><Clock3 size={16} /></i><small>Mulai tepat waktu</small><strong>94%</strong><em>Hari ini</em></span>
               </div>
-              <div className="login-preview-activity"><b><Check size={13} /></b><span><strong>Shift pagi siap berjalan</strong><small>43 anggota tim telah tercatat</small></span><time>08.02</time></div>
+              <div className="login-preview-activity"><b><Check size={13} /></b><span><strong>Jadwal pagi siap berjalan</strong><small>43 anggota tim telah tercatat</small></span><time>08.02</time></div>
             </div>
             <div className="login-story-foot"><ShieldCheck size={15} /><span>Ruang kerja privat untuk setiap perusahaan.</span></div>
           </aside>

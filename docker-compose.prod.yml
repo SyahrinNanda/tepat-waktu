@@ -1,0 +1,81 @@
+# Produksi di VPS dengan Coolify (Deploy → "Docker Compose", file ini).
+#
+# - PostgreSQL: resource database Coolify (atau server lain), isi DATABASE_URL.
+# - File: Cloudflare R2 (S3-compatible), isi OBJECT_STORAGE_*.
+# - Email: Brevo → Mailjet → Mailtrap (MAIL_PROVIDERS + SMTP_<NAMA>_*).
+# - Domain & HTTPS: atur di Coolify pada service "app" (port 3000).
+# Variabel bertanda :? wajib diisi; deploy berhenti dengan pesan jelas jika kosong.
+# Panduan lengkap: docs/DEPLOY-VPS-COOLIFY.md
+
+services:
+  # Menjalankan migrasi database setiap deploy, lalu berhenti. "app" baru menyala setelah ini sukses.
+  migrate:
+    build:
+      context: .
+      target: migrator
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Isi DATABASE_URL}
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        # Ditanam saat build: tandai sebagai "Build Variable" di Coolify.
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Isi NEXT_PUBLIC_APP_URL (https://domain-anda)}
+    restart: unless-stopped
+    init: true
+    expose:
+      - "3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?Isi DATABASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Isi BETTER_AUTH_SECRET (acak, minimal 32 karakter)}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Isi BETTER_AUTH_URL (https://domain-anda)}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Isi NEXT_PUBLIC_APP_URL}
+      # Cloudflare R2: https://<ACCOUNT_ID>.r2.cloudflarestorage.com, region "auto", bucket dibuat manual.
+      OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:?Isi OBJECT_STORAGE_ENDPOINT}
+      OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:-auto}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:?Isi OBJECT_STORAGE_BUCKET}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?Isi OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?Isi OBJECT_STORAGE_SECRET_KEY}
+      OBJECT_STORAGE_FORCE_PATH_STYLE: ${OBJECT_STORAGE_FORCE_PATH_STYLE:-true}
+      OBJECT_STORAGE_AUTO_CREATE_BUCKET: ${OBJECT_STORAGE_AUTO_CREATE_BUCKET:-false}
+      GEOCODING_BASE_URL: ${GEOCODING_BASE_URL:-https://nominatim.openstreetmap.org}
+      GEOCODING_USER_AGENT: ${GEOCODING_USER_AGENT:-TepatWaktu/1.0}
+      GEOAPIFY_API_KEY: ${GEOAPIFY_API_KEY:-}
+      TOMTOM_API_KEY: ${TOMTOM_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:?Isi MAIL_FROM, mis. "TepatWaktu <noreply@domain-anda>"}
+      MAIL_PROVIDERS: ${MAIL_PROVIDERS:?Isi MAIL_PROVIDERS, mis. brevo,mailjet,mailtrap}
+      SMTP_BREVO_HOST: ${SMTP_BREVO_HOST:-}
+      SMTP_BREVO_PORT: ${SMTP_BREVO_PORT:-}
+      SMTP_BREVO_SECURE: ${SMTP_BREVO_SECURE:-}
+      SMTP_BREVO_USER: ${SMTP_BREVO_USER:-}
+      SMTP_BREVO_PASS: ${SMTP_BREVO_PASS:-}
+      SMTP_BREVO_DAILY_LIMIT: ${SMTP_BREVO_DAILY_LIMIT:-}
+      SMTP_BREVO_FROM: ${SMTP_BREVO_FROM:-}
+      SMTP_MAILJET_HOST: ${SMTP_MAILJET_HOST:-}
+      SMTP_MAILJET_PORT: ${SMTP_MAILJET_PORT:-}
+      SMTP_MAILJET_SECURE: ${SMTP_MAILJET_SECURE:-}
+      SMTP_MAILJET_USER: ${SMTP_MAILJET_USER:-}
+      SMTP_MAILJET_PASS: ${SMTP_MAILJET_PASS:-}
+      SMTP_MAILJET_DAILY_LIMIT: ${SMTP_MAILJET_DAILY_LIMIT:-}
+      SMTP_MAILJET_FROM: ${SMTP_MAILJET_FROM:-}
+      SMTP_MAILTRAP_HOST: ${SMTP_MAILTRAP_HOST:-}
+      SMTP_MAILTRAP_PORT: ${SMTP_MAILTRAP_PORT:-}
+      SMTP_MAILTRAP_SECURE: ${SMTP_MAILTRAP_SECURE:-}
+      SMTP_MAILTRAP_USER: ${SMTP_MAILTRAP_USER:-}
+      SMTP_MAILTRAP_PASS: ${SMTP_MAILTRAP_PASS:-}
+      SMTP_MAILTRAP_DAILY_LIMIT: ${SMTP_MAILTRAP_DAILY_LIMIT:-}
+      SMTP_MAILTRAP_FROM: ${SMTP_MAILTRAP_FROM:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      # Penjadwal email pengingat di dalam aplikasi. Jika app dijalankan >1 replika, set "off"
+      # dan buat Scheduled Task di Coolify yang memanggil /api/cron/subscription-reminders.
+      REMINDER_SCHEDULER: ${REMINDER_SCHEDULER:-on}
+      # Header berisi IP asli pengunjung (IP whitelist presensi, log presensi, rate limit login).
+      # Traefik/Coolify: x-real-ip. Lewat proxy Cloudflare (awan oranye): cf-connecting-ip.
+      CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-x-real-ip}

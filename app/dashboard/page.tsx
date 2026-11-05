@@ -15,7 +15,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
   const today = dateInTimeZone(context.timezone);
   let personalAttendance: { checkIn: string | null; checkOut: string | null; status: "present" | "late" | "absent" | "leave" } | null = null;
-  if (context.role === "employee") {
+  // Everyone except the company admin must check in, so they all get the personal attendance card.
+  const mustCheckIn = !context.isSuperAdmin && context.role !== "admin" && context.role !== "owner";
+  if (mustCheckIn) {
     let [employee] = await db.select({ id: employees.id }).from(employees).where(and(
       eq(employees.companyId, context.companyId),
       eq(employees.userId, context.session.user.id),
@@ -53,7 +55,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      {context.role === "employee" ? <EmployeeDashboard
+      {mustCheckIn ? <EmployeeDashboard
         name={context.session.user.name.split(" ")[0]}
         date={new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeZone: context.timezone }).format(new Date())}
         timezone={context.timezone}

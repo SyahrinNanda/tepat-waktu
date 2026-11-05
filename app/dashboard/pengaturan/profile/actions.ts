@@ -1,6 +1,7 @@
 "use server";
 
 import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { TIMEZONE_VALUES } from "@/lib/timezone";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
@@ -13,10 +14,7 @@ import {
   employees,
   featureRecords,
   fileAssets,
-  financialReports,
-  financialTerms,
   jobPositions,
-  payrollTerms,
   subscriptionOrders,
   user,
   visitLocations,
@@ -32,7 +30,7 @@ export type ProfileMutationResult = {
   error?: string;
 };
 
-const timezones = ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura"] as const;
+const timezones = TIMEZONE_VALUES;
 
 export async function updateUserProfile(input: {
   name: string;
@@ -153,10 +151,9 @@ export async function resetCompanyData(input: {
       const removableAssets = assets.filter((asset) => !protectedIds.includes(asset.id));
 
       await tx.delete(announcements).where(eq(announcements.companyId, context.companyId));
-      await tx.delete(financialReports).where(eq(financialReports.companyId, context.companyId));
       await tx.delete(visits).where(eq(visits.companyId, context.companyId));
-      // Employee deletion cascades to attendance, payroll, leave/overtime,
-      // kasbon, claims, salary records, and employee documents.
+      // Employee deletion cascades to attendance, payslips, leave/overtime,
+      // salary records, and employee documents.
       await tx.delete(employees).where(eq(employees.companyId, context.companyId));
       await tx.delete(featureRecords).where(eq(featureRecords.companyId, context.companyId));
       await tx.delete(visitLocations).where(eq(visitLocations.companyId, context.companyId));
@@ -164,8 +161,6 @@ export async function resetCompanyData(input: {
       await tx.delete(divisions).where(eq(divisions.companyId, context.companyId));
       await tx.delete(jobPositions).where(eq(jobPositions.companyId, context.companyId));
       await tx.delete(workSchedules).where(eq(workSchedules.companyId, context.companyId));
-      await tx.delete(payrollTerms).where(eq(payrollTerms.companyId, context.companyId));
-      await tx.delete(financialTerms).where(eq(financialTerms.companyId, context.companyId));
       if (removableAssets.length) {
         await tx.delete(fileAssets).where(
           and(

@@ -3,6 +3,7 @@ import "@fontsource-variable/plus-jakarta-sans/wght.css";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import "./refresh.css";
+import "./modals.css";
 
 export const metadata: Metadata = {
   title: { default: "TepatWaktu — Kelola kehadiran tanpa ribet", template: "%s | TepatWaktu" },

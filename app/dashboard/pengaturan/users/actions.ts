@@ -1,12 +1,15 @@
 "use server";
 
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { resolveTimeZone } from "@/lib/timezone";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hashPassword } from "better-auth/crypto";
 import { db } from "@/db";
 import { account, companyMembers, employees, session, user } from "@/db/schema";
+import { ensureEmployeeRecord } from "@/features/attendance/server/employee-link";
+import { employeeCapacity, employeeLimitMessage } from "@/features/subscriptions/server/employee-capacity";
 import { auth } from "@/lib/auth";
 import { requireCompanyRole } from "@/lib/current-company";
 
@@ -49,7 +52,7 @@ function getRoleDisplay(role: string): string {
 
 export async function fetchCompanyUsers(): Promise<CompanyUserData[]> {
   const context = await requireCompanyRole(["admin"]);
-  const tz = context.timezone || "Asia/Jakarta";
+  const tz = resolveTimeZone(context.timezone);
 
   const rows = await db
     .select({
@@ -146,6 +149,28 @@ export async function fetchCompanyUsers(): Promise<CompanyUserData[]> {
   });
 }
 
+/**
+ * Non-admin members get an employee record (they check in), which counts against the plan.
+ * Linking an existing active employee with the same email does not add to the count.
+ */
+async function newEmployeeLimitError(companyId: string, email: string, role: string) {
+  if (role === "admin" || role === "owner") return null;
+  const [existing] = await db.select({ id: employees.id }).from(employees)
+    .where(and(eq(employees.companyId, companyId), eq(employees.email, email), eq(employees.status, "active"))).limit(1);
+  if (existing) return null;
+  const capacity = await employeeCapacity(companyId);
+  return capacity.full ? employeeLimitMessage(capacity) : null;
+}
+
+/** One account belongs to at most one company (unique index on company_members.user_id). */
+async function existingMembershipError(userId: string, companyId: string) {
+  const [membership] = await db.select({ companyId: companyMembers.companyId }).from(companyMembers).where(eq(companyMembers.userId, userId)).limit(1);
+  if (!membership) return null;
+  return membership.companyId === companyId
+    ? "Pengguna dengan email ini sudah terdaftar di perusahaan ini."
+    : "Email ini sudah dipakai akun di perusahaan lain. Satu akun hanya bisa terhubung ke satu perusahaan, jadi gunakan email lain.";
+}
+
 export async function createCompanyUser(form: FormData) {
   const context = await requireCompanyRole(["admin"]);
   const parsed = z
@@ -159,6 +184,8 @@ export async function createCompanyUser(form: FormData) {
     .parse(Object.fromEntries(form));
 
   const email = parsed.email.toLowerCase();
+  const limitError = await newEmployeeLimitError(context.companyId, email, parsed.role);
+  if (limitError) throw new Error(limitError);
 
   let [targetUser] = await db
     .select({ id: user.id, platformRole: user.platformRole })
@@ -171,20 +198,8 @@ export async function createCompanyUser(form: FormData) {
   }
 
   if (targetUser) {
-    const [existingMember] = await db
-      .select({ id: companyMembers.id })
-      .from(companyMembers)
-      .where(
-        and(
-          eq(companyMembers.companyId, context.companyId),
-          eq(companyMembers.userId, targetUser.id),
-        ),
-      )
-      .limit(1);
-
-    if (existingMember) {
-      throw new Error("Email sudah terdaftar sebagai pengguna pada perusahaan ini.");
-    }
+    const membershipError = await existingMembershipError(targetUser.id, context.companyId);
+    if (membershipError) throw new Error(membershipError);
   } else {
     const created = await auth.api.signUpEmail({
       body: {
@@ -207,15 +222,8 @@ export async function createCompanyUser(form: FormData) {
     lastLoginAt: new Date(),
   });
 
-  await db
-    .update(employees)
-    .set({ userId: targetUser.id })
-    .where(
-      and(
-        eq(employees.companyId, context.companyId),
-        eq(employees.email, email),
-      ),
-    );
+  // Links an existing employee record by email, or creates one so non-admin roles can check in.
+  await ensureEmployeeRecord({ companyId: context.companyId, userId: targetUser.id, name: parsed.name, email, role: parsed.role });
 
   revalidatePath("/dashboard/pengaturan/users");
   redirect("/dashboard/pengaturan/users");
@@ -241,6 +249,8 @@ export async function createCompanyUserAction(input: {
       .parse(input);
 
     const email = parsed.email.toLowerCase();
+    const limitError = await newEmployeeLimitError(context.companyId, email, parsed.role);
+    if (limitError) return { ok: false, error: limitError };
 
     let [targetUser] = await db
       .select({ id: user.id, platformRole: user.platformRole })
@@ -256,23 +266,8 @@ export async function createCompanyUserAction(input: {
     }
 
     if (targetUser) {
-      const [existingMember] = await db
-        .select({ id: companyMembers.id })
-        .from(companyMembers)
-        .where(
-          and(
-            eq(companyMembers.companyId, context.companyId),
-            eq(companyMembers.userId, targetUser.id),
-          ),
-        )
-        .limit(1);
-
-      if (existingMember) {
-        return {
-          ok: false,
-          error: "Pengguna dengan email ini sudah terdaftar di perusahaan ini.",
-        };
-      }
+      const membershipError = await existingMembershipError(targetUser.id, context.companyId);
+      if (membershipError) return { ok: false, error: membershipError };
     } else {
       const created = await auth.api.signUpEmail({
         body: {
@@ -295,15 +290,8 @@ export async function createCompanyUserAction(input: {
       lastLoginAt: new Date(),
     });
 
-    await db
-      .update(employees)
-      .set({ userId: targetUser.id })
-      .where(
-        and(
-          eq(employees.companyId, context.companyId),
-          eq(employees.email, email),
-        ),
-      );
+    // Links an existing employee record by email, or creates one so non-admin roles can check in.
+    await ensureEmployeeRecord({ companyId: context.companyId, userId: targetUser.id, name: parsed.name, email, role: parsed.role });
 
     revalidatePath("/dashboard/pengaturan/users");
     return { ok: true, message: "User berhasil ditambahkan." };

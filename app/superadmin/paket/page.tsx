@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { asc } from "drizzle-orm";
+import { asc, desc, eq, isNull } from "drizzle-orm";
 import { CheckCircle2, CreditCard, Sparkles, Tags } from "lucide-react";
 import { db } from "@/db";
-import { subscriptionPlans } from "@/db/schema";
+import { companies, customPlanRequests, subscriptionPlans, user } from "@/db/schema";
+import { CustomRequestReview } from "@/features/subscriptions/components/custom-request-review";
 import { requireSuperAdmin } from "@/lib/superadmin";
 import { PlansManagementTable, type PlanItem } from "./plans-management-table";
 
@@ -10,10 +11,20 @@ export const metadata: Metadata = { title: "Paket & Harga" };
 
 export default async function Page() {
   await requireSuperAdmin();
-  const plans = await db
-    .select()
-    .from(subscriptionPlans)
-    .orderBy(asc(subscriptionPlans.monthlyPrice));
+  const [plans, requests] = await Promise.all([
+    // Company-specific custom plans are managed through their request, not this catalog.
+    db.select().from(subscriptionPlans).where(isNull(subscriptionPlans.companyId)).orderBy(asc(subscriptionPlans.monthlyPrice)),
+    db.select({
+      id: customPlanRequests.id, companyName: companies.name, requesterName: user.name, requesterEmail: user.email,
+      employeeCount: customPlanRequests.employeeCount, proposedPricePerEmployee: customPlanRequests.proposedPricePerEmployee,
+      durationMonths: customPlanRequests.durationMonths, note: customPlanRequests.note, status: customPlanRequests.status,
+      agreedEmployeeCount: customPlanRequests.agreedEmployeeCount, agreedPricePerEmployee: customPlanRequests.agreedPricePerEmployee,
+      reviewNote: customPlanRequests.reviewNote, createdAt: customPlanRequests.createdAt,
+    }).from(customPlanRequests)
+      .innerJoin(companies, eq(customPlanRequests.companyId, companies.id))
+      .innerJoin(user, eq(customPlanRequests.requestedBy, user.id))
+      .orderBy(desc(customPlanRequests.createdAt)).limit(100),
+  ]);
 
   const totalPlans = plans.length;
   const activePlans = plans.filter((p) => p.active).length;
@@ -81,6 +92,8 @@ export default async function Page() {
       <section className="module-card">
         <PlansManagementTable plans={plans as PlanItem[]} />
       </section>
+
+      <CustomRequestReview rows={requests.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))} />
     </>
   );
 }

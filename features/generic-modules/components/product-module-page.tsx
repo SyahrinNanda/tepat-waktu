@@ -138,19 +138,6 @@ const screens: Record<string, ScreenConfig> = {
     ],
     form: ["Nama Lokasi", "Alamat", "Latitude", "Longitude", "Radius", "Karyawan"],
   },
-  "master/lokasi-kunjungan": {
-    title: "Daftar Lokasi Kunjungan",
-    description: "Kelola lokasi tujuan untuk aktivitas tim lapangan.",
-    breadcrumb: "Beranda / Master Data / Lokasi Kunjungan",
-    action: "Tambah Lokasi",
-    columns: ["Lokasi Kunjungan", "Pemilik", "No. Telepon", "Radius", "Karyawan", "Aksi"],
-    rows: [
-      ["Mitra Sejahtera", "Budi Hartono", "0812 8844 9901", "100 meter", "6", ""],
-      ["Toko Sentosa", "Nur Aini", "0813 7221 6620", "75 meter", "4", ""],
-      ["Cabang Utara", "Irfan Hakim", "0852 1109 7712", "100 meter", "8", ""],
-    ],
-    form: ["Nama Lokasi", "Nama Pemilik", "Email", "No. Telepon", "Alamat", "Radius", "Karyawan"],
-  },
   karyawan: {
     title: "Daftar Karyawan",
     description: "Kelola identitas, penempatan, dan status seluruh anggota tim.",

@@ -1,8 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
+import { sendAuthEmail } from "@/lib/registration/auth-emails";
+import { provisionRegistration } from "@/lib/registration/provision";
 
-const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 const configuredOrigins = [process.env.BETTER_AUTH_URL, process.env.NEXT_PUBLIC_APP_URL].filter(
   (origin): origin is string => Boolean(origin),
 );
@@ -11,30 +12,41 @@ const developmentOrigins =
     ? ["http://localhost:*", "http://127.0.0.1:*"]
     : [];
 
+/**
+ * Accounts, sessions, email verification and password reset all live in this app's PostgreSQL.
+ * Emails go through lib/mailer.ts (Brevo → Mailjet → Mailtrap fallback).
+ */
 export const auth = betterAuth({
   appName: "TepatWaktu",
   database: drizzleAdapter(db, { provider: "pg" }),
-  emailAndPassword: { enabled: true, requireEmailVerification: true },
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+    revokeSessionsOnPasswordReset: true,
+    resetPasswordTokenExpiresIn: 60 * 60,
+    sendResetPassword: async ({ user, url }) => sendAuthEmail("recovery", user.email, url),
+  },
   emailVerification: {
+    // Off on purpose: company admins create employee accounts with signUpEmail and mark them
+    // verified themselves. The public sign-up (/api/registration) sends the email explicitly.
     sendOnSignUp: false,
-    sendOnSignIn: false,
-    expiresIn: 60 * 30,
-    sendVerificationEmail: async () => {
-      throw new Error("Akun lama belum diverifikasi. Hubungi administrator.");
+    // An unverified account that tries to log in gets a fresh link.
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+    expiresIn: 60 * 60 * 24,
+    sendVerificationEmail: async ({ user, url }) => sendAuthEmail("signup", user.email, url),
+    afterEmailVerification: async (user) => {
+      // Creates the company from the sign-up form. If it fails here, /masuk/lanjut retries it.
+      try { await provisionRegistration(user.id); }
+      catch (error) { console.error("Ruang kerja belum dibuat setelah verifikasi:", error); }
     },
   },
-  socialProviders: googleEnabled
-    ? {
-        google: {
-          clientId: process.env.GOOGLE_CLIENT_ID!,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-          disableSignUp: true,
-        },
-      }
-    : undefined,
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
   trustedOrigins: [...new Set([...configuredOrigins, ...developmentOrigins])],
+  // Login rate limiting keys on the client IP. Read it from the header our proxy sets (see
+  // lib/client-ip.ts), not the client-controlled left-most X-Forwarded-For entry.
+  advanced: { ipAddress: { ipAddressHeaders: [(process.env.CLIENT_IP_HEADER || "x-real-ip").toLowerCase()] } },
 });

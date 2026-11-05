@@ -3,21 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Bell,
-  Building2,
-  CreditCard,
-  ExternalLink,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  MessageCircle,
-  Settings,
-  Tags,
-  Users,
-  Video,
-  X,
-} from "lucide-react";
+import { Megaphone, ScrollText, TicketPercent, AlarmClock, BarChart3, Filter, Bell, Building2, CreditCard, ExternalLink, LayoutDashboard, LogOut, Menu, MessageCircle, Settings, Tags, Users, Video, X, UserX } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
 import { Logo } from "./logo";
@@ -29,11 +15,18 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
-  { href: "/superadmin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/superadmin", label: "Beranda", icon: LayoutDashboard },
   { href: "/superadmin/users", label: "Kelola Seluruh Akun", icon: Users },
+  { href: "/superadmin/penghapusan-akun", label: "Permintaan Hapus Akun", icon: UserX },
   { href: "/superadmin/perusahaan", label: "Semua Perusahaan", icon: Building2 },
   { href: "/superadmin/langganan", label: "Semua Langganan", icon: CreditCard },
+  { href: "/superadmin/retensi", label: "Retensi Pelanggan", icon: AlarmClock },
+  { href: "/superadmin/pendapatan", label: "Laporan Pendapatan", icon: BarChart3 },
+  { href: "/superadmin/konversi", label: "Konversi Trial", icon: Filter },
   { href: "/superadmin/paket", label: "Paket & Harga", icon: Tags },
+  { href: "/superadmin/kupon", label: "Kupon Diskon", icon: TicketPercent },
+  { href: "/superadmin/pengumuman", label: "Pengumuman Platform", icon: Megaphone },
+  { href: "/superadmin/log", label: "Log Aktivitas", icon: ScrollText },
   { href: "/superadmin/pengaturan", label: "Pengaturan Platform", icon: Settings },
 ];
 

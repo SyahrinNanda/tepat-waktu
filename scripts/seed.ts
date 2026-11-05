@@ -1,5 +1,5 @@
 import "./env";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, notInArray } from "drizzle-orm";
 import { hashPassword } from "better-auth/crypto";
 import { auth } from "../lib/auth";
 import { db, pool } from "../db";
@@ -48,13 +48,19 @@ async function main() {
   const demoPasswordHash = await hashPassword(DEMO_PASSWORD);
 
   const plans = [
-    ["free-2", "Free 2", 0, 5, 12, true, "Paket gratis untuk 5 karyawan"], ["free", "Free 1", 0, 50, 2, true, "Paket gratis untuk 50 karyawan"], ["basic", "Basic", 36000, 15, 0, false, "Paket Basic untuk Perusahaan Kecil / Mikro"], ["basic-plus", "Basic+", 60000, 25, 0, false, "Paket Basic untuk Perusahaan Kecil / Mikro"],
-    ["silver", "Silver", 91000, 40, 0, false, "Paket Silver untuk Perusahaan Kelas Menengah"], ["silver-plus", "Silver+", 137000, 75, 0, false, "Paket Silver untuk Perusahaan Kelas Menengah"], ["gold", "Gold", 165000, 100, 0, false, "Paket Gold untuk Perusahaan Menengah Keatas"], ["platinum", "Platinum", 253000, 125, 0, false, "Paket Platinum untuk Perusahaan/Usaha menengah keatas"],
-    ["platinum-plus", "Platinum+", 286000, 150, 0, false, "Paket Platinum untuk Perusahaan/Usaha menengah keatas"], ["diamond", "Diamond", 363000, 200, 0, false, "Untuk Perusahaan/Usaha Kelas Atas"], ["diamond-plus", "Diamond+", 440000, 300, 0, false, "Untuk Perusahaan/Usaha Kelas Atas"], ["enterprise", "Enterprise", 512000, 500, 0, false, "Untuk Perusahaan/Usaha Kelas Atas"],
+    ["free", "Free Trial", 0, 5, 14, false, "Coba seluruh fitur gratis selama 14 hari"],
+    ["micro", "Micro", 97000, 10, 0, false, "Untuk usaha mikro hingga 10 karyawan"],
+    ["small", "Small", 237000, 25, 0, false, "Untuk usaha kecil hingga 25 karyawan"],
+    ["growth", "Growth", 458000, 50, 0, true, "Untuk perusahaan yang sedang bertumbuh hingga 50 karyawan"],
+    ["mid-size", "Mid-size", 872000, 100, 0, false, "Untuk perusahaan menengah hingga 100 karyawan"],
+    ["expand", "Expand", 1648000, 200, 0, false, "Untuk perusahaan yang berekspansi hingga 200 karyawan"],
+    ["pro", "Pro", 3849000, 500, 0, false, "Untuk perusahaan besar hingga 500 karyawan"],
+    ["enterprise", "Enterprise", 7150000, 1000, 0, false, "Untuk korporasi hingga 1.000 karyawan"],
   ] as const;
-  for (const [code, name, monthlyPrice, maxEmployees, trialMonths, recommended, description] of plans) {
-    await db.insert(subscriptionPlans).values({ code, name, monthlyPrice, maxEmployees, trialMonths, recommended, description }).onConflictDoUpdate({ target: subscriptionPlans.code, set: { name, monthlyPrice, maxEmployees, trialMonths, recommended, description, active: true } });
+  for (const [code, name, monthlyPrice, maxEmployees, trialDays, recommended, description] of plans) {
+    await db.insert(subscriptionPlans).values({ code, name, monthlyPrice, maxEmployees, trialDays, trialMonths: 0, recommended, description }).onConflictDoUpdate({ target: subscriptionPlans.code, set: { name, monthlyPrice, maxEmployees, trialDays, trialMonths: 0, recommended, description, active: true, companyId: null } });
   }
+  await db.update(subscriptionPlans).set({ active: false, recommended: false }).where(and(isNull(subscriptionPlans.companyId), notInArray(subscriptionPlans.code, plans.map(([code]) => code))));
   let [superadmin] = await db.select({ id: user.id }).from(user).where(eq(user.email, SUPERADMIN_EMAIL)).limit(1);
   if (!superadmin) {
     await auth.api.signUpEmail({ body: { name: "Super Admin TepatWaktu", email: SUPERADMIN_EMAIL, password: DEMO_PASSWORD } });
@@ -104,7 +110,7 @@ async function main() {
   let [defaultShift] = await db.select().from(workSchedules).where(and(eq(workSchedules.companyId, membership.companyId), eq(workSchedules.name, "Reguler kantor"))).limit(1);
   if (!defaultShift) [defaultShift] = await db.insert(workSchedules).values({ companyId: membership.companyId, name: "Reguler kantor", workDays: "1,2,3,4,5", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15, active: true }).returning();
   for (let day = 1; day <= 7; day++) await db.insert(workScheduleDays).values({ scheduleId: defaultShift.id, dayOfWeek: day, enabled: day <= 5, startTime: "08:00:00", endTime: day === 5 ? "16:00:00" : "17:00:00" }).onConflictDoNothing({ target: [workScheduleDays.scheduleId, workScheduleDays.dayOfWeek] });
-  for (const name of ["Operasional", "People", "Teknologi", "Keuangan"]) await db.insert(divisions).values({ companyId: membership.companyId, name, scheduleId: defaultShift.id, payrollCalculation: "monthly", active: true }).onConflictDoNothing({ target: [divisions.companyId, divisions.name] });
+  for (const name of ["Operasional", "People", "Teknologi", "Keuangan"]) await db.insert(divisions).values({ companyId: membership.companyId, name, scheduleId: defaultShift.id, active: true }).onConflictDoNothing({ target: [divisions.companyId, divisions.name] });
   for (const name of ["Supervisor", "HR Specialist", "Frontend Engineer", "Finance Officer", "Backend Engineer"]) await db.insert(jobPositions).values({ companyId: membership.companyId, name }).onConflictDoNothing({ target: [jobPositions.companyId, jobPositions.name] });
   await db.insert(attendanceLocations).values({ companyId: membership.companyId, name: "Kantor Pusat", type: "headquarters", address: "Yogyakarta", latitude: -7.7956, longitude: 110.3695, radiusMeters: 100 }).onConflictDoNothing({ target: [attendanceLocations.companyId, attendanceLocations.name] });
   await db.insert(visitLocations).values({ companyId: membership.companyId, name: "Mitra Sejahtera", ownerName: "Budi Santoso", email: "mitra@example.com", phone: "081234567890", address: "Yogyakarta", latitude: -7.8014, longitude: 110.3647, radiusMeters: 100 }).onConflictDoNothing({ target: [visitLocations.companyId, visitLocations.name] });

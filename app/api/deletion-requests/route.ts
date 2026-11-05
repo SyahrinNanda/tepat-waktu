@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/db";
-import { deletionRequests } from "@/db/schema";
+import { DELETION_REQUEST_MESSAGE, requestAccountDeletion } from "@/features/account-requests/server/deletion";
 
 const inputSchema = z.object({ email: z.email(), reason: z.string().max(500).optional() });
 
 export async function POST(request: Request) {
-  const parsed = inputSchema.safeParse(await request.json());
+  const parsed = inputSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ message: "Masukkan email yang valid." }, { status: 400 });
-  await db.insert(deletionRequests).values({ email: parsed.data.email.toLowerCase(), reason: parsed.data.reason || null });
-  return NextResponse.json({ message: "Permintaan penghapusan akun diterima dan akan ditinjau administrator. Akun Anda belum dihapus." }, { status: 201 });
+  await requestAccountDeletion(parsed.data.email, parsed.data.reason?.trim() || null);
+  return NextResponse.json({ message: DELETION_REQUEST_MESSAGE }, { status: 202 });
 }

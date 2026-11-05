@@ -39,6 +39,15 @@ services:
     volumes:
       - object_storage_data:/data
 
+  # Local inbox for outgoing email (UI: http://localhost:8025). Point SMTP_* to a real server in production.
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: tepatwaktu-mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+
   migrate:
     build:
       context: .
@@ -60,8 +69,6 @@ services:
       target: runner
       args:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
-        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
     env_file:
       - path: .env.local
         required: false
@@ -73,10 +80,6 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-tepatwaktu-local-development-secret-change-me-2026}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
       OBJECT_STORAGE_ENDPOINT: http://object-storage:8333
       OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:-us-east-1}
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-tepatwaktu-private}
@@ -86,6 +89,34 @@ services:
       OBJECT_STORAGE_AUTO_CREATE_BUCKET: "true"
       GEOCODING_BASE_URL: ${GEOCODING_BASE_URL:-https://nominatim.openstreetmap.org}
       GEOCODING_USER_AGENT: ${GEOCODING_USER_AGENT:-TepatWaktu/0.1}
+      MAIL_FROM: ${MAIL_FROM:-TepatWaktu <no-reply@tepatwaktu.local>}
+      # Lokal: semua email masuk Mailpit (http://localhost:8025). Ganti mis. "brevo,mailjet,mailtrap" untuk uji kirim sungguhan.
+      MAIL_PROVIDERS: ${MAIL_PROVIDERS:-mailpit}
+      SMTP_MAILPIT_HOST: mailpit
+      SMTP_MAILPIT_PORT: "1025"
+      SMTP_BREVO_HOST: ${SMTP_BREVO_HOST:-}
+      SMTP_BREVO_PORT: ${SMTP_BREVO_PORT:-}
+      SMTP_BREVO_SECURE: ${SMTP_BREVO_SECURE:-}
+      SMTP_BREVO_USER: ${SMTP_BREVO_USER:-}
+      SMTP_BREVO_PASS: ${SMTP_BREVO_PASS:-}
+      SMTP_BREVO_DAILY_LIMIT: ${SMTP_BREVO_DAILY_LIMIT:-}
+      SMTP_BREVO_FROM: ${SMTP_BREVO_FROM:-}
+      SMTP_MAILJET_HOST: ${SMTP_MAILJET_HOST:-}
+      SMTP_MAILJET_PORT: ${SMTP_MAILJET_PORT:-}
+      SMTP_MAILJET_SECURE: ${SMTP_MAILJET_SECURE:-}
+      SMTP_MAILJET_USER: ${SMTP_MAILJET_USER:-}
+      SMTP_MAILJET_PASS: ${SMTP_MAILJET_PASS:-}
+      SMTP_MAILJET_DAILY_LIMIT: ${SMTP_MAILJET_DAILY_LIMIT:-}
+      SMTP_MAILJET_FROM: ${SMTP_MAILJET_FROM:-}
+      SMTP_MAILTRAP_HOST: ${SMTP_MAILTRAP_HOST:-}
+      SMTP_MAILTRAP_PORT: ${SMTP_MAILTRAP_PORT:-}
+      SMTP_MAILTRAP_SECURE: ${SMTP_MAILTRAP_SECURE:-}
+      SMTP_MAILTRAP_USER: ${SMTP_MAILTRAP_USER:-}
+      SMTP_MAILTRAP_PASS: ${SMTP_MAILTRAP_PASS:-}
+      SMTP_MAILTRAP_DAILY_LIMIT: ${SMTP_MAILTRAP_DAILY_LIMIT:-}
+      SMTP_MAILTRAP_FROM: ${SMTP_MAILTRAP_FROM:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      REMINDER_SCHEDULER: ${REMINDER_SCHEDULER:-on}
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:
@@ -93,6 +124,8 @@ services:
         condition: service_completed_successfully
       object-storage:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
 volumes:
   database_data:

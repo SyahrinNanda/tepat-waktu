@@ -9,6 +9,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   time,
   timestamp,
@@ -26,7 +27,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  timezone: text("timezone").default("Asia/Jakarta").notNull(),
+  timezone: text("timezone").default("Asia/Makassar").notNull(),
   platformRole: platformRole("platform_role").default("user").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -118,11 +119,10 @@ export const leaveType = pgEnum("leave_type", ["annual", "sick", "permission"]);
 export const deletionStatus = pgEnum("deletion_status", ["pending", "processed", "rejected"]);
 export const attendanceEventType = pgEnum("attendance_event_type", ["check_in", "check_out"]);
 export const attendanceEventSource = pgEnum("attendance_event_source", ["self", "admin", "superadmin"]);
-export const fileAssetCategory = pgEnum("file_asset_category", ["attendance_photo", "employee_document", "claim_attachment", "payslip", "announcement_image", "visit_attachment"]);
+export const fileAssetCategory = pgEnum("file_asset_category", ["attendance_photo", "employee_document", "announcement_image", "visit_attachment"]);
 export const payrollCalculation = pgEnum("payroll_calculation", ["hourly", "daily", "monthly"]);
 export const payrollTermType = pgEnum("payroll_term_type", ["compensation", "deduction"]);
 export const salaryComponentUnit = pgEnum("salary_component_unit", ["hour", "day", "month"]);
-export const financialTermType = pgEnum("financial_term_type", ["income", "outcome"]);
 export const attendanceLocationType = pgEnum("attendance_location_type", ["headquarters", "branch", "warehouse", "other"]);
 export const employeeDocumentKind = pgEnum("employee_document_kind", ["profile_photo", "selfie", "identity_card", "certificate"]);
 
@@ -158,7 +158,8 @@ export const companyMembers = pgTable(
   },
   (table) => [
     uniqueIndex("company_member_unique").on(table.companyId, table.userId),
-    index("company_members_user_idx").on(table.userId),
+    // One account belongs to at most one company.
+    uniqueIndex("company_members_user_unique").on(table.userId),
   ],
 );
 
@@ -234,7 +235,6 @@ export const divisions = pgTable("divisions", {
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   scheduleId: uuid("schedule_id").references(() => workSchedules.id, { onDelete: "restrict" }),
-  payrollCalculation: payrollCalculation("payroll_calculation").default("monthly").notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -323,25 +323,13 @@ export const attendanceLocations = pgTable("attendance_locations", {
   index("attendance_locations_company_idx").on(table.companyId, table.active),
 ]);
 
-export const payrollTerms = pgTable("payroll_terms", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  type: payrollTermType("type").notNull(),
-  active: boolean("active").default(true).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
-  uniqueIndex("payroll_terms_company_name_unique").on(table.companyId, table.name),
-  index("payroll_terms_company_type_idx").on(table.companyId, table.type),
-]);
-
 export const employeeSalaryProfiles = pgTable("employee_salary_profiles", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   employeeId: uuid("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
   baseSalary: bigint("base_salary", { mode: "number" }).default(0).notNull(),
   overtimeRate: bigint("overtime_rate", { mode: "number" }).default(0).notNull(),
+  salaryBasis: payrollCalculation("salary_basis").default("monthly").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
@@ -353,7 +341,6 @@ export const employeeSalaryComponents = pgTable("employee_salary_components", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   employeeId: uuid("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
-  payrollTermId: uuid("payroll_term_id").references(() => payrollTerms.id, { onDelete: "restrict" }),
   name: text("name").notNull(),
   type: payrollTermType("type").notNull(),
   unit: salaryComponentUnit("unit").notNull(),
@@ -363,7 +350,6 @@ export const employeeSalaryComponents = pgTable("employee_salary_components", {
 }, (table) => [
   uniqueIndex("employee_salary_components_employee_name_type_unique").on(table.employeeId, table.name, table.type),
   index("employee_salary_components_company_employee_idx").on(table.companyId, table.employeeId),
-  index("employee_salary_components_term_idx").on(table.payrollTermId),
 ]);
 
 export const employeeLeaveEntitlements = pgTable("employee_leave_entitlements", {
@@ -377,35 +363,6 @@ export const employeeLeaveEntitlements = pgTable("employee_leave_entitlements", 
 }, (table) => [
   uniqueIndex("employee_leave_entitlements_employee_year_unique").on(table.employeeId, table.year),
   index("employee_leave_entitlements_company_year_idx").on(table.companyId, table.year),
-]);
-
-export const financialTerms = pgTable("financial_terms", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  type: financialTermType("type").notNull(),
-  active: boolean("active").default(true).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
-  uniqueIndex("financial_terms_company_name_unique").on(table.companyId, table.name),
-  index("financial_terms_company_type_idx").on(table.companyId, table.type),
-]);
-
-export const financialReports = pgTable("financial_reports", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
-  financialTermId: uuid("financial_term_id").notNull().references(() => financialTerms.id, { onDelete: "restrict" }),
-  amount: bigint("amount", { mode: "number" }).notNull(),
-  description: text("description").notNull(),
-  transactionDate: date("transaction_date").notNull(),
-  createdBy: text("created_by").notNull().references(() => user.id, { onDelete: "restrict" }),
-  updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
-  index("financial_reports_company_date_idx").on(table.companyId, table.transactionDate),
-  index("financial_reports_term_idx").on(table.financialTermId),
 ]);
 
 export const fileAssets = pgTable(
@@ -466,7 +423,6 @@ export const payrolls = pgTable("payrolls", {
   deductionAmount: bigint("deduction_amount", { mode: "number" }).default(0).notNull(),
   totalAmount: bigint("total_amount", { mode: "number" }).default(0).notNull(),
   status: text("status").default("New").notNull(),
-  slipAssetId: uuid("slip_asset_id").references(() => fileAssets.id, { onDelete: "set null" }),
   createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -475,6 +431,7 @@ export const payrolls = pgTable("payrolls", {
   index("payrolls_company_year_month_idx").on(table.companyId, table.year, table.month),
   index("payrolls_employee_idx").on(table.employeeId),
   index("payrolls_company_status_idx").on(table.companyId, table.status),
+  index("payrolls_employee_period_idx").on(table.employeeId, table.year, table.month),
 ]);
 
 export const payrollItems = pgTable("payroll_items", {
@@ -560,6 +517,7 @@ export const leaveRequests = pgTable(
     endDate: date("end_date").notNull(),
     reason: text("reason").notNull(),
     status: leaveStatus("status").default("pending").notNull(),
+    paid: boolean("paid").default(true).notNull(),
     reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -649,13 +607,33 @@ export const expenseClaims = pgTable(
   ],
 );
 
-export const deletionRequests = pgTable("deletion_requests", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  email: text("email").notNull(),
-  reason: text("reason"),
-  status: deletionStatus("status").default("pending").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+/**
+ * Account deletion requests. A request is only queued for superadmin review once the owner
+ * clicked the emailed link (confirmedAt set); the token is stored as a SHA-256 hash.
+ */
+export const deletionRequests = pgTable(
+  "deletion_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    email: text("email").notNull(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    reason: text("reason"),
+    status: deletionStatus("status").default("pending").notNull(),
+    tokenHash: text("token_hash"),
+    tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    /** Email of the superadmin who processed or rejected the request. */
+    processedBy: text("processed_by"),
+    /** Reason given to the requester when rejected. */
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("deletion_requests_token_idx").on(table.tokenHash),
+    index("deletion_requests_status_idx").on(table.status, table.createdAt),
+  ],
+);
 
 // Tenant-scoped records for operational modules whose fields are configured by
 // the corresponding feature screen. Core attendance, employee, and leave data
@@ -699,10 +677,13 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   maxEmployees: integer("max_employees").notNull(),
   description: text("description").notNull(),
   trialMonths: integer("trial_months").default(0).notNull(),
+  trialDays: integer("trial_days").default(0).notNull(),
+  // Set only for a negotiated custom plan; such plans are private to that company.
+  companyId: uuid("company_id").references(() => companies.id, { onDelete: "cascade" }),
   recommended: boolean("recommended").default(false).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [index("subscription_plans_company_idx").on(table.companyId)]);
 
 export const subscriptionOrders = pgTable("subscription_orders", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -711,6 +692,8 @@ export const subscriptionOrders = pgTable("subscription_orders", {
   invoiceNumber: text("invoice_number").notNull().unique(),
   transactionType: text("transaction_type").default("new").notNull(),
   durationMonths: integer("duration_months").default(1).notNull(),
+  durationDays: integer("duration_days").default(0).notNull(),
+  couponCode: text("coupon_code"),
   subtotal: integer("subtotal").default(0).notNull(),
   discountAmount: integer("discount_amount").default(0).notNull(),
   adminFee: integer("admin_fee").default(0).notNull(),
@@ -726,7 +709,126 @@ export const subscriptionOrders = pgTable("subscription_orders", {
   verifiedBy: text("verified_by").references(() => user.id),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [index("subscription_orders_company_idx").on(table.companyId, table.createdAt), index("subscription_orders_status_idx").on(table.status)]);
+}, (table) => [index("subscription_orders_company_idx").on(table.companyId, table.createdAt), index("subscription_orders_status_idx").on(table.status), index("subscription_orders_verified_idx").on(table.verifiedAt)]);
+
+export const customPlanRequests = pgTable("custom_plan_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  requestedBy: text("requested_by").notNull().references(() => user.id),
+  employeeCount: integer("employee_count").notNull(),
+  proposedPricePerEmployee: integer("proposed_price_per_employee").notNull(),
+  durationMonths: integer("duration_months").default(12).notNull(),
+  note: text("note"),
+  status: text("status").default("pending").notNull(),
+  agreedEmployeeCount: integer("agreed_employee_count"),
+  agreedPricePerEmployee: integer("agreed_price_per_employee"),
+  reviewNote: text("review_note"),
+  planId: uuid("plan_id").references(() => subscriptionPlans.id),
+  orderId: uuid("order_id").references(() => subscriptionOrders.id),
+  reviewedBy: text("reviewed_by").references(() => user.id),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("custom_plan_requests_company_idx").on(table.companyId, table.createdAt), index("custom_plan_requests_status_idx").on(table.status)]);
+
+/** One row per (order, threshold) so each H-5 / H-2 email goes out once; failed sends are retried. */
+export const subscriptionReminders = pgTable("subscription_reminders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id").notNull().references(() => subscriptionOrders.id, { onDelete: "cascade" }),
+  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  level: integer("level").notNull(),
+  recipients: text("recipients").default("").notNull(),
+  status: text("status").default("sending").notNull(),
+  attempts: integer("attempts").default(1).notNull(),
+  error: text("error"),
+  /** Email provider that delivered it (brevo, mailjet, ...), see lib/mailer.ts. */
+  provider: text("provider"),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [uniqueIndex("subscription_reminders_order_level_idx").on(table.orderId, table.level), index("subscription_reminders_company_idx").on(table.companyId, table.createdAt)]);
+
+/** Sign-up form data waiting for email verification; turned into a company afterwards (lib/registration). */
+export const registrationRequests = pgTable("registration_requests", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  companyName: text("company_name").notNull(),
+  industry: text("industry").notNull(),
+  planCode: text("plan_code").notNull(),
+  durationMonths: integer("duration_months").default(1).notNull(),
+  couponCode: text("coupon_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Emails sent per provider per UTC day, so the mailer can fall back when a free quota runs out. */
+export const mailProviderUsage = pgTable("mail_provider_usage", {
+  provider: text("provider").notNull(),
+  day: date("day", { mode: "string" }).notNull(),
+  sent: integer("sent").default(0).notNull(),
+  failed: integer("failed").default(0).notNull(),
+  /** Skip this provider until then: next quota reset after a quota error, or a short pause after other errors. */
+  blockedUntil: timestamp("blocked_until", { withTimezone: true }),
+  lastError: text("last_error"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [primaryKey({ columns: [table.provider, table.day] })]);
+
+/** Every privileged superadmin action, for accountability. */
+export const platformAuditLogs = pgTable("platform_audit_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  actorUserId: text("actor_user_id").references(() => user.id, { onDelete: "set null" }),
+  actorName: text("actor_name").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  action: text("action").notNull(),
+  companyId: uuid("company_id").references(() => companies.id, { onDelete: "set null" }),
+  companyName: text("company_name"),
+  summary: text("summary").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("platform_audit_logs_created_idx").on(table.createdAt), index("platform_audit_logs_company_idx").on(table.companyId, table.createdAt), index("platform_audit_logs_action_idx").on(table.action, table.createdAt)]);
+
+export const coupons = pgTable("coupons", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  code: text("code").notNull().unique(),
+  description: text("description").default("").notNull(),
+  discountType: text("discount_type").$type<"percent" | "fixed">().notNull(),
+  discountValue: integer("discount_value").notNull(),
+  minDurationMonths: integer("min_duration_months").default(1).notNull(),
+  /** null = every plan */
+  planCodes: text("plan_codes").array(),
+  maxRedemptions: integer("max_redemptions"),
+  perCompanyLimit: integer("per_company_limit").default(1).notNull(),
+  startsAt: timestamp("starts_at", { withTimezone: true }),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  active: boolean("active").default(true).notNull(),
+  createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const couponRedemptions = pgTable("coupon_redemptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  couponId: uuid("coupon_id").notNull().references(() => coupons.id, { onDelete: "cascade" }),
+  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  orderId: uuid("order_id").notNull().unique().references(() => subscriptionOrders.id, { onDelete: "cascade" }),
+  discountAmount: integer("discount_amount").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("coupon_redemptions_coupon_idx").on(table.couponId, table.companyId)]);
+
+export const platformAnnouncements = pgTable("platform_announcements", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  tone: text("tone").$type<"info" | "feature" | "maintenance" | "warning">().default("info").notNull(),
+  /** "admins" = only company admins see it */
+  audience: text("audience").$type<"all" | "admins">().default("all").notNull(),
+  /** null = every company */
+  companyIds: uuid("company_ids").array(),
+  linkUrl: text("link_url"),
+  linkLabel: text("link_label"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).defaultNow().notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  active: boolean("active").default(true).notNull(),
+  createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("platform_announcements_active_idx").on(table.active, table.startsAt)]);
 
 export const platformSettings = pgTable("platform_settings", {
   key: text("key").primaryKey(),
@@ -761,3 +863,38 @@ export const leaveRelations = relations(leaveRequests, ({ one }) => ({
 }));
 
 export const now = sql`now()`;
+
+export const complaintCategory = pgEnum("complaint_category", [
+  "sexual_harassment", "bullying", "toxic_environment", "discrimination", "violence",
+  "abuse_of_power", "safety", "salary_rights", "facilities", "other",
+]);
+export const complaintStatus = pgEnum("complaint_status", ["new", "reviewing", "in_progress", "resolved", "rejected"]);
+
+export const employeeComplaints = pgTable("employee_complaints", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  ticketCode: text("ticket_code").notNull(),
+  category: complaintCategory("category").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  incidentDate: date("incident_date"),
+  incidentLocation: text("incident_location"),
+  involvedParties: text("involved_parties"),
+  anonymous: boolean("anonymous").default(false).notNull(),
+  // HMAC of the reporter: lets them track their own reports without storing who they are when anonymous.
+  reporterKey: text("reporter_key").notNull(),
+  reporterUserId: text("reporter_user_id").references(() => user.id, { onDelete: "set null" }),
+  reporterName: text("reporter_name"),
+  status: complaintStatus("status").default("new").notNull(),
+  responseNote: text("response_note"),
+  internalNote: text("internal_note"),
+  handledBy: text("handled_by").references(() => user.id, { onDelete: "set null" }),
+  handledAt: timestamp("handled_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("employee_complaints_company_ticket_unique").on(table.companyId, table.ticketCode),
+  index("employee_complaints_company_status_idx").on(table.companyId, table.status),
+  index("employee_complaints_company_created_idx").on(table.companyId, table.createdAt),
+  index("employee_complaints_reporter_idx").on(table.companyId, table.reporterKey),
+]);

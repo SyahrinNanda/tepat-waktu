@@ -4,12 +4,24 @@ import JSZip from "jszip";
 import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { employees, fileAssets, visitAttachments, visitLocations, visits } from "@/db/schema";
-import { compressUpload } from "@/lib/file-compression";
+import { compressUpload, storedFileName } from "@/lib/file-compression";
 import { deletePrivateObject, getPrivateObject, putPrivateObject } from "@/lib/object-storage";
 import type { VisitReportRow, VisitRow } from "@/features/visits/types";
 
-export async function listVisits(companyId: string, from?: string, to?: string) {
+/**
+ * Visits a member may see: everyone's for managers, only their own for role "employee".
+ * Returns null when an employee has no active employee record (they see nothing).
+ */
+export async function visitScope(context: { companyId: string; userId: string; role: string }): Promise<{ employeeId?: string } | null> {
+  if (context.role !== "employee") return {};
+  const [row] = await db.select({ id: employees.id }).from(employees)
+    .where(and(eq(employees.companyId, context.companyId), eq(employees.userId, context.userId), eq(employees.status, "active"))).limit(1);
+  return row ? { employeeId: row.id } : null;
+}
+
+export async function listVisits(companyId: string, from?: string, to?: string, employeeId?: string) {
   const conditions = [eq(visits.companyId, companyId)];
+  if (employeeId) conditions.push(eq(visits.employeeId, employeeId));
   if (from) conditions.push(gte(visits.visitDate, from));
   if (to) conditions.push(lte(visits.visitDate, to));
   return db.select({
@@ -97,20 +109,20 @@ export async function createVisit(input: {
       const source = new Uint8Array(await file.arrayBuffer());
       const format = imageFormat(source);
       if (!format) throw new Error("Foto selfie harus berformat JPEG, PNG, atau WebP.");
-      const compressed = await compressUpload(source, format.contentType);
+      const compressed = await compressUpload(source, format.contentType, format.extension, "selfie");
       const checksum = createHash("sha256").update(compressed.bytes).digest("hex");
-      const key = `companies/${input.companyId}/visits/${visit.id}/selfie-${randomUUID()}.${format.extension}`;
+      const key = `companies/${input.companyId}/visits/${visit.id}/selfie-${randomUUID()}.${compressed.extension}`;
       const object = await putPrivateObject({
         key,
         body: compressed.bytes,
-        contentType: format.contentType,
+        contentType: compressed.contentType,
         storageCompression: compressed.storageCompression,
         metadata: {
           company: input.companyId,
           visit: visit.id,
           type: "selfie",
           sha256: checksum,
-          uploadQuality: "70",
+          uploadQuality: String(compressed.quality ?? "original"),
         },
       });
       stored.push(object);
@@ -123,8 +135,8 @@ export async function createVisit(input: {
           category: "visit_attachment",
           bucket: object.bucket,
           objectKey: object.key,
-          originalName: file.name,
-          contentType: format.contentType,
+          originalName: storedFileName(file.name, "lampiran", compressed.extension),
+          contentType: compressed.contentType,
           byteSize: compressed.bytes.byteLength,
           checksumSha256: checksum,
         })
@@ -150,20 +162,20 @@ export async function createVisit(input: {
       if (!format) {
         throw new Error(`Lampiran ${file.name} harus berformat JPEG, PNG, atau WebP.`);
       }
-      const compressed = await compressUpload(source, format.contentType);
+      const compressed = await compressUpload(source, format.contentType, format.extension, "detail");
       const checksum = createHash("sha256").update(compressed.bytes).digest("hex");
-      const key = `companies/${input.companyId}/visits/${visit.id}/attachment-${index + 1}-${randomUUID()}.${format.extension}`;
+      const key = `companies/${input.companyId}/visits/${visit.id}/attachment-${index + 1}-${randomUUID()}.${compressed.extension}`;
       const object = await putPrivateObject({
         key,
         body: compressed.bytes,
-        contentType: format.contentType,
+        contentType: compressed.contentType,
         storageCompression: compressed.storageCompression,
         metadata: {
           company: input.companyId,
           visit: visit.id,
           slot: String(index + 1),
           sha256: checksum,
-          uploadQuality: "70",
+          uploadQuality: String(compressed.quality ?? "original"),
         },
       });
       stored.push(object);
@@ -176,8 +188,8 @@ export async function createVisit(input: {
           category: "visit_attachment",
           bucket: object.bucket,
           objectKey: object.key,
-          originalName: file.name,
-          contentType: format.contentType,
+          originalName: storedFileName(file.name, "lampiran", compressed.extension),
+          contentType: compressed.contentType,
           byteSize: compressed.bytes.byteLength,
           checksumSha256: checksum,
         })
@@ -252,8 +264,8 @@ export async function visitReports(companyId: string, from: string, to: string):
   return [...grouped.values()];
 }
 
-export async function exportVisitWorkbook(companyId: string, from?: string, to?: string) {
-  const rows = await listVisits(companyId, from, to);
+export async function exportVisitWorkbook(companyId: string, from?: string, to?: string, employeeId?: string) {
+  const rows = await listVisits(companyId, from, to, employeeId);
   const attachmentRows = rows.length
     ? await db
         .select({
@@ -339,8 +351,8 @@ export async function exportVisitWorkbook(companyId: string, from?: string, to?:
   return new Uint8Array(buffer);
 }
 
-export async function exportVisitPhotos(companyId: string, from?: string, to?: string) {
-  const rows = await listVisits(companyId, from, to);
+export async function exportVisitPhotos(companyId: string, from?: string, to?: string, employeeId?: string) {
+  const rows = await listVisits(companyId, from, to, employeeId);
   const attachments = rows.length
     ? await db
         .select({

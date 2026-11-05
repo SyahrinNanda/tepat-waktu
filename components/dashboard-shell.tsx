@@ -26,6 +26,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
+import { PlatformAnnouncements } from "@/features/platform-admin/components/platform-announcements";
+import type { TenantAnnouncement } from "@/features/platform-admin/server/announcements";
+import { SubscriptionBanner, SubscriptionBell, SubscriptionWarningDialog, type SubscriptionAlertInput } from "@/features/subscriptions/components/subscription-alerts";
 import { leaveCompany } from "@/app/superadmin/actions";
 import { Logo } from "./logo";
 
@@ -48,8 +51,8 @@ type NavGroup = {
 };
 
 const primaryItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/pengumuman", label: "Pengumuman", icon: Megaphone },
+  { href: "/dashboard", label: "Beranda", icon: LayoutDashboard },
+  { href: "/dashboard/pengumuman", label: "Pemberitahuan", icon: Megaphone },
 ];
 
 const groups: NavGroup[] = [
@@ -58,12 +61,23 @@ const groups: NavGroup[] = [
     icon: PackageSearch,
     base: "/dashboard/master",
     children: [
-      { href: "/dashboard/master/shift", label: "Shift", roles: hrRoles },
-      { href: "/dashboard/master/jam-kerja", label: "Jam Kerja", roles: hrRoles },
+      { href: "/dashboard/master/shift", label: "Jadwal Kerja", roles: hrRoles },
+      { href: "/dashboard/master/jam-kerja", label: "Hari dan Waktu Kerja", roles: hrRoles },
       { href: "/dashboard/master/divisi", label: "Divisi", roles: hrRoles },
       { href: "/dashboard/master/jabatan", label: "Jabatan", roles: hrRoles },
-      { href: "/dashboard/master/lokasi-kunjungan", label: "Lokasi Kunjungan", roles: hrRoles },
-      { href: "/dashboard/master/lokasi-presensi", label: "Lokasi Presensi", roles: hrRoles },
+      { href: "/dashboard/master/lokasi-presensi", label: "Lokasi Kerja", roles: hrRoles },
+    ],
+  },
+  {
+    label: "Karyawan",
+    icon: Users,
+    base: "/dashboard/karyawan",
+    children: [
+      { href: "/dashboard/karyawan", label: "Daftar Karyawan", roles: managementRoles },
+      { href: "/dashboard/karyawan/gaji", label: "Daftar Gaji Karyawan", roles: hrRoles },
+      { href: "/dashboard/karyawan/slip-gaji", label: "Slip Gaji", roles: hrRoles },
+      { href: "/dashboard/karyawan/laporan-cuti", label: "Laporan Cuti", roles: managementRoles },
+      { href: "/dashboard/karyawan/keluhan", label: "Keluhan Karyawan" },
     ],
   },
   {
@@ -76,22 +90,13 @@ const groups: NavGroup[] = [
     ],
   },
   {
-    label: "Karyawan",
-    icon: Users,
-    base: "/dashboard/karyawan",
-    children: [
-      { href: "/dashboard/karyawan", label: "Daftar Karyawan", roles: managementRoles },
-      { href: "/dashboard/karyawan/laporan-cuti", label: "Laporan Cuti", roles: managementRoles },
-    ],
-  },
-  {
-    label: "Presensi",
+    label: "Kehadiran",
     icon: CalendarCheck2,
     base: "/dashboard/presensi",
     children: [
       { href: "/dashboard/presensi/check-in", label: "Check-in / Check-out", roles: ["general_manager", "hrd", "manager", "employee"] },
-      { href: "/dashboard/presensi/riwayat", label: "Riwayat Presensi", roles: ["admin", "general_manager", "hrd", "manager", "employee"] },
-      { href: "/dashboard/presensi/harian", label: "Presensi Harian", roles: managementRoles },
+      { href: "/dashboard/presensi/riwayat", label: "Riwayat", roles: ["admin", "general_manager", "hrd", "manager", "employee"] },
+      { href: "/dashboard/presensi/harian", label: "Kehadiran", roles: managementRoles },
       { href: "/dashboard/presensi/bulanan", label: "Laporan Bulanan", roles: managementRoles },
     ],
   },
@@ -129,6 +134,8 @@ export function DashboardShell({
   companyName,
   role,
   isSuperAdmin = false,
+  subscription,
+  announcements = [],
 }: {
   children: React.ReactNode;
   userName: string;
@@ -136,11 +143,14 @@ export function DashboardShell({
   companyName: string;
   role: string;
   isSuperAdmin?: boolean;
+  subscription?: SubscriptionAlertInput;
+  announcements?: TenantAnnouncement[];
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const normalizedRole = (role === "owner" ? "admin" : role) as CompanyRole;
+  const canRenew = isSuperAdmin || normalizedRole === "admin";
   const canAccess = (item: NavItem) => !item.roles || item.roles.includes(normalizedRole);
   const roleLabels: Record<CompanyRole, string> = {
     admin: "Admin Perusahaan",
@@ -258,10 +268,7 @@ export function DashboardShell({
             ) : null}
             <button className="support-link"><FileText size={14} /> Tutorial</button>
             <button className="support-link"><MessageCircleQuestion size={14} /> Customer Service</button>
-            <button className="icon-button notification-button" aria-label="Notifikasi">
-              <Bell size={19} />
-              <i />
-            </button>
+            {subscription ? <SubscriptionBell status={subscription} canRenew={canRenew} /> : <button className="icon-button notification-button" aria-label="Notifikasi"><Bell size={19} /></button>}
             <span className="role-pill">{isSuperAdmin ? "Super Admin" : roleLabels[normalizedRole] ?? role}</span>
             <div className="topbar-user" title={userEmail}>
               <span className="avatar">{initials}</span>
@@ -270,7 +277,8 @@ export function DashboardShell({
             <button className="icon-button" onClick={logout} title="Keluar" aria-label="Keluar"><LogOut size={18} /></button>
           </div>
         </header>
-        <main className="content">{children}</main>
+        <main className="content"><PlatformAnnouncements items={announcements} />{subscription ? <SubscriptionBanner status={subscription} canRenew={canRenew} /> : null}{children}</main>
+        {subscription ? <SubscriptionWarningDialog status={subscription} canRenew={canRenew} userKey={userEmail} /> : null}
       </div>
     </div>
   );

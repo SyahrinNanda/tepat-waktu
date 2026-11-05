@@ -4,7 +4,7 @@ Portal manajemen kehadiran berbasis Next.js, PostgreSQL, Drizzle ORM, dan Better
 
 ## Fitur
 
-- Login email/password dan Google OAuth opsional melalui Better Auth.
+- Login email/password, verifikasi email, dan reset password melalui Better Auth (lihat `docs/AUTH.md`).
 - Onboarding bertahap: bidang usaha, paket, akun, dan ruang kerja.
 - Isolasi data per perusahaan (multi-tenant).
 - Manajemen karyawan dan status aktif.
@@ -93,8 +93,7 @@ Ganti kredensial demo sebelum dipakai di lingkungan publik.
 | `BETTER_AUTH_SECRET` | Secret acak minimal 32 karakter. |
 | `BETTER_AUTH_URL` | URL canonical server Better Auth. |
 | `NEXT_PUBLIC_APP_URL` | URL publik aplikasi untuk klien auth. |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Opsional, mengaktifkan OAuth Google di server. |
-| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED` | Set `true` agar tombol Google aktif di UI. |
+| `MAIL_PROVIDERS`, `SMTP_<NAMA>_*`, `MAIL_FROM` | Email verifikasi, reset password, dan pengingat dengan fallback antar layanan (lihat `.env.example`). |
 | `OBJECT_STORAGE_ENDPOINT` | Endpoint S3-compatible. Kosongkan untuk AWS S3; lokal saat ini memakai `http://127.0.0.1:18334`. |
 | `OBJECT_STORAGE_REGION` | Region bucket, misalnya `us-east-1`. |
 | `OBJECT_STORAGE_BUCKET` | Nama bucket privat untuk aset TepatWaktu. |
@@ -156,6 +155,5 @@ dianggap sebagai data produksi.
 - Gunakan bucket privat, kredensial khusus aplikasi, TLS, dan jaringan privat
   untuk object storage produksi. Endpoint file aplikasi selalu memeriksa session
   dan hak akses sebelum melakukan streaming objek.
-- Hubungkan provider email ke konfigurasi Better Auth sebelum mengaktifkan reset password sungguhan. Endpoint contoh saat ini mengembalikan respons generik dan tidak mengirim email.
-- Konfigurasikan kredensial Google OAuth beserta callback `/api/auth/callback/google` bila diperlukan.
-- Jalankan `npm run db:migrate` sebagai langkah rilis sebelum menyalakan versi aplikasi baru.
+- Isi kredensial SMTP (`MAIL_PROVIDERS`) agar email verifikasi dan reset password terkirim.
+- Deploy produksi (VPS + Coolify + Cloudflare R2): lihat `docs/DEPLOY-VPS-COOLIFY.md` dan `docker-compose.prod.yml`. Migrasi berjalan otomatis lewat service `migrate` sebelum aplikasi menyala.

@@ -250,7 +250,7 @@ export function DailyAttendanceManager({
         if (row.department !== filterDivision) return false;
       }
 
-      // Filter Shift
+      // Filter Jadwal Kerja
       if (filterShift) {
         if (row.shiftId !== filterShift) return false;
       }
@@ -283,9 +283,9 @@ export function DailyAttendanceManager({
         method: "DELETE",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Gagal menghapus presensi.");
+      if (!res.ok) throw new Error(data.message || "Gagal menghapus kehadiran.");
 
-      setNotice({ type: "success", message: "Presensi berhasil dihapus." });
+      setNotice({ type: "success", message: "Kehadiran berhasil dihapus." });
       setDeletingId(null);
       router.refresh();
     } catch (err: unknown) {
@@ -311,11 +311,11 @@ export function DailyAttendanceManager({
       <header className="daily-attendance-header">
         <div className="daily-attendance-eyebrow">PRESENSI ADMIN PANEL</div>
         <div className="daily-attendance-title-row">
-          <h1 className="daily-attendance-title">Presensi Harian</h1>
+          <h1 className="daily-attendance-title">Kehadiran</h1>
           <nav className="daily-attendance-breadcrumb">
-            <Link href="/dashboard">Presensi</Link>
+            <Link href="/dashboard">Kehadiran</Link>
             <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-current">Presensi Harian</span>
+            <span className="breadcrumb-current">Kehadiran</span>
           </nav>
         </div>
       </header>
@@ -408,7 +408,7 @@ export function DailyAttendanceManager({
             <span>Reset</span>
           </button>
 
-          {/* Right Action: Tambah Presensi & More Menu */}
+          {/* Right Action: Tambah Kehadiran & More Menu */}
           <div className="daily-toolbar-right">
             <button
               type="button"
@@ -416,7 +416,7 @@ export function DailyAttendanceManager({
               onClick={openAddModal}
             >
               <Plus size={16} />
-              <span>Tambah Presensi</span>
+              <span>Tambah Kehadiran</span>
             </button>
 
             {/* Dropdown Menu `...` */}
@@ -450,7 +450,7 @@ export function DailyAttendanceManager({
                     }}
                   >
                     <Upload size={15} className="text-sky-600" />
-                    <span>Catat Presensi Baru</span>
+                    <span>Catat Kehadiran Baru</span>
                   </button>
                 </div>
               ) : null}
@@ -458,7 +458,7 @@ export function DailyAttendanceManager({
           </div>
         </div>
 
-        {/* Row 2: Dropdowns for Location, Division, and Shift matching Gambar 1 */}
+        {/* Row 2: Dropdowns for Location, Division, and Jadwal Kerja matching Gambar 1 */}
         {filterPanelOpen ? <div className="daily-toolbar-row-2" id="daily-advanced-filters">
           <div className="daily-select-wrap">
             <select
@@ -466,7 +466,7 @@ export function DailyAttendanceManager({
               onChange={(e) => setFilterLocation(e.target.value)}
               className="daily-select"
             >
-              <option value="">Semua Lokasi Presensi</option>
+              <option value="">Semua Lokasi Kerja</option>
               {locations.map((loc) => (
                 <option key={loc.id} value={loc.id}>
                   {loc.name}
@@ -496,7 +496,7 @@ export function DailyAttendanceManager({
               onChange={(e) => setFilterShift(e.target.value)}
               className="daily-select"
             >
-              <option value="">Semua Shift</option>
+              <option value="">Semua Jadwal Kerja</option>
               {shifts.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} ({s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)})
@@ -568,7 +568,7 @@ export function DailyAttendanceManager({
               </div>
               <h3 className="daily-empty-title">Data Kosong...</h3>
               <p className="daily-empty-desc">
-                Belum ada data presensi pada tanggal ini atau filter yang dipilih.
+                Belum ada data kehadiran pada tanggal ini atau filter yang dipilih.
               </p>
             </div>
           ) : (
@@ -578,7 +578,7 @@ export function DailyAttendanceManager({
                   <tr>
                     <th>Tanggal</th>
                     <th>Pegawai</th>
-                    <th>Shift</th>
+                    <th>Jadwal Kerja</th>
                     <th>Masuk</th>
                     <th>Keluar</th>
                     <th>Istirahat</th>
@@ -702,7 +702,7 @@ export function DailyAttendanceManager({
                             <button
                               type="button"
                               className="daily-action-icon-btn"
-                              title="Edit Presensi"
+                              title="Edit Kehadiran"
                               onClick={() => openEditModal(row)}
                             >
                               <Pencil size={14} />
@@ -711,7 +711,7 @@ export function DailyAttendanceManager({
                               <button
                                 type="button"
                                 className="daily-action-icon-btn danger"
-                                title="Hapus Presensi"
+                                title="Hapus Kehadiran"
                                 onClick={() => setDeletingId(row.id)}
                               >
                                 <Trash2 size={14} />
@@ -736,7 +736,7 @@ export function DailyAttendanceManager({
         </div>
       </section>
 
-      {/* Modal Tambah / Edit Presensi matching Gambar 2, 3, 4, 5 */}
+      {/* Modal Tambah / Edit Kehadiran matching Gambar 2, 3, 4, 5 */}
       {modalOpen ? (
         <AttendanceModal
           defaultDate={date}
@@ -757,9 +757,9 @@ export function DailyAttendanceManager({
       {deletingId ? (
         <div className="daily-modal-backdrop">
           <div className="daily-confirm-dialog">
-            <h3 className="confirm-title">Hapus Data Presensi</h3>
+            <h3 className="confirm-title">Hapus Data Kehadiran</h3>
             <p className="confirm-desc">
-              Apakah Anda yakin ingin menghapus catatan presensi pegawai ini? Data riwayat audit
+              Apakah Anda yakin ingin menghapus catatan kehadiran pegawai ini? Data riwayat audit
               check-in dan check-out akan ikut dihapus.
             </p>
             <div className="confirm-actions">
@@ -778,7 +778,7 @@ export function DailyAttendanceManager({
                 disabled={deletingLoading}
               >
                 {deletingLoading ? <LoaderCircle size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                <span>Hapus Presensi</span>
+                <span>Hapus Kehadiran</span>
               </button>
             </div>
           </div>
@@ -790,13 +790,13 @@ export function DailyAttendanceManager({
         <div className="daily-modal-backdrop" onClick={() => setLightboxUrl(null)}>
           <div className="daily-lightbox-content" onClick={(e) => e.stopPropagation()}>
             <header className="daily-lightbox-header">
-              <span>Bukti Foto Presensi</span>
+              <span>Bukti Foto Kehadiran</span>
               <button type="button" onClick={() => setLightboxUrl(null)}>
                 <X size={18} />
               </button>
             </header>
             <div className="daily-lightbox-body">
-              <img src={lightboxUrl} alt="Bukti Foto Presensi" className="daily-lightbox-img" />
+              <img src={lightboxUrl} alt="Bukti Foto Kehadiran" className="daily-lightbox-img" />
             </div>
             <footer className="daily-lightbox-footer">
               <a href={lightboxUrl} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
@@ -866,11 +866,7 @@ function AttendanceModal({
     return editingRecord?.status || "present";
   });
   const [checkInNote, setCheckInNote] = useState<string>(() => {
-    return editingRecord?.note || "Presensi masuk karyawan";
-  });
-  const [photoCheckInFile, setPhotoCheckInFile] = useState<File | null>(null);
-  const [photoCheckInPreview, setPhotoCheckInPreview] = useState<string | null>(() => {
-    return editingRecord?.checkInPhotoAssetId ? `/api/files/${editingRecord.checkInPhotoAssetId}` : null;
+    return editingRecord?.note || "Kehadiran masuk karyawan";
   });
 
   // Check Out Section
@@ -881,11 +877,7 @@ function AttendanceModal({
     return editingRecord?.checkOutLocationId || locations[0]?.id || "";
   });
   const [checkOutStatus, setCheckOutStatus] = useState<string>("present");
-  const [checkOutNote, setCheckOutNote] = useState<string>("Presensi keluar karyawan");
-  const [photoCheckOutFile, setPhotoCheckOutFile] = useState<File | null>(null);
-  const [photoCheckOutPreview, setPhotoCheckOutPreview] = useState<string | null>(() => {
-    return editingRecord?.checkOutPhotoAssetId ? `/api/files/${editingRecord.checkOutPhotoAssetId}` : null;
-  });
+  const [checkOutNote, setCheckOutNote] = useState<string>("Kehadiran keluar karyawan");
 
   // Break Section
   const [breakStartTime, setBreakStartTime] = useState<string>(() => {
@@ -899,13 +891,6 @@ function AttendanceModal({
   // Submitting state
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-
-  // Camera capture modal state
-  const [cameraActiveFor, setCameraActiveFor] = useState<"check_in" | "check_out" | null>(null);
-
-  // File input refs
-  const fileCheckInRef = useRef<HTMLInputElement>(null);
-  const fileCheckOutRef = useRef<HTMLInputElement>(null);
 
   // Autocomplete filtering
   const matchingEmployees = useMemo(() => {
@@ -940,35 +925,6 @@ function AttendanceModal({
     setEmployeeQuery("");
   };
 
-  // Photo handlers
-  const handleCheckInPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoCheckInFile(file);
-      setPhotoCheckInPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleCheckOutPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoCheckOutFile(file);
-      setPhotoCheckOutPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const removeCheckInPhoto = () => {
-    setPhotoCheckInFile(null);
-    setPhotoCheckInPreview(null);
-    if (fileCheckInRef.current) fileCheckInRef.current.value = "";
-  };
-
-  const removeCheckOutPhoto = () => {
-    setPhotoCheckOutFile(null);
-    setPhotoCheckOutPreview(null);
-    if (fileCheckOutRef.current) fileCheckOutRef.current.value = "";
-  };
-
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -980,7 +936,7 @@ function AttendanceModal({
     }
 
     if (!modalDate) {
-      setErrorMsg("Tanggal presensi wajib diisi.");
+      setErrorMsg("Tanggal kehadiran wajib diisi.");
       return;
     }
 
@@ -994,12 +950,10 @@ function AttendanceModal({
       // Check-in data
       if (checkInTime) formData.set("checkInTime", checkInTime);
       if (checkInLocationId) formData.set("checkInLocationId", checkInLocationId);
-      if (photoCheckInFile) formData.set("photoCheckIn", photoCheckInFile);
 
       // Check-out data
       if (checkOutTime) formData.set("checkOutTime", checkOutTime);
       if (checkOutLocationId) formData.set("checkOutLocationId", checkOutLocationId);
-      if (photoCheckOutFile) formData.set("photoCheckOut", photoCheckOutFile);
 
       // Break data
       if (breakStartTime) formData.set("breakStartTime", breakStartTime);
@@ -1008,7 +962,7 @@ function AttendanceModal({
       // Combined status & notes
       formData.set("status", checkInStatus);
       const combinedNotes = [checkInNote, checkOutNote, breakNote].filter(Boolean).join(" | ");
-      formData.set("note", combinedNotes || "Presensi manual dicatat admin");
+      formData.set("note", combinedNotes || "Kehadiran manual dicatat admin");
 
       const response = await fetch("/api/attendance/admin", {
         method: "POST",
@@ -1017,12 +971,12 @@ function AttendanceModal({
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.message || "Gagal menyimpan presensi.");
+        throw new Error(result.message || "Gagal menyimpan kehadiran.");
       }
 
-      onSuccess(result.message || "Presensi berhasil disimpan.");
+      onSuccess(result.message || "Kehadiran berhasil disimpan.");
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan presensi.");
+      setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan kehadiran.");
     } finally {
       setSubmitting(false);
     }
@@ -1036,7 +990,7 @@ function AttendanceModal({
           <header className="daily-modal-header">
             <div>
               <h2 className="daily-modal-title">
-                {editingRecord ? "Edit Presensi" : "Tambah Presensi"}
+                {editingRecord ? "Edit Kehadiran" : "Tambah Kehadiran"}
               </h2>
               <p className="daily-modal-subtitle">
                 Catat kehadiran pegawai secara manual untuk tanggal terpilih
@@ -1050,12 +1004,12 @@ function AttendanceModal({
           {/* Modal Form */}
           <form onSubmit={handleSubmit} className="daily-modal-form">
             <div className="daily-modal-body">
-              {/* Row 1: Tanggal, Pegawai (Autocomplete Gambar 3), Shift */}
+              {/* Row 1: Tanggal, Pegawai (Autocomplete Gambar 3), Jadwal Kerja */}
               <div className="daily-modal-top-grid">
-                {/* 1. Tanggal Presensi */}
+                {/* 1. Tanggal Kehadiran */}
                 <div className="daily-modal-field">
                   <label className="daily-field-label">
-                    Tanggal Presensi <span className="text-red-500">*</span>
+                    Tanggal Kehadiran <span className="text-red-500">*</span>
                   </label>
                   <div className="daily-input-with-icon">
                     <Calendar size={15} />
@@ -1142,15 +1096,15 @@ function AttendanceModal({
                   )}
                 </div>
 
-                {/* 3. Shift */}
+                {/* 3. Jadwal Kerja */}
                 <div className="daily-modal-field">
-                  <label className="daily-field-label">Shift</label>
+                  <label className="daily-field-label">Jadwal Kerja</label>
                   <select
                     value={selectedShiftId}
                     onChange={(e) => setSelectedShiftId(e.target.value)}
                     className="daily-modal-select"
                   >
-                    <option value="">Pilih Shift</option>
+                    <option value="">Pilih Jadwal Kerja</option>
                     {shifts.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} ({s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)})
@@ -1181,13 +1135,13 @@ function AttendanceModal({
                     </div>
 
                     <div className="daily-subcard-field">
-                      <label>Lokasi Presensi</label>
+                      <label>Lokasi Kerja</label>
                       <select
                         value={checkInLocationId}
                         onChange={(e) => setCheckInLocationId(e.target.value)}
                         className="daily-modal-select"
                       >
-                        <option value="">Pilih Lokasi Presensi</option>
+                        <option value="">Pilih Lokasi Kerja</option>
                         {locations.map((loc) => (
                           <option key={loc.id} value={loc.id}>
                             {loc.name}
@@ -1215,61 +1169,12 @@ function AttendanceModal({
                       <textarea
                         value={checkInNote}
                         onChange={(e) => setCheckInNote(e.target.value)}
-                        placeholder="Presensi masuk karyawan"
+                        placeholder="Kehadiran masuk karyawan"
                         rows={2}
                         className="daily-modal-textarea"
                       />
                     </div>
 
-                    {/* Foto Check-In Upload & Camera Capture */}
-                    <div className="daily-subcard-field">
-                      <label className="daily-field-label">Foto Check-In</label>
-                      {photoCheckInPreview ? (
-                        <div className="daily-photo-preview-wrap">
-                          <img
-                            src={photoCheckInPreview}
-                            alt="Preview Check-In"
-                            className="daily-preview-thumb"
-                          />
-                          <div className="daily-preview-overlay-actions">
-                            <button
-                              type="button"
-                              className="daily-preview-btn-delete"
-                              onClick={removeCheckInPhoto}
-                              title="Hapus Foto"
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="daily-photo-upload-container">
-                          <input
-                            ref={fileCheckInRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleCheckInPhotoChange}
-                            style={{ display: "none" }}
-                          />
-                          <button
-                            type="button"
-                            className="daily-upload-dropzone"
-                            onClick={() => fileCheckInRef.current?.click()}
-                          >
-                            <Upload size={18} className="text-slate-400" />
-                            <span>Pilih file foto</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="daily-camera-action-btn"
-                            onClick={() => setCameraActiveFor("check_in")}
-                          >
-                            <Camera size={14} />
-                            <span>Buka Kamera</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -1292,13 +1197,13 @@ function AttendanceModal({
                     </div>
 
                     <div className="daily-subcard-field">
-                      <label>Lokasi Presensi</label>
+                      <label>Lokasi Kerja</label>
                       <select
                         value={checkOutLocationId}
                         onChange={(e) => setCheckOutLocationId(e.target.value)}
                         className="daily-modal-select"
                       >
-                        <option value="">Pilih Lokasi Presensi</option>
+                        <option value="">Pilih Lokasi Kerja</option>
                         {locations.map((loc) => (
                           <option key={loc.id} value={loc.id}>
                             {loc.name}
@@ -1325,61 +1230,12 @@ function AttendanceModal({
                       <textarea
                         value={checkOutNote}
                         onChange={(e) => setCheckOutNote(e.target.value)}
-                        placeholder="Presensi keluar karyawan"
+                        placeholder="Kehadiran keluar karyawan"
                         rows={2}
                         className="daily-modal-textarea"
                       />
                     </div>
 
-                    {/* Foto Check-Out Upload & Camera Capture */}
-                    <div className="daily-subcard-field">
-                      <label className="daily-field-label">Foto Check-Out</label>
-                      {photoCheckOutPreview ? (
-                        <div className="daily-photo-preview-wrap">
-                          <img
-                            src={photoCheckOutPreview}
-                            alt="Preview Check-Out"
-                            className="daily-preview-thumb"
-                          />
-                          <div className="daily-preview-overlay-actions">
-                            <button
-                              type="button"
-                              className="daily-preview-btn-delete"
-                              onClick={removeCheckOutPhoto}
-                              title="Hapus Foto"
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="daily-photo-upload-container">
-                          <input
-                            ref={fileCheckOutRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleCheckOutPhotoChange}
-                            style={{ display: "none" }}
-                          />
-                          <button
-                            type="button"
-                            className="daily-upload-dropzone"
-                            onClick={() => fileCheckOutRef.current?.click()}
-                          >
-                            <Upload size={18} className="text-slate-400" />
-                            <span>Pilih file foto</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="daily-camera-action-btn"
-                            onClick={() => setCameraActiveFor("check_out")}
-                          >
-                            <Camera size={14} />
-                            <span>Buka Kamera</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -1455,134 +1311,14 @@ function AttendanceModal({
                   ) : (
                     <Check size={16} />
                   )}
-                  <span>{submitting ? "Menyimpan..." : "Simpan Presensi"}</span>
+                  <span>{submitting ? "Menyimpan..." : "Simpan Kehadiran"}</span>
                 </button>
               </div>
             </footer>
           </form>
         </div>
       </div>
-
-      {/* Live Camera Viewfinder Modal */}
-      {cameraActiveFor ? (
-        <CameraCaptureModal
-          title={cameraActiveFor === "check_in" ? "Ambil Foto Masuk" : "Ambil Foto Keluar"}
-          onClose={() => setCameraActiveFor(null)}
-          onCapture={(file, preview) => {
-            if (cameraActiveFor === "check_in") {
-              setPhotoCheckInFile(file);
-              setPhotoCheckInPreview(preview);
-            } else {
-              setPhotoCheckOutFile(file);
-              setPhotoCheckOutPreview(preview);
-            }
-            setCameraActiveFor(null);
-          }}
-        />
-      ) : null}
     </>
-  );
-}
-
-// =========================================================================
-// Camera Capture Modal
-// =========================================================================
-function CameraCaptureModal({
-  title,
-  onClose,
-  onCapture,
-}: {
-  title: string;
-  onClose: () => void;
-  onCapture: (file: File, previewUrl: string) => void;
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [cameraError, setCameraError] = useState("");
-
-  useEffect(() => {
-    let localStream: MediaStream | null = null;
-    async function startCamera() {
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
-          audio: false,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = localStream;
-        }
-      } catch (err) {
-        console.error("Camera access error:", err);
-        setCameraError("Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.");
-      }
-    }
-    startCamera();
-
-    return () => {
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, []);
-
-  const handleCapture = () => {
-    if (!videoRef.current) return;
-    const video = videoRef.current;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Flip horizontally for natural mirror feel
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], `attendance-${Date.now()}.jpg`, { type: "image/jpeg" });
-      const preview = URL.createObjectURL(blob);
-      onCapture(file, preview);
-    }, "image/jpeg", 0.9);
-  };
-
-  return (
-    <div className="daily-modal-backdrop">
-      <div className="daily-camera-modal-card">
-        <header className="daily-modal-header">
-          <h2 className="daily-modal-title">{title}</h2>
-          <button type="button" className="daily-modal-close" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </header>
-
-        <div className="daily-camera-body">
-          {cameraError ? (
-            <div className="daily-camera-error">
-              <AlertCircle size={32} />
-              <p>{cameraError}</p>
-            </div>
-          ) : (
-            <div className="daily-camera-viewport">
-              <video ref={videoRef} autoPlay playsInline muted className="daily-camera-video" />
-              <div className="daily-face-guide-circle" />
-            </div>
-          )}
-        </div>
-
-        <footer className="daily-camera-footer">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
-            Batal
-          </button>
-          {!cameraError ? (
-            <button type="button" className="daily-btn-primary" onClick={handleCapture}>
-              <Camera size={16} />
-              <span>Ambil Foto</span>
-            </button>
-          ) : null}
-        </footer>
-      </div>
-    </div>
   );
 }
 

@@ -19,6 +19,7 @@ type StatusResponse = {
   company: { name: string; timezone: string };
   attendance: AttendanceState;
   nextAction: AttendanceAction | null;
+  networkError?: string | null;
 };
 
 export function EmployeeDashboard({ name, date, timezone, initialAttendance, display = "full" }: {
@@ -123,6 +124,12 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
   }, [router]);
 
   const openCamera = useCallback(async (nextAction: AttendanceAction) => {
+    // Company IP whitelist: say so before the camera opens, not after the photo is taken.
+    try {
+      const check = await fetch("/api/attendance/me", { cache: "no-store" });
+      const body = await check.json() as Partial<StatusResponse> & { message?: string };
+      if (body.networkError) { setError(body.networkError); return; }
+    } catch { /* Network hiccup: the submit itself reports any problem. */ }
     setError("");
     setPhoto("");
     setAction(nextAction);
@@ -247,6 +254,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
     <section className="employee-home-attendance">
       <div><span>ABSENSI HARI INI</span><h2>{headline}</h2><p>{copy}</p></div>
       {nextAction ? <button type="button" className="employee-home-camera-action" onClick={() => void openCamera(nextAction)} aria-label={actionText}><span><Camera size={18} /></span><strong>{actionText}</strong><small>Tanpa formulir · foto langsung dikirim</small></button> : <Link className="employee-home-camera-action complete" href={historyHref}><span><CheckCircle2 size={18} /></span><strong>Lihat riwayat</strong><small>Presensi hari ini sudah lengkap</small></Link>}
+      {error && phase === "ready" ? <div className="camera-error" role="alert">{error}</div> : null}
     </section>
 
     {display === "full" ? <section className="employee-home-stats">

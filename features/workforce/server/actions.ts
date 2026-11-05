@@ -9,7 +9,8 @@ import { db } from "@/db";
 import { employeeDocuments, employees, fileAssets, leaveRequests, workSchedules } from "@/db/schema";
 import { requireCompany, requireCompanyRole } from "@/lib/current-company";
 import { deletePrivateObject, putPrivateObject } from "@/lib/object-storage";
-import { compressUpload } from "@/lib/file-compression";
+import { compressUpload, storedFileName, type ImageProfile } from "@/lib/file-compression";
+import { assertEmployeeCapacity, employeeCapacity } from "@/features/subscriptions/server/employee-capacity";
 
 const requiredText = z.string().trim().min(1);
 
@@ -21,6 +22,8 @@ export async function createEmployee(form: FormData) {
     birthDate: z.union([z.iso.date(), z.literal("")]).optional(), phone: z.string().trim().max(40).optional(), address: z.string().trim().max(500).optional(),
     taxNumber: z.string().trim().max(60).optional(), socialSecurityNumber: z.string().trim().max(60).optional(), contractType: z.string().trim().max(60).optional(),
   }).parse(Object.fromEntries([...form.entries()].filter(([, value]) => typeof value === "string")));
+  // Plan limit on active employees; the form page explains it and links to Langganan.
+  if ((await employeeCapacity(context.companyId)).full) redirect("/dashboard/karyawan/tambah?limit=1");
   const [employee] = await db.insert(employees).values({
     ...parsed, employeeCode: parsed.employeeCode || `EMP-${randomUUID().slice(0, 8).toUpperCase()}`, email: parsed.email.toLowerCase(), companyId: context.companyId,
     birthDate: parsed.birthDate || null, phone: parsed.phone || null, address: parsed.address || null, taxNumber: parsed.taxNumber || null,
@@ -33,10 +36,10 @@ export async function createEmployee(form: FormData) {
       const file = form.get(field); if (!(file instanceof File) || file.size === 0) continue;
       if (file.size > 8 * 1024 * 1024) throw new Error(`Ukuran ${file.name} melebihi 8 MB.`);
       const sourceBytes = new Uint8Array(await file.arrayBuffer()); const format = employeeFileFormat(sourceBytes); if (!format) throw new Error(`Format ${file.name} tidak didukung.`);
-      const compressed = await compressUpload(sourceBytes, format.contentType); const bytes = compressed.bytes;
-      const checksum = createHash("sha256").update(bytes).digest("hex"); const key = `companies/${context.companyId}/employees/${employee.id}/${kind}-${randomUUID()}.${format.extension}`;
-      const object = await putPrivateObject({ key, body: bytes, contentType: format.contentType, storageCompression: compressed.storageCompression, metadata: { company: context.companyId, employee: employee.id, kind, sha256: checksum, uploadQuality: "70" } }); stored.push(object);
-      const [asset] = await db.insert(fileAssets).values({ companyId: context.companyId, ownerEmployeeId: employee.id, uploadedBy: context.session.user.id, category: "employee_document", bucket: object.bucket, objectKey: object.key, originalName: file.name, contentType: format.contentType, byteSize: bytes.byteLength, checksumSha256: checksum }).returning({ id: fileAssets.id });
+      const compressed = await compressUpload(sourceBytes, format.contentType, format.extension, documentImageProfile(kind)); const bytes = compressed.bytes;
+      const checksum = createHash("sha256").update(bytes).digest("hex"); const key = `companies/${context.companyId}/employees/${employee.id}/${kind}-${randomUUID()}.${compressed.extension}`;
+      const object = await putPrivateObject({ key, body: bytes, contentType: compressed.contentType, storageCompression: compressed.storageCompression, metadata: { company: context.companyId, employee: employee.id, kind, sha256: checksum, uploadQuality: String(compressed.quality ?? "original") } }); stored.push(object);
+      const [asset] = await db.insert(fileAssets).values({ companyId: context.companyId, ownerEmployeeId: employee.id, uploadedBy: context.session.user.id, category: "employee_document", bucket: object.bucket, objectKey: object.key, originalName: storedFileName(file.name, kind, compressed.extension), contentType: compressed.contentType, byteSize: bytes.byteLength, checksumSha256: checksum }).returning({ id: fileAssets.id });
       stored[stored.length - 1].assetId = asset.id; await db.insert(employeeDocuments).values({ employeeId: employee.id, assetId: asset.id, kind });
     }
   } catch (error) {
@@ -56,9 +59,21 @@ function employeeFileFormat(bytes: Uint8Array) {
   return null;
 }
 
+/** Re-activating an inactive employee counts against the plan limit; already-active ones do not. */
+async function reactivationAllowed(companyId: string, employeeId: string) {
+  const [current] = await db.select({ status: employees.status }).from(employees).where(and(eq(employees.id, employeeId), eq(employees.companyId, companyId))).limit(1);
+  if (!current || current.status === "active") return true;
+  return !(await employeeCapacity(companyId, db, { excludeEmployeeId: employeeId })).full;
+}
+
+async function assertReactivationAllowed(companyId: string, employeeId: string) {
+  if (!(await reactivationAllowed(companyId, employeeId))) await assertEmployeeCapacity(companyId, db, { excludeEmployeeId: employeeId });
+}
+
 export async function toggleEmployee(form: FormData) {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
   const parsed = z.object({ id: z.uuid(), status: z.enum(["active", "inactive"]) }).parse(Object.fromEntries(form));
+  if (parsed.status === "active") await assertReactivationAllowed(context.companyId, parsed.id);
   await db.update(employees).set({ status: parsed.status }).where(and(eq(employees.id, parsed.id), eq(employees.companyId, context.companyId)));
   revalidatePath("/dashboard/karyawan");
   revalidatePath(`/dashboard/karyawan/${parsed.id}`);
@@ -108,6 +123,7 @@ export async function updateEmployee(form: FormData) {
     contractType: z.string().trim().max(60).optional(),
     status: z.enum(["active", "inactive"]),
   }).parse(Object.fromEntries([...form.entries()].filter(([, value]) => typeof value === "string")));
+  if (parsed.status === "active" && !(await reactivationAllowed(context.companyId, parsed.id))) redirect(`/dashboard/karyawan/${parsed.id}/edit?limit=1`);
   await db.update(employees).set({
     employeeCode: parsed.employeeCode,
     name: parsed.name,
@@ -130,14 +146,14 @@ export async function updateEmployee(form: FormData) {
     const file = form.get(field); if (!(file instanceof File) || file.size === 0) continue;
     if (file.size > 8 * 1024 * 1024) throw new Error(`Ukuran ${file.name} melebihi 8 MB.`);
     const sourceBytes = new Uint8Array(await file.arrayBuffer()); const format = employeeFileFormat(sourceBytes); if (!format) throw new Error(`Format ${file.name} tidak didukung.`);
-    const compressed = await compressUpload(sourceBytes, format.contentType); const bytes = compressed.bytes;
+    const compressed = await compressUpload(sourceBytes, format.contentType, format.extension, documentImageProfile(kind)); const bytes = compressed.bytes;
     const [oldDocument] = await db.select({ documentId: employeeDocuments.id, assetId: fileAssets.id, bucket: fileAssets.bucket, key: fileAssets.objectKey })
       .from(employeeDocuments).innerJoin(fileAssets, eq(employeeDocuments.assetId, fileAssets.id))
       .where(and(eq(employeeDocuments.employeeId, parsed.id), eq(employeeDocuments.kind, kind))).limit(1);
     const checksum = createHash("sha256").update(bytes).digest("hex");
-    const key = `companies/${context.companyId}/employees/${parsed.id}/${kind}-${randomUUID()}.${format.extension}`;
-    const object = await putPrivateObject({ key, body: bytes, contentType: format.contentType, storageCompression: compressed.storageCompression, metadata: { company: context.companyId, employee: parsed.id, kind, sha256: checksum, uploadQuality: "70" } });
-    const [asset] = await db.insert(fileAssets).values({ companyId: context.companyId, ownerEmployeeId: parsed.id, uploadedBy: context.session.user.id, category: "employee_document", bucket: object.bucket, objectKey: object.key, originalName: file.name, contentType: format.contentType, byteSize: bytes.byteLength, checksumSha256: checksum }).returning({ id: fileAssets.id });
+    const key = `companies/${context.companyId}/employees/${parsed.id}/${kind}-${randomUUID()}.${compressed.extension}`;
+    const object = await putPrivateObject({ key, body: bytes, contentType: compressed.contentType, storageCompression: compressed.storageCompression, metadata: { company: context.companyId, employee: parsed.id, kind, sha256: checksum, uploadQuality: String(compressed.quality ?? "original") } });
+    const [asset] = await db.insert(fileAssets).values({ companyId: context.companyId, ownerEmployeeId: parsed.id, uploadedBy: context.session.user.id, category: "employee_document", bucket: object.bucket, objectKey: object.key, originalName: storedFileName(file.name, kind, compressed.extension), contentType: compressed.contentType, byteSize: bytes.byteLength, checksumSha256: checksum }).returning({ id: fileAssets.id });
     if (oldDocument) {
       await db.update(employeeDocuments).set({ assetId: asset.id }).where(eq(employeeDocuments.id, oldDocument.documentId));
       await db.delete(fileAssets).where(eq(fileAssets.id, oldDocument.assetId));
@@ -189,4 +205,9 @@ export async function reviewLeave(form: FormData) {
   revalidatePath("/dashboard/pengajuan/izin-cuti");
   revalidatePath(`/dashboard/pengajuan/izin-cuti/${parsed.id}`);
   revalidatePath("/dashboard");
+}
+
+/** Profile and selfie photos are only viewed small; ID cards and certificates must stay legible. */
+function documentImageProfile(kind: string): ImageProfile {
+  return kind === "identity_card" || kind === "certificate" ? "detail" : "selfie";
 }

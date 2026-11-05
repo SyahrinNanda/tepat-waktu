@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { clientIp } from "@/lib/client-ip";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
@@ -16,7 +17,9 @@ import {
 } from "@/db/schema";
 import { getAppSession } from "@/lib/app-session";
 import { deletePrivateObject, objectStorageBucket, putPrivateObject } from "@/lib/object-storage";
-import { compressUpload } from "@/lib/file-compression";
+import { compressUpload, storedFileName } from "@/lib/file-compression";
+import { ensureEmployeeRecord } from "./employee-link";
+import { getSubscriptionStatus, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/features/subscriptions/server/subscription-status";
 import { selectedCompanyFromRequest } from "@/lib/selected-company";
 
 export type AttendanceAction = "check_in" | "check_out";
@@ -44,6 +47,11 @@ export type SelfAttendanceContext = Actor & {
   employeeName: string;
 };
 
+async function assertSubscriptionActive(companyId: string) {
+  const status = await getSubscriptionStatus(companyId);
+  if (status.state === "expired") throw new AttendanceError(SUBSCRIPTION_EXPIRED_MESSAGE, 402);
+}
+
 export async function authenticatedActor(request: Request): Promise<Actor> {
   const session = await getAppSession(request.headers);
   if (!session) throw new AttendanceError("Sesi tidak ditemukan.", 401);
@@ -62,6 +70,7 @@ export async function selfAttendanceContext(request: Request): Promise<SelfAtten
     .where(eq(companyMembers.userId, actor.userId))
     .limit(1);
   if (!membership) throw new AttendanceError("Keanggotaan perusahaan tidak ditemukan.", 403);
+  await assertSubscriptionActive(membership.companyId);
   if (membership.role === "admin" || membership.role === "owner") {
     throw new AttendanceError("Admin Perusahaan tidak diwajibkan melakukan presensi.", 403);
   }
@@ -81,6 +90,12 @@ export async function selfAttendanceContext(request: Request): Promise<SelfAtten
       .where(and(eq(employees.companyId, membership.companyId), eq(employees.email, actor.email.toLowerCase()), eq(employees.status, "active")))
       .limit(1);
     if (employee) await db.update(employees).set({ userId: actor.userId }).where(and(eq(employees.id, employee.id), eq(employees.companyId, membership.companyId)));
+  }
+  // Members without an employee record yet (e.g. GM/HRD/Manager accounts) get one, so they can check in like staff.
+  if (!employee) {
+    const [account] = await db.select({ name: user.name }).from(user).where(eq(user.id, actor.userId)).limit(1);
+    const linked = await ensureEmployeeRecord({ companyId: membership.companyId, userId: actor.userId, name: account?.name ?? actor.email, email: actor.email, role: membership.role });
+    if (linked) employee = linked;
   }
   if (!employee) throw new AttendanceError("Akun belum terhubung ke data karyawan aktif.", 409);
 
@@ -109,6 +124,7 @@ export async function attendanceManagerContext(request: Request, requestedCompan
   if (!membership || !["admin", "owner"].includes(membership.role)) {
     throw new AttendanceError("Hanya Admin Perusahaan yang dapat menambahkan presensi karyawan lain.", 403);
   }
+  await assertSubscriptionActive(membership.companyId);
   return { ...actor, ...membership, source: "admin" as const };
 }
 
@@ -133,18 +149,18 @@ export async function uploadAttendancePhoto(file: File, input: { companyId: stri
   if (file.size > 5 * 1024 * 1024) throw new AttendanceError("Ukuran foto maksimal 5 MB.", 413);
   const sourceBytes = new Uint8Array(await file.arrayBuffer());
   const detected = detectImage(sourceBytes);
-  const compressed = await compressUpload(sourceBytes, detected.contentType);
+  const compressed = await compressUpload(sourceBytes, detected.contentType, detected.extension, "selfie");
   const bytes = compressed.bytes;
   const checksumSha256 = createHash("sha256").update(bytes).digest("hex");
-  const key = `companies/${input.companyId}/attendance/${input.employeeId}/${new Date().toISOString().slice(0, 10)}/${input.action}-${randomUUID()}.${detected.extension}`;
+  const key = `companies/${input.companyId}/attendance/${input.employeeId}/${new Date().toISOString().slice(0, 10)}/${input.action}-${randomUUID()}.${compressed.extension}`;
   const stored = await putPrivateObject({
     key,
     body: bytes,
-    contentType: detected.contentType,
+    contentType: compressed.contentType,
     storageCompression: compressed.storageCompression,
-    metadata: { company: input.companyId, employee: input.employeeId, action: input.action, uploader: input.actorId, sha256: checksumSha256, uploadQuality: "70" },
+    metadata: { company: input.companyId, employee: input.employeeId, action: input.action, uploader: input.actorId, sha256: checksumSha256, uploadQuality: String(compressed.quality ?? "original") },
   });
-  return { ...stored, originalName: file.name || `${input.action}.${detected.extension}`, contentType: detected.contentType, byteSize: bytes.byteLength, checksumSha256 };
+  return { ...stored, originalName: storedFileName(file.name, input.action, compressed.extension), contentType: compressed.contentType, byteSize: bytes.byteLength, checksumSha256 };
 }
 
 function zonedParts(date: Date, timezone: string) {
@@ -225,7 +241,7 @@ export async function recordAttendanceEvent(input: {
   const occurredAt = input.occurredAt ?? new Date();
   const zoned = zonedParts(occurredAt, input.timezone);
   try {
-    return await db.transaction(async (tx) => {
+    return await withTransactionRetry(() => db.transaction(async (tx) => {
       const [employee] = await tx.select({ id: employees.id, userId: employees.userId, department: employees.department }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, input.companyId), eq(employees.status, "active"))).limit(1);
       if (!employee) throw new AttendanceError("Karyawan aktif tidak ditemukan.", 404);
       if (input.source === "self") {
@@ -244,10 +260,16 @@ export async function recordAttendanceEvent(input: {
         }
       }
 
-      let [attendance] = await tx.select().from(attendances).where(and(eq(attendances.companyId, input.companyId), eq(attendances.employeeId, input.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1);
+      // The employee's row for the day is locked, so concurrent requests for the same employee run
+      // one after another while different employees never wait on each other. Duplicates are also
+      // blocked by the unique indexes (employee_id, attendance_date) and (attendance_id, type).
+      const lockDay = () => tx.select().from(attendances).where(and(eq(attendances.companyId, input.companyId), eq(attendances.employeeId, input.employeeId), eq(attendances.attendanceDate, zoned.date))).for("update").limit(1);
+      let [attendance] = await lockDay();
       if (!attendance) {
         if (input.action === "check_out") throw new AttendanceError("Check-in harus dicatat sebelum check-out.", 409);
-        [attendance] = await tx.insert(attendances).values({ companyId: input.companyId, employeeId: input.employeeId, attendanceDate: zoned.date, status: "present" }).returning();
+        [attendance] = await tx.insert(attendances).values({ companyId: input.companyId, employeeId: input.employeeId, attendanceDate: zoned.date, status: "present" }).onConflictDoNothing().returning();
+        // Another request created the row first: wait for its lock, then re-read.
+        if (!attendance) [attendance] = await lockDay();
       }
       if (input.action === "check_in" && attendance.checkIn) throw new AttendanceError("Check-in hari ini sudah tercatat.", 409);
       if (input.action === "check_out" && attendance.checkOut) throw new AttendanceError("Check-out hari ini sudah tercatat.", 409);
@@ -302,19 +324,46 @@ export async function recordAttendanceEvent(input: {
         .where(eq(attendances.id, attendance.id));
 
       return { attendanceId: attendance.id, action: input.action, time: zoned.time, date: zoned.date, status, photoAssetId };
-    }, { isolationLevel: "serializable", accessMode: "read write" });
+    }, { isolationLevel: "read committed", accessMode: "read write" }));
   } catch (error) {
     if (input.photo) await deletePrivateObject(input.photo.bucket, input.photo.key).catch(() => undefined);
     if (error instanceof AttendanceError) throw error;
-    const pgCode = typeof error === "object" && error && "cause" in error && typeof error.cause === "object" && error.cause && "code" in error.cause ? error.cause.code : undefined;
-    if (pgCode === "23505") throw new AttendanceError("Presensi untuk aksi ini sudah tercatat.", 409);
+    const code = pgErrorCode(error);
+    if (code === "23505") throw new AttendanceError("Presensi untuk aksi ini sudah tercatat.", 409);
+    if (code === "40001" || code === "40P01") throw new AttendanceError("Server sedang sibuk memproses presensi lain. Silakan coba lagi.", 503);
     throw error;
+  }
+}
+
+/** Postgres SQLSTATE of a (possibly wrapped) driver error. */
+function pgErrorCode(error: unknown): string | undefined {
+  for (let current: unknown = error, depth = 0; current && typeof current === "object" && depth < 4; current = (current as { cause?: unknown }).cause, depth++) {
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === "string" && /^[0-9A-Z]{5}$/.test(code)) return code;
+  }
+  return undefined;
+}
+
+/**
+ * Re-runs a transaction that Postgres aborted with a serialization failure (40001) or deadlock
+ * (40P01); Postgres expects the client to retry these. Check-ins use row locks, so this is a
+ * safety net rather than the normal path.
+ */
+export async function withTransactionRetry<T>(run: () => Promise<T>, attempts = 4): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await run();
+    } catch (error) {
+      const code = pgErrorCode(error);
+      if (attempt >= attempts || (code !== "40001" && code !== "40P01")) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 15 * 2 ** attempt + Math.random() * 40));
+    }
   }
 }
 
 export function requestMetadata(request: Request) {
   return {
-    ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip"),
+    ipAddress: clientIp(request.headers),
     userAgent: request.headers.get("user-agent"),
   };
 }

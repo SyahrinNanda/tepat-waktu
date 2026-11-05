@@ -13,11 +13,15 @@ import {
 import { db } from "@/db";
 import { companies, employees, subscriptionOrders, user } from "@/db/schema";
 import { enterCompany } from "./actions";
+import { requireSuperAdmin } from "@/lib/superadmin";
+import { IndustryAnalyticsSection } from "@/features/subscriptions/components/industry-analytics";
+import { getIndustryAnalytics } from "@/features/subscriptions/server/industry-analytics";
 
-export const metadata: Metadata = { title: "Dashboard & Tenant" };
+export const metadata: Metadata = { title: "Beranda & Tenant" };
 
 export default async function Page() {
-  const [companyRows, [totalUsersResult], [totalEmployeesResult], [pendingInvoicesResult]] = await Promise.all([
+  await requireSuperAdmin();
+  const [companyRows, [totalUsersResult], [totalEmployeesResult], [pendingInvoicesResult], industryAnalytics] = await Promise.all([
     db
       .select({
         id: companies.id,
@@ -34,6 +38,7 @@ export default async function Page() {
     db.select({ count: count(user.id) }).from(user),
     db.select({ count: count(employees.id) }).from(employees).where(eq(employees.status, "active")),
     db.select({ count: count(subscriptionOrders.id) }).from(subscriptionOrders).where(eq(subscriptionOrders.status, "pending")),
+    getIndustryAnalytics(),
   ]);
 
   const totalCompanies = companyRows.length;
@@ -143,6 +148,8 @@ export default async function Page() {
           </span>
         </Link>
       </section>
+
+      <IndustryAnalyticsSection data={industryAnalytics} />
 
       <section className="module-card">
         <div className="module-toolbar">

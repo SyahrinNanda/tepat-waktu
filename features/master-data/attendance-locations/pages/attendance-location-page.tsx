@@ -5,7 +5,7 @@ import { attendanceLocations } from "@/db/schema";
 import { AttendanceLocationManager } from "@/features/master-data/attendance-locations/components/attendance-location-manager";
 import { requireCompanyRole } from "@/lib/current-company";
 
-export const metadata: Metadata = { title: "Daftar Lokasi Presensi" };
+export const metadata: Metadata = { title: "Daftar Lokasi Kerja" };
 export default async function Page() {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
   const rows = await db.select().from(attendanceLocations).where(eq(attendanceLocations.companyId, context.companyId)).orderBy(asc(attendanceLocations.name));

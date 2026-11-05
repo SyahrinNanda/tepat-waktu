@@ -20,7 +20,7 @@ import {
   type ProfileMutationResult,
 } from "@/app/dashboard/pengaturan/profile/actions";
 import { authClient } from "@/lib/auth-client";
-import { supabaseAuthEnabled, supabaseBrowser } from "@/lib/supabase/client";
+import { TIMEZONE_OPTIONS, timeZoneShortLabel } from "@/lib/timezone";
 
 type UserProfile = {
   name: string;
@@ -47,11 +47,7 @@ type CompanyProfile = {
 type Tab = "user" | "company" | "password";
 type Notice = { type: "success" | "error"; text: string } | null;
 
-const timezoneOptions = [
-  { value: "Asia/Jakarta", label: "WIB (Asia/Jakarta)" },
-  { value: "Asia/Makassar", label: "WITA (Asia/Makassar)" },
-  { value: "Asia/Jayapura", label: "WIT (Asia/Jayapura)" },
-];
+const timezoneOptions = TIMEZONE_OPTIONS;
 
 export function ProfileSettings({
   user,
@@ -140,19 +136,6 @@ export function ProfileSettings({
       return;
     }
     startTransition(async () => {
-      if (supabaseAuthEnabled()) {
-        const client = supabaseBrowser();
-        const { data: { user: identity } } = await client.auth.getUser();
-        if (identity?.email?.toLowerCase() === user.email.toLowerCase()) {
-          const verified = await client.auth.signInWithPassword({ email: user.email, password: currentPassword });
-          if (verified.error) { setNotice({ type: "error", text: "Password saat ini belum tepat." }); return; }
-          const updated = await client.auth.updateUser({ password: newPassword });
-          if (updated.error) { setNotice({ type: "error", text: updated.error.message }); return; }
-          setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation("");
-          setNotice({ type: "success", text: "Password berhasil diganti." });
-          return;
-        }
-      }
       const result = await authClient.changePassword({
         currentPassword,
         newPassword,
@@ -325,9 +308,4 @@ function toggleVisibility(index: number, setter: React.Dispatch<React.SetStateAc
   setter((values) => values.map((value, itemIndex) => itemIndex === index ? !value : value));
 }
 
-function timezoneLabel(value: string) {
-  if (value === "Asia/Jakarta") return "WIB";
-  if (value === "Asia/Makassar") return "WITA";
-  if (value === "Asia/Jayapura") return "WIT";
-  return value;
-}
+const timezoneLabel = timeZoneShortLabel;

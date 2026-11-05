@@ -4,13 +4,13 @@ import { z } from "zod";
 import { db } from "@/db";
 import { employees, leaveRequests } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
-import { leaveInputSchema, reviewerRoles } from "./schemas";
+import { leaveInputSchema, resolveLeavePaid, reviewerRoles } from "./schemas";
 
 export async function GET(request: Request) {
   const context = await featureContext(request, "pengajuan/izin-cuti", "read");
   if ("error" in context) return context.error;
   const canReview = reviewerRoles.includes(context.role);
-  const rows = await db.select({ id: leaveRequests.id, employeeId: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, type: leaveRequests.type, startDate: leaveRequests.startDate, endDate: leaveRequests.endDate, reason: leaveRequests.reason, status: leaveRequests.status, createdAt: leaveRequests.createdAt })
+  const rows = await db.select({ id: leaveRequests.id, employeeId: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, type: leaveRequests.type, startDate: leaveRequests.startDate, endDate: leaveRequests.endDate, reason: leaveRequests.reason, status: leaveRequests.status, paid: leaveRequests.paid, createdAt: leaveRequests.createdAt })
     .from(leaveRequests).innerJoin(employees, eq(leaveRequests.employeeId, employees.id))
     .where(and(eq(leaveRequests.companyId, context.companyId), canReview ? undefined : eq(employees.userId, context.userId))).orderBy(desc(leaveRequests.createdAt));
   return Response.json({ rows });
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const [employee] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, userId: employees.userId }).from(employees)
     .where(and(eq(employees.id, parsed.data.employeeId), eq(employees.companyId, context.companyId), eq(employees.status, "active"))).limit(1);
   if (!employee || (!canReview && employee.userId !== context.userId)) return Response.json({ error: "Karyawan tidak ditemukan atau tidak dapat dipilih." }, { status: 403 });
-  const [created] = await db.insert(leaveRequests).values({ companyId: context.companyId, ...parsed.data }).returning();
+  const [created] = await db.insert(leaveRequests).values({ companyId: context.companyId, ...parsed.data, paid: resolveLeavePaid(parsed.data, canReview) }).returning();
   revalidatePaths();
   return Response.json({ row: { ...created, name: employee.name, employeeCode: employee.employeeCode, department: employee.department } }, { status: 201 });
 }

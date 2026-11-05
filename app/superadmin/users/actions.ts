@@ -7,6 +7,7 @@ import { hashPassword } from "better-auth/crypto";
 import { db } from "@/db";
 import { account, user } from "@/db/schema";
 import { requireSuperAdmin } from "@/lib/superadmin";
+import { recordAudit } from "@/lib/audit";
 
 export async function updateUserPlatformRole(formData: FormData) {
   const currentSession = await requireSuperAdmin();
@@ -17,13 +18,15 @@ export async function updateUserPlatformRole(formData: FormData) {
     throw new Error("Anda tidak dapat mencabut hak Super Admin dari akun Anda sendiri.");
   }
 
+  const [target] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId)).limit(1);
   await db.update(user).set({ platformRole: newRole }).where(eq(user.id, userId));
+  await recordAudit(currentSession, { action: "user.role_update", summary: `Peran ${target?.email ?? userId} diubah ke ${newRole === "superadmin" ? "Super Admin" : "User"}`, metadata: { userId, newRole } });
   revalidatePath("/superadmin/users");
   revalidatePath("/superadmin");
 }
 
 export async function resetUserPassword(formData: FormData) {
-  await requireSuperAdmin();
+  const currentSession = await requireSuperAdmin();
   const userId = z.string().parse(formData.get("userId"));
   const newPassword = z.string().min(6, "Password minimal 6 karakter.").parse(formData.get("newPassword"));
 
@@ -54,6 +57,8 @@ export async function resetUserPassword(formData: FormData) {
     });
   }
 
+  const [target] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId)).limit(1);
+  await recordAudit(currentSession, { action: "user.password_reset", summary: `Mereset password ${target?.email ?? userId}`, metadata: { userId } });
   revalidatePath("/superadmin/users");
 }
 
@@ -65,6 +70,9 @@ export async function deleteUserAccount(formData: FormData) {
     throw new Error("Anda tidak dapat menghapus akun Anda sendiri.");
   }
 
+  const [target] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId)).limit(1);
+  // Logged first: the entry keeps the email after the account row is gone.
+  await recordAudit(currentSession, { action: "user.delete", summary: `Menghapus akun ${target?.email ?? userId}`, metadata: { userId, email: target?.email } });
   await db.delete(user).where(eq(user.id, userId));
   revalidatePath("/superadmin/users");
   revalidatePath("/superadmin");

@@ -8,6 +8,8 @@ import {
   selfAttendanceContext,
   uploadAttendancePhoto,
 } from "@/features/attendance/server/attendance-service";
+import { attendanceIpError } from "@/features/attendance/server/ip-whitelist";
+import { clientIp } from "@/lib/client-ip";
 
 export const runtime = "nodejs";
 
@@ -22,7 +24,8 @@ const payloadSchema = z.object({
 export async function GET(request: Request) {
   try {
     const context = await selfAttendanceContext(request);
-    return NextResponse.json(await getSelfAttendanceStatus(context));
+    const [status, networkError] = await Promise.all([getSelfAttendanceStatus(context), attendanceIpError(context.companyId, clientIp(request.headers))]);
+    return NextResponse.json({ ...status, networkError });
   } catch (error) {
     return attendanceErrorResponse(error);
   }
@@ -34,6 +37,9 @@ export async function POST(request: Request) {
     const length = Number(request.headers.get("content-length") || 0);
     if (length > 6 * 1024 * 1024) throw new AttendanceError("Ukuran request terlalu besar.", 413);
     const context = await selfAttendanceContext(request);
+    // IP whitelist is checked before the photo is uploaded.
+    const networkError = await attendanceIpError(context.companyId, clientIp(request.headers));
+    if (networkError) throw new AttendanceError(networkError, 403);
     const form = await request.formData();
     const parsed = payloadSchema.parse(Object.fromEntries(form));
     const photo = form.get("photo");

@@ -3,7 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
 import { attendanceLocations, attendances, employees, workSchedules } from "@/db/schema";
-import { attendanceManagerContext } from "@/features/attendance/server/attendance-service";
+import { AttendanceError, attendanceManagerContext } from "@/features/attendance/server/attendance-service";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,7 @@ const headers = [
   "ID Pegawai",
   "Nama Pegawai",
   "Divisi",
-  "Shift",
+  "Jadwal Kerja",
   "Jam Masuk",
   "Lokasi Masuk",
   "Jam Keluar",
@@ -51,16 +51,16 @@ export async function GET(request: Request) {
       })
       .from(attendances)
       .innerJoin(employees, eq(attendances.employeeId, employees.id))
-      .leftJoin(workSchedules, eq(attendances.shiftId, workSchedules.id))
-      .leftJoin(checkInLocation, eq(attendances.checkInLocationId, checkInLocation.id))
-      .leftJoin(checkOutLocation, eq(attendances.checkOutLocationId, checkOutLocation.id))
+      .leftJoin(workSchedules, and(eq(attendances.shiftId, workSchedules.id), eq(workSchedules.companyId, context.companyId)))
+      .leftJoin(checkInLocation, and(eq(attendances.checkInLocationId, checkInLocation.id), eq(checkInLocation.companyId, context.companyId)))
+      .leftJoin(checkOutLocation, and(eq(attendances.checkOutLocationId, checkOutLocation.id), eq(checkOutLocation.companyId, context.companyId)))
       .where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, date)))
       .orderBy(asc(employees.name));
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "TepatWaktu";
     workbook.created = new Date();
-    const sheet = workbook.addWorksheet("Presensi Harian", { views: [{ state: "frozen", ySplit: 1 }] });
+    const sheet = workbook.addWorksheet("Kehadiran", { views: [{ state: "frozen", ySplit: 1 }] });
 
     sheet.columns = [
       { header: headers[0], key: "date", width: 15 },
@@ -117,6 +117,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof AttendanceError) return Response.json({ message: error.message }, { status: error.status });
     console.error("Export daily attendance error:", error);
     return new Response(JSON.stringify({ message: "Gagal mengunduh laporan presensi." }), {
       status: 500,

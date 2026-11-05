@@ -10,8 +10,9 @@ export const metadata: Metadata = { title: "Laporan" };
 export default async function ReportsPage() {
   const context = await requireCompany();
   const today = dateInTimeZone(context.timezone);
-  const start = new Date(`${today}T00:00:00+08:00`); start.setDate(start.getDate() - 29);
-  const startDate = dateInTimeZone(context.timezone, start);
+  // 30-day window ending today in the company zone; plain calendar math, no fixed UTC offset.
+  const start = new Date(`${today}T00:00:00Z`); start.setUTCDate(start.getUTCDate() - 29);
+  const startDate = start.toISOString().slice(0, 10);
   const [byStatus, [active], byDepartment] = await Promise.all([
     db.select({ status: attendances.status, value: count() }).from(attendances).where(and(eq(attendances.companyId, context.companyId), gte(attendances.attendanceDate, startDate))).groupBy(attendances.status),
     db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))),

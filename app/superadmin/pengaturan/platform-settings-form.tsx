@@ -64,7 +64,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
     { id: "attendance", label: "Presensi Global", icon: Clock },
     { id: "storage", label: "Storage & Media", icon: HardDrive },
     { id: "security", label: "Keamanan & Sesi", icon: Shield },
-    { id: "broadcast", label: "Pengumuman Sistem", icon: Bell },
+    { id: "broadcast", label: "Pemberitahuan Sistem", icon: Bell },
   ] as const;
 
   return (
@@ -440,13 +440,13 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
         {activeTab === "broadcast" && (
           <div>
             <div className="settings-section-head">
-              <h3>Siaran Pengumuman Global</h3>
-              <p>Tampilkan banner pengumuman di bagian atas dashboard seluruh pengguna platform.</p>
+              <h3>Siaran Pemberitahuan Global</h3>
+              <p>Tampilkan banner pemberitahuan di bagian atas dashboard seluruh pengguna platform.</p>
             </div>
 
             <div style={{ maxWidth: "680px", marginBottom: "20px" }}>
               <div className="settings-toggle-row">
-                <span className="settings-toggle-label">Aktifkan Banner Pengumuman</span>
+                <span className="settings-toggle-label">Aktifkan Banner Pemberitahuan</span>
                 <label className="ui-switch">
                   <input
                     type="checkbox"
@@ -459,7 +459,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
             </div>
 
             <label className="field full">
-              <span className="field-label">Teks Pengumuman Sistem</span>
+              <span className="field-label">Teks Pemberitahuan Sistem</span>
               <textarea
                 className="input"
                 name="globalNoticeText"

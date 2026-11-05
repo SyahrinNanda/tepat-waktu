@@ -1,11 +1,13 @@
 "use server";
 
 import { and, desc, eq } from "drizzle-orm";
+import { DEFAULT_COMPANY_TIMEZONE, resolveTimeZone } from "@/lib/timezone";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { featureRecords } from "@/db/schema";
 import { requireCompanyRole } from "@/lib/current-company";
+import { whitelistEntryError } from "@/lib/client-ip";
 
 export type IpWhitelistItem = {
   id: string;
@@ -29,7 +31,7 @@ const createIpWhitelistSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-function formatDate(date: Date | string | null, tz: string = "Asia/Jakarta"): string {
+function formatDate(date: Date | string | null, tz: string = DEFAULT_COMPANY_TIMEZONE): string {
   if (!date) return "-";
   try {
     const d = new Date(date);
@@ -49,7 +51,7 @@ function formatDate(date: Date | string | null, tz: string = "Asia/Jakarta"): st
 
 export async function fetchIpWhitelistsAction(): Promise<IpWhitelistItem[]> {
   const context = await requireCompanyRole(["admin"]);
-  const tz = context.timezone || "Asia/Jakarta";
+  const tz = resolveTimeZone(context.timezone);
 
   const rows = await db
     .select({
@@ -102,6 +104,10 @@ export async function createIpWhitelistAction(
       if (validIps.length === 0) {
         return { ok: false, error: "Masukkan minimal satu alamat IP." };
       }
+      for (const ip of validIps) {
+        const invalid = whitelistEntryError({ type: "satuan_wildcard", ip });
+        if (invalid) return { ok: false, error: invalid };
+      }
 
       // Insert each IP
       for (const ip of validIps) {
@@ -125,6 +131,8 @@ export async function createIpWhitelistAction(
     } else {
       const rangeFrom = parsed.data.rangeFrom.trim();
       const rangeTo = parsed.data.rangeTo.trim();
+      const invalidRange = whitelistEntryError({ type: "rentang", rangeFrom, rangeTo });
+      if (invalidRange) return { ok: false, error: invalidRange };
 
       await db.insert(featureRecords).values({
         companyId: context.companyId,

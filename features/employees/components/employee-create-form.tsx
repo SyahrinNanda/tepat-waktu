@@ -7,9 +7,9 @@ import { SubmitButton } from "@/components/submit-button";
 import { createEmployee } from "@/features/workforce/server/actions";
 
 type Option = { id: string; name: string };
-export function EmployeeCreateForm({ divisions, positions, today }: { divisions: Option[]; positions: Option[]; today: string }) {
+export function EmployeeCreateForm({ divisions, positions, today, disabled = false }: { divisions: Option[]; positions: Option[]; today: string; disabled?: boolean }) {
   return <form action={createEmployee} className="employee-create-card">
-    <div className="employee-create-head"><h2>Detail Karyawan</h2><div><Link className="btn btn-outline" href="/dashboard/karyawan">Batalkan</Link><SubmitButton pendingLabel="Menyimpan..."><Save size={15}/> Simpan</SubmitButton></div></div>
+    <div className="employee-create-head"><h2>Detail Karyawan</h2><div><Link className="btn btn-outline" href="/dashboard/karyawan">Batalkan</Link>{disabled ? <button className="btn btn-primary" type="button" disabled title="Batas karyawan paket tercapai"><Save size={15}/> Simpan</button> : <SubmitButton pendingLabel="Menyimpan..."><Save size={15}/> Simpan</SubmitButton>}</div></div>
     <div className="employee-upload-grid"><UploadField name="profilePhoto" label="Upload foto karyawan"/><UploadField name="selfiePhoto" label="Upload foto selfie karyawan"/><UploadField name="identityCard" label="Upload foto KTP karyawan"/><UploadField name="certificate" label="Upload foto ijazah dan sertifikat" accept="image/jpeg,image/png,image/webp,application/pdf"/></div>
     <div className="employee-form-columns"><div>
       <Field label="Nama Karyawan"><input name="name" placeholder="Nama Karyawan..." required/></Field>

@@ -1,36 +1,34 @@
-# Status implementasi terhadap Main Feature
+# Status implementasi
 
-Tanggal audit: 16 Oktober 2026. Acuan: 68 screenshot di `Main Feature` dan `PRD-TepatWaktu-Main-Feature.md`.
+Diperbarui: 5 November 2026 (audit awal 16 Oktober 2026). Acuan awal: 68 screenshot di `Main Feature` dan `PRD-TepatWaktu-Main-Feature.md`.
+
+## Fitur yang dihentikan
+
+Payroll lama (istilah payroll), kasbon, klaim beban, dan laporan keuangan **tidak dilanjutkan** (keputusan 5 November 2026). Tabel, kategori file, dan CSS-nya sudah dibuang lewat migrasi `0034_remove_finance_leftovers`. Penggantinya untuk urusan gaji adalah **Daftar Gaji Karyawan** dan **Slip Gaji** di bawah.
 
 ## Sudah tersambung ke data nyata
 
-- Better Auth: login, registrasi, sesi, profil, ganti kata sandi; role superadmin dan role perusahaan.
-- PostgreSQL + Drizzle: perusahaan, anggota, karyawan, jadwal, presensi, izin/cuti, modul record, paket, invoice, konfigurasi.
-- Presensi: check-in/out kamera langsung, penyimpanan foto privat di object storage, input oleh admin/superadmin, laporan harian/bulanan.
-- Modul daftar/detail/form: pengumuman, master data, lembur, kasbon, klaim beban, kunjungan, istilah, pembayaran kasbon, laporan keuangan, IP whitelist. CRUD tersimpan dan dibatasi perusahaan/role.
-- Karyawan: daftar dan detail, user login per role, profil gaji per karyawan, laporan cuti dari pengajuan nyata.
-- Payroll: input komponen draft dan preferensi payroll tersimpan.
-- Langganan: 12 paket tersimpan, pengajuan invoice per perusahaan, verifikasi manual superadmin, paket aktif diperbarui setelah disetujui.
-- Pengaturan: profil akun, identitas perusahaan, identitas platform, paket/harga.
-- Superadmin: memilih tenant setelah login, masuk ke dashboard tenant dengan tampilan dan hak Admin, mengganti tenant, mengelola seluruh akun tenant, serta kembali ke pengaturan paket/langganan platform.
-- Tampilan: dasar sidebar, header, tabel, drawer form, paket grid, dan login diselaraskan dengan pola screenshot tanpa menyalin logo/identitas merek sumber.
+- **Akun (Better Auth saja):** login email/password, pendaftaran perusahaan dengan verifikasi email, lupa/atur ulang password, sesi, ganti password, role superadmin dan role perusahaan. Penghapusan akun: pengguna mengajukan di `/penghapusan-akun`, mengonfirmasi lewat tautan email (24 jam), lalu superadmin memproses atau menolak di Superadmin → Permintaan Hapus Akun; pemohon menerima email hasilnya. Tidak ada Supabase dan login Google. Detail: `docs/AUTH.md`.
+- **Email:** verifikasi akun, reset password, konfirmasi dan hasil penghapusan akun, dan pengingat langganan lewat fallback Brevo → Mailjet → Mailtrap dengan penghitung kuota harian (`lib/mailer.ts`).
+- **Presensi:** check-in/out kamera langsung, IP whitelist per perusahaan, aman untuk check-in serentak, foto privat di object storage, input oleh admin/superadmin, kehadiran harian, laporan bulanan, riwayat.
+- **Pengajuan:** izin/cuti dan lembur dengan persetujuan, laporan cuti.
+- **Karyawan:** daftar, detail, user login per role, keluhan karyawan.
+- **Gaji:** Daftar Gaji Karyawan (basis gaji, upah lembur, kompensasi, potongan per karyawan) dan Slip Gaji bulanan dari kehadiran, izin/cuti, dan lembur, dengan kunci slip. Aturan hitung: `docs/SLIP-GAJI.md`.
+- **Kunjungan:** daftar dan laporan kunjungan.
+- **Master data:** jadwal kerja, hari dan waktu kerja, divisi, jabatan, lokasi kerja, pemberitahuan.
+- **Langganan:** batas jumlah karyawan aktif sesuai paket; katalog paket (Free Trial sampai Enterprise) dan paket custom >1000 karyawan; invoice, kupon diskon (termasuk di form pendaftaran), verifikasi manual superadmin; akses diblokir saat paket berakhir; peringatan H-5/H-2 di dashboard dan email ke admin.
+- **Superadmin:** kelola perusahaan dan akun, masuk ke tenant, analitik bidang usaha, retensi dan monitor kapasitas, laporan pendapatan (ekspor Excel), konversi trial, kupon, pengumuman platform, log aktivitas, ubah tanggal daftar dan jatuh tempo.
+- **Zona waktu:** tanggal operasional perusahaan (hari presensi, laporan, tanggal langganan yang dilihat perusahaan) memakai zona waktu perusahaan (`companies.timezone`). Halaman superadmin memakai WITA sebagai zona waktu platform.
+- **Deploy:** `Dockerfile`, `docker-compose.yml` (lokal), dan `docker-compose.prod.yml` untuk VPS + Coolify + Cloudflare R2 (`docs/DEPLOY-VPS-COOLIFY.md`).
 
-## Belum setara penuh dengan PRD atau screenshot
+## Belum lengkap
 
-- Beberapa layout dan interaksi detail dari 68 screenshot belum diuji pixel-by-pixel; kesetaraan visual penuh belum terverifikasi.
-- Record master shift/jam kerja/divisi/jabatan/lokasi belum menjadi referensi relasional wajib pada karyawan, jadwal, dan validasi presensi. Data tersimpan tetapi aturan bisnis lintas-modul belum lengkap.
-- IP whitelist baru berupa konfigurasi tersimpan; belum membatasi akses, agar presensi tidak terblokir tanpa kebijakan yang jelas.
-- Kasbon, klaim beban, kunjungan, istilah dan laporan keuangan memakai record tenant-scoped; perhitungan saldo/cicilan, alur bukti berlapis, dan agregasi laporan belum lengkap.
-- Profil gaji tidak otomatis menjadi payroll. Preferensi payroll tidak otomatis diterapkan; pajak, BPJS, slip final, dan proses pembayaran gaji belum tersedia.
-- Paket belum membatasi jumlah karyawan atau akses fitur secara otomatis. Tidak ada gateway pembayaran/webhook; verifikasi paket berbayar bersifat manual dan tidak membuktikan transfer melalui aplikasi.
-- Kuota laporan cuti saat ini diasumsikan 12 hari kalender per karyawan; belum ada kebijakan cuti per perusahaan dan kalender hari kerja/libur.
-- Belum ada audit log perubahan umum, tes E2E lengkap, dan tes isolasi tenant menyeluruh.
-
-## Verifikasi yang dijalankan
-
-- `npm run db:generate`, `npm run db:migrate`, `npm run db:seed`: berhasil.
-- `npm run build`, `npm run lint`: berhasil.
-- Login admin/superadmin, halaman utama tiap peran, API CRUD record, dan penolakan 403 untuk karyawan pada master shift: berhasil.
-- Akun demo dapat dicek ulang dengan `npm run accounts:demo`.
+- **Pembayaran:** tidak ada payment gateway atau webhook; aktivasi paket berbayar diverifikasi manual oleh superadmin.
+- **Lokasi presensi:** geofence memakai koordinat browser yang bisa dipalsukan; untuk kantor tetap gunakan IP whitelist.
+- **Master data:** shift, divisi, jabatan, dan lokasi belum menjadi referensi relasional wajib di semua aturan presensi lintas modul.
+- **Gaji:** belum ada perhitungan pajak dan BPJS otomatis, serta proses pembayaran gaji.
+- **Cuti:** kuota diasumsikan 12 hari per karyawan; belum ada kebijakan cuti per perusahaan dan kalender hari libur.
+- **Pengujian:** belum ada tes E2E otomatis menyeluruh dan tes isolasi tenant; pengiriman email lewat layanan SMTP sungguhan dan deploy VPS belum diuji (lihat `docs/CATATAN-PRIORITAS.md`).
+- **Tampilan:** kesetaraan pixel-by-pixel dengan 68 screenshot acuan belum diverifikasi.
 
 Dokumen ini adalah audit status, bukan klaim selesai seluruh PRD.

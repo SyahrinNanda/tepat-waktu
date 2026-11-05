@@ -8,7 +8,7 @@ import { attendanceEvents, attendances, employees, user } from "@/db/schema";
 import { requireCompanyRole } from "@/lib/current-company";
 import { StatusBadge } from "@/components/status-badge";
 
-export const metadata: Metadata = { title: "Detail Presensi Harian" };
+export const metadata: Metadata = { title: "Detail Kehadiran" };
 type Props = { params: Promise<{ id: string }> };
 
 export default async function Page({ params }: Props) {

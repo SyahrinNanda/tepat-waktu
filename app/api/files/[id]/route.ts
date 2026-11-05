@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { companyMembers, employees, fileAssets } from "@/db/schema";
 import { AttendanceError, authenticatedActor } from "@/features/attendance/server/attendance-service";
 import { getPrivateObject } from "@/lib/object-storage";
+import { getSubscriptionStatus, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/features/subscriptions/server/subscription-status";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (actor.platformRole !== "superadmin") {
       const [membership] = await db.select({ role: companyMembers.role }).from(companyMembers).where(and(eq(companyMembers.companyId, asset.companyId), eq(companyMembers.userId, actor.userId))).limit(1);
       if (!membership) throw new AttendanceError("Anda tidak memiliki akses ke file ini.", 403);
+      // Admins keep file access (e.g. payment proofs) so they can renew; other members are locked out.
+      if (!["admin", "owner"].includes(membership.role) && (await getSubscriptionStatus(asset.companyId)).state === "expired") throw new AttendanceError(SUBSCRIPTION_EXPIRED_MESSAGE, 402);
       if (asset.category === "announcement_image") {
         const object = await getPrivateObject(asset.bucket, asset.objectKey);
         return new Response(Buffer.from(object.bytes), {
@@ -25,12 +28,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       }
       if (!["admin", "owner"].includes(membership.role) && asset.uploadedBy !== actor.userId) {
         const [employee] = await db.select({ id: employees.id }).from(employees).where(and(eq(employees.companyId, asset.companyId), eq(employees.userId, actor.userId))).limit(1);
-        const isManager = ["general_manager", "hrd", "manager"].includes(membership.role);
-        const canReviewClaim = asset.category === "claim_attachment" && isManager;
         const canReviewDocument = asset.category === "employee_document" && ["general_manager", "hrd"].includes(membership.role);
         const canReviewVisit = asset.category === "visit_attachment" && ["general_manager", "hrd", "manager"].includes(membership.role);
-        const canReviewPayslip = asset.category === "payslip" && ["general_manager", "hrd", "admin", "owner"].includes(membership.role);
-        if (!canReviewClaim && !canReviewDocument && !canReviewVisit && !canReviewPayslip && (!employee || employee.id !== asset.ownerEmployeeId)) throw new AttendanceError("Anda tidak memiliki akses ke file ini.", 403);
+        if (!canReviewDocument && !canReviewVisit && (!employee || employee.id !== asset.ownerEmployeeId)) throw new AttendanceError("Anda tidak memiliki akses ke file ini.", 403);
       }
     }
 

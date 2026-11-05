@@ -13,7 +13,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const parsed = schema.safeParse(await request.json().catch(() => null)); if (!parsed.success) return Response.json({ error: "Data shift tidak valid." }, { status: 400 });
   try {
     const [row] = await db.update(workSchedules).set(parsed.data).where(and(eq(workSchedules.id, (await params).id), eq(workSchedules.companyId, context.companyId))).returning();
-    if (!row) return Response.json({ error: "Shift tidak ditemukan." }, { status: 404 });
+    if (!row) return Response.json({ error: "Jadwal kerja tidak ditemukan." }, { status: 404 });
     revalidatePath("/dashboard/master/shift"); return Response.json({ row });
   } catch (error) { console.error("Update shift failed", error); return Response.json({ error: "Perubahan shift belum dapat disimpan." }, { status: 409 }); }
 }
@@ -22,7 +22,7 @@ export async function DELETE(request: Request, { params }: Params) {
   const context = await featureContext(request, "master/shift", "manage"); if ("error" in context) return context.error;
   try {
     const [row] = await db.delete(workSchedules).where(and(eq(workSchedules.id, (await params).id), eq(workSchedules.companyId, context.companyId))).returning({ id: workSchedules.id });
-    if (!row) return Response.json({ error: "Shift tidak ditemukan." }, { status: 404 });
+    if (!row) return Response.json({ error: "Jadwal kerja tidak ditemukan." }, { status: 404 });
     revalidatePath("/dashboard/master/shift"); revalidatePath("/dashboard/master/jam-kerja"); return Response.json({ ok: true });
-  } catch { return Response.json({ error: "Shift masih digunakan oleh divisi. Pindahkan divisi terlebih dahulu." }, { status: 409 }); }
+  } catch { return Response.json({ error: "Jadwal kerja masih digunakan oleh divisi. Pindahkan divisi terlebih dahulu." }, { status: 409 }); }
 }

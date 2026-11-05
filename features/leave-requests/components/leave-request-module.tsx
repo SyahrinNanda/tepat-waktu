@@ -10,7 +10,7 @@ export async function LeaveRequestModule() {
   const [team, rows] = await Promise.all([
     db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department }).from(employees)
       .where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"), canReview ? undefined : eq(employees.userId, context.session.user.id))).orderBy(asc(employees.name)),
-    db.select({ id: leaveRequests.id, employeeId: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, type: leaveRequests.type, startDate: leaveRequests.startDate, endDate: leaveRequests.endDate, reason: leaveRequests.reason, status: leaveRequests.status, createdAt: leaveRequests.createdAt })
+    db.select({ id: leaveRequests.id, employeeId: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, type: leaveRequests.type, startDate: leaveRequests.startDate, endDate: leaveRequests.endDate, reason: leaveRequests.reason, status: leaveRequests.status, paid: leaveRequests.paid, createdAt: leaveRequests.createdAt })
       .from(leaveRequests).innerJoin(employees, eq(leaveRequests.employeeId, employees.id))
       .where(and(eq(leaveRequests.companyId, context.companyId), canReview ? undefined : eq(employees.userId, context.session.user.id))).orderBy(desc(leaveRequests.createdAt)),
   ]);

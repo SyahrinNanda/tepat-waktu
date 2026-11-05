@@ -13,7 +13,7 @@ export default function AccountDeletionPage() {
         <Link href="/" className="account-deletion-back"><ArrowLeft size={16} /> Kembali ke login</Link>
         <span className="login-form-kicker">PENGELOLAAN AKUN</span>
         <h1>Penghapusan akun</h1>
-        <p className="login-form-lead">Masukkan email akun yang ingin dihapus. Permintaan Anda akan dicatat untuk ditinjau administrator. Akun tidak langsung dihapus setelah formulir dikirim.</p>
+        <p className="login-form-lead">Masukkan email akun yang ingin dihapus. Kami akan mengirim tautan konfirmasi ke email tersebut. Setelah dikonfirmasi, permintaan ditinjau administrator dan hasilnya dikabarkan lewat email. Akun tidak langsung dihapus.</p>
         <RequestForm type="deletion" />
       </div>
     </AuthShell>

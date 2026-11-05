@@ -15,7 +15,6 @@ export type VisitRow = {
 };
 
 export type VisitEmployeeOption = { id: string; name: string; employeeCode: string };
-export type VisitLocationOption = { id: string; name: string; latitude: number; longitude: number };
 
 export type VisitReportRow = {
   employeeId: string;

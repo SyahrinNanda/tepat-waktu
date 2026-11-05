@@ -132,6 +132,27 @@ Warna charcoal (hitam) dinilai menghilangkan nuansa Jago, jadi semua panel gelap
   - Daftar administrator berupa baris dengan avatar, nama, email, dan pil peran. Sebelumnya teksnya menempel ke tepi kartu.
 - **Topbar**: latar dibuat hampir solid dengan garis bawah tipis, supaya judul halaman tidak tampak hilang tertutup saat halaman di-scroll.
 
+## Revisi 3: Istilah menu
+
+| Lama | Baru |
+|---|---|
+| Dashboard | Beranda |
+| Pengumuman | Pemberitahuan |
+| Shift | Jadwal Kerja |
+| Jam Kerja | Hari dan Waktu Kerja |
+| Lokasi Presensi | Lokasi Kerja |
+| Presensi (grup menu) | Kehadiran |
+| Riwayat Presensi | Riwayat (judul halaman: "Riwayat Kehadiran Saya/Karyawan") |
+| Presensi Harian | Kehadiran |
+| Presensi Bulanan (judul halaman) | Laporan Kehadiran Bulanan |
+
+- Urutan grup sidebar: **Karyawan** sekarang di atas **Pengajuan Karyawan**.
+- Istilah baru dipakai di sidebar, judul dan breadcrumb halaman, tombol, judul modal, header tabel, pesan error API, dan header kolom ekspor Excel kehadiran harian.
+- Yang tidak diubah:
+  - URL, misalnya `/dashboard/master/shift` dan `/dashboard/pengumuman`, supaya bookmark dan tautan lama tetap jalan.
+  - Nama variabel dan kode.
+  - Kolom "Jam Kerja" di laporan bulanan serta "Jumlah Jam Kerja (Aktual)", karena keduanya berarti jumlah jam, bukan nama menu.
+
 ## Belum tercakup penuh
 
 - Halaman **Pengaturan → Aplikasi, IP Whitelist, User Level, User Login** memakai style inline di TSX. Halaman ini sudah mendapat warna dan font baru, tetapi bentuk kartu dan tabelnya belum mengikuti layout baru. Supaya ikut, style inline perlu dipindah ke kelas CSS.

@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { employees, fileAssets } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
 import { deletePrivateObject, putPrivateObject } from "@/lib/object-storage";
-import { compressUpload } from "@/lib/file-compression";
+import { compressUpload, storedFileName } from "@/lib/file-compression";
 
 export const runtime = "nodejs";
 
@@ -19,21 +19,21 @@ export async function POST(request: Request) {
   const sourceBytes = new Uint8Array(await file.arrayBuffer());
   const format = detectFormat(sourceBytes);
   if (!format) return Response.json({ error: "Format file harus PDF, JPEG, PNG, atau WebP." }, { status: 415 });
-  const compressed = await compressUpload(sourceBytes, format.contentType);
+  const compressed = await compressUpload(sourceBytes, format.contentType, format.extension, "detail");
   const bytes = compressed.bytes;
   const checksum = createHash("sha256").update(bytes).digest("hex");
-  const key = `companies/${context.companyId}/features/${context.module.replaceAll("/", "-")}/${randomUUID()}.${format.extension}`;
+  const key = `companies/${context.companyId}/features/${context.module.replaceAll("/", "-")}/${randomUUID()}.${compressed.extension}`;
   const [employee] = await db.select({ id: employees.id }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.userId, context.userId))).limit(1);
   let stored: { bucket: string; key: string } | undefined;
   try {
-    stored = await putPrivateObject({ key, body: bytes, contentType: format.contentType, storageCompression: compressed.storageCompression, metadata: { company: context.companyId, module: context.module, sha256: checksum, uploadQuality: "70" } });
+    stored = await putPrivateObject({ key, body: bytes, contentType: compressed.contentType, storageCompression: compressed.storageCompression, metadata: { company: context.companyId, module: context.module, sha256: checksum, uploadQuality: String(compressed.quality ?? "original") } });
     const [asset] = await db.insert(fileAssets).values({
       companyId: context.companyId, ownerEmployeeId: employee?.id ?? null, uploadedBy: context.userId,
       category: "employee_document",
-      bucket: stored.bucket, objectKey: stored.key, originalName: file.name || `lampiran.${format.extension}`,
-      contentType: format.contentType, byteSize: bytes.byteLength, checksumSha256: checksum,
+      bucket: stored.bucket, objectKey: stored.key, originalName: storedFileName(file.name, "lampiran", compressed.extension),
+      contentType: compressed.contentType, byteSize: bytes.byteLength, checksumSha256: checksum,
     }).returning({ id: fileAssets.id });
-    return Response.json({ id: asset.id, url: `/api/files/${asset.id}`, name: file.name });
+    return Response.json({ id: asset.id, url: `/api/files/${asset.id}`, name: storedFileName(file.name, "lampiran", compressed.extension) });
   } catch (error) {
     if (stored) await deletePrivateObject(stored.bucket, stored.key).catch(() => undefined);
     console.error("Feature upload failed", error);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { employees, visitLocations } from "@/db/schema";
+import { employees } from "@/db/schema";
 import { VisitListManager } from "@/features/visits/components/visit-list-manager";
 import { listVisits } from "@/features/visits/server/visit-service";
 import { dateInTimeZone, requireCompany } from "@/lib/current-company";
@@ -10,10 +10,17 @@ export const metadata: Metadata = { title: "Daftar Kunjungan" };
 
 export default async function Page() {
   const context = await requireCompany();
-  const [rows, employeeRows, locations] = await Promise.all([
+  const today = dateInTimeZone(context.timezone);
+  if (context.role === "employee") {
+    // Staff see and record only their own visits.
+    const [own] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode }).from(employees)
+      .where(and(eq(employees.companyId, context.companyId), eq(employees.userId, context.session.user.id), eq(employees.status, "active"))).limit(1);
+    const rows = own ? await listVisits(context.companyId, undefined, undefined, own.id) : [];
+    return <VisitListManager initialRows={rows} employees={own ? [own] : []} today={today} canWrite={Boolean(own)}/>;
+  }
+  const [rows, employeeRows] = await Promise.all([
     listVisits(context.companyId),
     db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode }).from(employees).where(eq(employees.companyId, context.companyId)).orderBy(asc(employees.name)),
-    db.select({ id: visitLocations.id, name: visitLocations.name, latitude: visitLocations.latitude, longitude: visitLocations.longitude }).from(visitLocations).where(eq(visitLocations.companyId, context.companyId)).orderBy(asc(visitLocations.name)),
   ]);
-  return <VisitListManager initialRows={rows} employees={employeeRows} locations={locations} today={dateInTimeZone(context.timezone)} canWrite={["owner", "admin", "general_manager", "hrd", "manager"].includes(context.role)}/>;
+  return <VisitListManager initialRows={rows} employees={employeeRows} today={today} canWrite={["owner", "admin", "general_manager", "hrd", "manager"].includes(context.role)}/>;
 }

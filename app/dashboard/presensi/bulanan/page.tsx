@@ -6,7 +6,7 @@ import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
 import { MonthlyAttendanceManager } from "@/features/attendance/components/monthly-attendance-manager";
 import { fetchMonthlyAttendanceSummary } from "@/features/attendance/server/monthly-service";
 
-export const metadata: Metadata = { title: "Laporan Presensi Bulanan" };
+export const metadata: Metadata = { title: "Laporan Laporan Kehadiran Bulanan" };
 
 type Props = {
   searchParams: Promise<{

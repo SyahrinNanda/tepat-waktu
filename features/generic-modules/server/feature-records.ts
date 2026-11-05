@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { companies, companyMembers, featureRecords, user } from "@/db/schema";
 import { canManageFeature, canReadFeature, canWriteFeature, isFeatureModule } from "@/features/generic-modules/config/feature-modules";
 import { selectedCompanyFromRequest } from "@/lib/selected-company";
+import { subscriptionBlock } from "@/features/subscriptions/server/subscription-status";
 
 export async function featureContext(request: Request, module: string, operation: "read" | "write" | "manage") {
   if (!isFeatureModule(module)) return { error: Response.json({ error: "Fitur tidak ditemukan." }, { status: 404 }) } as const;
@@ -21,6 +22,8 @@ export async function featureContext(request: Request, module: string, operation
   if (!membership) return { error: Response.json({ error: "Perusahaan tidak ditemukan." }, { status: 403 }) } as const;
   const allowed = operation === "read" ? canReadFeature(module, membership.role) : operation === "write" ? canWriteFeature(module, membership.role) : canManageFeature(module, membership.role);
   if (!allowed) return { error: Response.json({ error: "Tidak memiliki akses ke fitur ini." }, { status: 403 }) } as const;
+  const blocked = await subscriptionBlock(membership.companyId);
+  if (blocked) return { error: blocked } as const;
   return { module, companyId: membership.companyId, role: membership.role, userId: session.user.id, userName: session.user.name, isSuperAdmin: false } as const;
 }
 

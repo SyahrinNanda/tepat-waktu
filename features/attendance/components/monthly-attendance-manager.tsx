@@ -223,7 +223,7 @@ export function MonthlyAttendanceManager({
             <span className="breadcrumb-separator">/</span>
             <Link href="/dashboard/presensi/harian">Presensi</Link>
             <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-current">Laporan Presensi Bulanan</span>
+            <span className="breadcrumb-current">Laporan Laporan Kehadiran Bulanan</span>
           </nav>
         </div>
       </header>
@@ -363,7 +363,7 @@ export function MonthlyAttendanceManager({
           </div>
         </div>
 
-        {/* ROW 2: Dropdowns Lokasi, Divisi, Shift matching Gambar 1 */}
+        {/* ROW 2: Dropdowns Lokasi, Divisi, Jadwal Kerja matching Gambar 1 */}
         {filterPanelOpen ? <div className="monthly-toolbar-row-2" id="monthly-advanced-filters">
           {/* Lokasi */}
           <div className="monthly-field-group">
@@ -399,15 +399,15 @@ export function MonthlyAttendanceManager({
             </select>
           </div>
 
-          {/* Shift */}
+          {/* Jadwal Kerja */}
           <div className="monthly-field-group">
-            <label className="monthly-field-label">Shift</label>
+            <label className="monthly-field-label">Jadwal Kerja</label>
             <select
               value={selectedShift}
               onChange={(e) => setSelectedShift(e.target.value)}
               className="monthly-select-dropdown"
             >
-              <option value="">Pilih Shift</option>
+              <option value="">Pilih Jadwal Kerja</option>
               {shifts.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} ({s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)})

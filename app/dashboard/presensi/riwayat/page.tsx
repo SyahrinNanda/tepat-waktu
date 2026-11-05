@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { AttendanceEmployeeFilter, type AttendanceEmployeeOption } from "@/features/attendance/components/attendance-employee-filter";
 import { requireCompany } from "@/lib/current-company";
 
-export const metadata: Metadata = { title: "Riwayat Presensi" };
+export const metadata: Metadata = { title: "Riwayat" };
 
 type PageProps = {
   searchParams: Promise<{ month?: string; year?: string; employeeId?: string }>;
@@ -137,8 +137,8 @@ export default async function Page({ searchParams }: PageProps) {
   return <>
     <header className="product-page-header attendance-history-header">
       <div>
-        <span className="breadcrumb">Presensi / Riwayat {canSelectEmployee ? "Karyawan" : "Saya"}</span>
-        <h1>{canSelectEmployee ? "Riwayat Presensi Karyawan" : "Riwayat Presensi Saya"}</h1>
+        <span className="breadcrumb">Kehadiran / Riwayat {canSelectEmployee ? "Karyawan" : "Saya"}</span>
+        <h1>{canSelectEmployee ? "Riwayat Kehadiran Karyawan" : "Riwayat Kehadiran Saya"}</h1>
         <p>{employee.name} · {employee.code} · {employee.position}, {employee.department}</p>
       </div>
       {!canSelectEmployee ? <Link className="btn btn-primary" href="/dashboard/presensi/check-in"><Camera size={16} /> Buka Presensi</Link> : null}
@@ -161,7 +161,7 @@ export default async function Page({ searchParams }: PageProps) {
       </form>
 
       {rows.length ? <div className="table-scroll"><table className="data-table attendance-history-table">
-        <thead><tr><th>Tanggal</th><th>Shift</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Bukti Foto</th><th>Catatan</th></tr></thead>
+        <thead><tr><th>Tanggal</th><th>Jadwal Kerja</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Bukti Foto</th><th>Catatan</th></tr></thead>
         <tbody>{rows.map((row) => {
           const events = eventsByAttendance.get(row.id) ?? [];
           const checkInEvent = events.find((event) => event.type === "check_in");

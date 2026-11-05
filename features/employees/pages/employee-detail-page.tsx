@@ -36,7 +36,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <div className="employee-detail-copy"><h2>{employee.name.toUpperCase()}</h2><div className="employee-detail-grid">
         <Info label="Nomor Induk" value={employee.employeeCode}/><Info label="Jenis Kelamin" value={gender(employee.gender)}/>
         <Info label="Jabatan" value={employee.position}/><Info label="No. Handphone" value={employee.phone}/>
-        <Info label="Divisi" value={employee.department}/><Info label="Lokasi Presensi" value={employee.allAttendanceLocations ? "Semua Lokasi Perusahaan" : "Lokasi Tertentu"}/>
+        <Info label="Divisi" value={employee.department}/><Info label="Lokasi Kerja" value={employee.allAttendanceLocations ? "Semua Lokasi Perusahaan" : "Lokasi Tertentu"}/>
         <Info label="Email" value={employee.email}/><Info label="Alamat" value={employee.address}/>
         <Info label="Tanggal Lahir" value={employee.birthDate}/><Info label="Foto Selfie" value={documents.selfie ? "Lihat foto" : "–"} href={documents.selfie ? `/api/files/${documents.selfie}` : undefined}/>
         <Info label="Tgl Karyawan Bergabung" value={employee.joinedAt}/><Info label="Foto KTP" value={documents.identity_card ? "Lihat dokumen" : "–"} href={documents.identity_card ? `/api/files/${documents.identity_card}` : undefined}/>
@@ -44,7 +44,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </div></div>
     </section>
     <section className="employee-detail-tabs-card">
-      <nav className="employee-detail-tabs"><span>Presensi</span><button>Lokasi Kunjungan</button><button>Absen Kunjungan</button><button>Kontrak Kerja</button><button>Daftar Lembur ({overtimeRows.length})</button><button>Daftar Inventaris</button><button>Daftar Device</button></nav>
+      <nav className="employee-detail-tabs"><span>Presensi</span><button>Absen Kunjungan</button><button>Kontrak Kerja</button><button>Daftar Lembur ({overtimeRows.length})</button><button>Daftar Inventaris</button><button>Daftar Device</button></nav>
       <h3>Laporan Presensi Karyawan</h3>
       <form className="employee-report-filters"><label>Filter Bulan<select name="month" defaultValue={month}>{months.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select></label><label>Filter Tahun<select name="year" defaultValue={year}>{[year - 1, year, year + 1].map((item) => <option key={item}>{item}</option>)}</select></label><button className="btn btn-outline" type="submit">Tampilkan</button></form>
       <div className="employee-report-summary"><Info label="Jumlah Hari" value={`${new Date(Date.UTC(year, month, 0)).getUTCDate()} Hari`}/><Info label="Jumlah Presensi" value={`${attendanceRows.length} Hari`}/><Info label="Jumlah Berangkat Tepat Waktu" value={`${present} Hari`}/><Info label="Jumlah Terlambat" value={`${late} Hari`}/><Info label="Jumlah Izin/Cuti/Sakit" value={`${leaveRows.length + leave} Hari`}/><Info label="Jumlah Lembur" value={`${overtimeRows.length} Hari`}/><Info label="Jumlah Jam Kerja Aktual" value={`${workedMinutes} Menit`}/><Info label="Jumlah Alpa" value={`${absent} Hari`}/></div>

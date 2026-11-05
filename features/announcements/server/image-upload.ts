@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { fileAssets } from "@/db/schema";
 import { deletePrivateObject, putPrivateObject } from "@/lib/object-storage";
-import { compressUpload } from "@/lib/file-compression";
+import { compressUpload, storedFileName } from "@/lib/file-compression";
 
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 
@@ -16,17 +16,17 @@ export async function storeAnnouncementImage(file: File, companyId: string, user
   const sourceBytes = new Uint8Array(await file.arrayBuffer());
   const format = detectImageFormat(sourceBytes);
   if (!format) throw new ImageUploadError("Format gambar harus JPEG, PNG, atau WebP.", 415);
-  const compressed = await compressUpload(sourceBytes, format.contentType);
+  const compressed = await compressUpload(sourceBytes, format.contentType, format.extension, "detail");
   const bytes = compressed.bytes;
   const checksum = createHash("sha256").update(bytes).digest("hex");
-  const key = `companies/${companyId}/announcements/${randomUUID()}.${format.extension}`;
+  const key = `companies/${companyId}/announcements/${randomUUID()}.${compressed.extension}`;
   let stored: { bucket: string; key: string } | undefined;
   try {
-    stored = await putPrivateObject({ key, body: bytes, contentType: format.contentType, storageCompression: compressed.storageCompression, metadata: { company: companyId, sha256: checksum, uploadQuality: "70" } });
+    stored = await putPrivateObject({ key, body: bytes, contentType: compressed.contentType, storageCompression: compressed.storageCompression, metadata: { company: companyId, sha256: checksum, uploadQuality: String(compressed.quality ?? "original") } });
     const [asset] = await db.insert(fileAssets).values({
       companyId, uploadedBy: userId, category: "announcement_image", bucket: stored.bucket,
-      objectKey: stored.key, originalName: file.name || `pengumuman.${format.extension}`,
-      contentType: format.contentType, byteSize: bytes.byteLength, checksumSha256: checksum,
+      objectKey: stored.key, originalName: storedFileName(file.name, "pengumuman", compressed.extension),
+      contentType: compressed.contentType, byteSize: bytes.byteLength, checksumSha256: checksum,
     }).returning();
     return asset;
   } catch (error) {

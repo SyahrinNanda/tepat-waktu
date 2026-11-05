@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { announcements } from "@/db/schema";
 import { requireCompany } from "@/lib/current-company";
 
-export const metadata: Metadata = { title: "Daftar Pengumuman" };
+export const metadata: Metadata = { title: "Daftar Pemberitahuan" };
 
 export default async function Page() {
   const context = await requireCompany();

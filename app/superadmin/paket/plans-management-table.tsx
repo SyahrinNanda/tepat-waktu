@@ -10,6 +10,7 @@ export type PlanItem = {
   name: string;
   monthlyPrice: number;
   maxEmployees: number;
+  trialDays: number;
   description: string;
   active: boolean;
   createdAt: Date;
@@ -167,9 +168,10 @@ export function PlansManagementTable({ plans }: { plans: PlanItem[] }) {
                 <td>
                   <span style={{ fontWeight: 600 }}>{formatRupiah(plan.monthlyPrice)}</span>
                   {plan.monthlyPrice > 0 ? <small style={{ color: "var(--muted)" }}> / bln</small> : null}
+                  {plan.monthlyPrice > 0 ? <small style={{ display: "block", color: "var(--muted)" }}>{formatRupiah(Math.round(plan.monthlyPrice / Math.max(plan.maxEmployees, 1)))} / karyawan</small> : plan.trialDays > 0 ? <small style={{ display: "block", color: "var(--muted)" }}>Trial {plan.trialDays} hari</small> : null}
                 </td>
                 <td>
-                  <span className="badge blue">{plan.maxEmployees} Karyawan</span>
+                  <span className="badge blue">{plan.maxEmployees.toLocaleString("id-ID")} Karyawan</span>
                 </td>
                 <td style={{ maxWidth: "260px" }}>
                   <span style={{ color: "var(--muted)", fontSize: "12.5px" }}>{plan.description}</span>
@@ -280,6 +282,11 @@ export function PlansManagementTable({ plans }: { plans: PlanItem[] }) {
                 </div>
 
                 <label className="field">
+                  <span className="field-label">Masa Trial Gratis (hari)</span>
+                  <input className="input" name="trialDays" type="number" min="0" max="365" defaultValue="0" />
+                </label>
+
+                <label className="field">
                   <span className="field-label">Deskripsi Paket</span>
                   <input
                     className="input"
@@ -360,6 +367,11 @@ export function PlansManagementTable({ plans }: { plans: PlanItem[] }) {
                     />
                   </label>
                 </div>
+
+                <label className="field">
+                  <span className="field-label">Masa Trial Gratis (hari)</span>
+                  <input className="input" name="trialDays" type="number" min="0" max="365" defaultValue={editPlan.trialDays} />
+                </label>
 
                 <label className="field">
                   <span className="field-label">Deskripsi Paket</span>

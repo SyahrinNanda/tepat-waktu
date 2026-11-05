@@ -5,10 +5,20 @@ import { getAppSession } from "@/lib/app-session";
 import { db } from "@/db";
 import { companies, companyMembers, user } from "@/db/schema";
 import { SELECTED_COMPANY_COOKIE } from "@/lib/selected-company";
+import { getSubscriptionStatus } from "@/features/subscriptions/server/subscription-status";
+
+/** Pages a company admin may still open after the subscription ended, to renew it. */
+export const SUBSCRIPTION_RENEW_PATH = "/dashboard/langganan";
+export const SUBSCRIPTION_LOCKED_PATH = "/langganan-berakhir";
+
+type CompanyOptions = {
+  /** Skip the expired-subscription gate (subscription pages and the dashboard layout only). */
+  allowExpired?: boolean;
+};
 
 export type CompanyRole = "owner" | "admin" | "general_manager" | "hrd" | "manager" | "employee";
 
-export async function requireCompany() {
+export async function requireCompany(options: CompanyOptions = {}) {
   const session = await getAppSession();
   if (!session) redirect("/");
 
@@ -18,7 +28,9 @@ export async function requireCompany() {
     if (!companyId) redirect("/superadmin");
     const [company] = await db.select({ companyId: companies.id, companyName: companies.name, industry: companies.industry, plan: companies.plan, timezone: companies.timezone }).from(companies).where(eq(companies.id, companyId)).limit(1);
     if (!company) redirect("/superadmin");
-    return { session, ...company, role: "admin" as const, isSuperAdmin: true };
+    // Superadmin can always enter a tenant (e.g. to help it renew), but sees its status.
+    const subscription = await getSubscriptionStatus(company.companyId);
+    return { session, ...company, role: "admin" as const, isSuperAdmin: true, subscription };
   }
 
   const [membership] = await db
@@ -29,11 +41,15 @@ export async function requireCompany() {
     .limit(1);
 
   if (!membership) redirect("/register");
-  return { session, ...membership, isSuperAdmin: false };
+  const subscription = await getSubscriptionStatus(membership.companyId);
+  if (subscription.state === "expired" && !options.allowExpired) {
+    redirect(membership.role === "admin" || membership.role === "owner" ? `${SUBSCRIPTION_RENEW_PATH}?expired=1` : SUBSCRIPTION_LOCKED_PATH);
+  }
+  return { session, ...membership, isSuperAdmin: false, subscription };
 }
 
-export async function requireCompanyRole(allowedRoles: CompanyRole[]) {
-  const context = await requireCompany();
+export async function requireCompanyRole(allowedRoles: CompanyRole[], options: CompanyOptions = {}) {
+  const context = await requireCompany(options);
   const role = context.role === "owner" ? "admin" : context.role;
   const normalizedAllowed = allowedRoles.map((value) => value === "owner" ? "admin" : value);
   if (!normalizedAllowed.includes(role)) {
@@ -49,8 +65,4 @@ export function dateInTimeZone(timeZone: string, value = new Date()) {
     month: "2-digit",
     day: "2-digit",
   }).format(value);
-}
-
-export function todayInMakassar() {
-  return dateInTimeZone("Asia/Makassar");
 }

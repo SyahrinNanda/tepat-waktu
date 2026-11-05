@@ -29,7 +29,7 @@ export function EmployeeListTable({ rows, canManage }: { rows: EmployeeListRow[]
   };
   if (!rows.length) return <div className="location-empty"><Users size={46}/><strong>Data Kosong</strong><span>Karyawan tidak ditemukan.</span></div>;
   return <>
-    <div className="table-scroll"><table className="employee-list-table"><thead><tr><th>#</th><th>Foto</th><th>Nama Karyawan</th><th>Jabatan–Divisi</th><th>Lokasi Presensi</th><th>Kunci Pengaturan</th><th>Tipe Kontrak</th><th>Aksi</th></tr></thead><tbody>
+    <div className="table-scroll"><table className="employee-list-table"><thead><tr><th>#</th><th>Foto</th><th>Nama Karyawan</th><th>Jabatan–Divisi</th><th>Lokasi Kerja</th><th>Kunci Pengaturan</th><th>Tipe Kontrak</th><th>Aksi</th></tr></thead><tbody>
       {rows.map((row, index) => <tr key={row.id} className={row.status === "inactive" ? "employee-inactive-row" : undefined}>
         <td>{index + 1}</td>
         <td>{row.photoAssetId ? <Image className="employee-photo" src={`/api/files/${row.photoAssetId}`} alt={row.name} width={56} height={56} unoptimized/> : <span className="employee-photo-placeholder"><UserRound size={38}/></span>}</td>

@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { platformSettings } from "@/db/schema";
 import { requireSuperAdmin } from "@/lib/superadmin";
+import { recordAudit } from "@/lib/audit";
 
 export async function savePlatformSettings(form: FormData) {
-  await requireSuperAdmin();
+  const session = await requireSuperAdmin();
 
   const data = {
     // Identitas
@@ -63,6 +64,7 @@ export async function savePlatformSettings(form: FormData) {
       });
   }
 
+  await recordAudit(session, { action: "settings.update", summary: `Menyimpan pengaturan platform${data.maintenanceMode === "true" ? " (mode maintenance aktif)" : ""}`, metadata: { maintenanceMode: data.maintenanceMode, openRegistration: data.openRegistration } });
   revalidatePath("/superadmin/pengaturan");
   revalidatePath("/dashboard");
 }

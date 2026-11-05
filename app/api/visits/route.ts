@@ -1,5 +1,8 @@
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { db } from "@/db";
+import { employees } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
 import { createVisit, listVisits } from "@/features/visits/server/visit-service";
 
@@ -9,7 +12,12 @@ export async function GET(request: Request) {
   const context = await featureContext(request, "kunjungan", "read");
   if ("error" in context) return context.error;
   const params = new URL(request.url).searchParams;
-  return Response.json({ rows: await listVisits(context.companyId, params.get("from") || undefined, params.get("to") || undefined) });
+  let ownEmployeeId: string | undefined;
+  if (context.role === "employee") {
+    ownEmployeeId = await ownEmployee(context.companyId, context.userId);
+    if (!ownEmployeeId) return Response.json({ rows: [] });
+  }
+  return Response.json({ rows: await listVisits(context.companyId, params.get("from") || undefined, params.get("to") || undefined, ownEmployeeId) });
 }
 
 export async function POST(request: Request) {
@@ -38,6 +46,11 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     const errorMsg = parsed.error.issues[0]?.message || "Lengkapi formulir dengan benar.";
     return Response.json({ error: errorMsg }, { status: 400 });
+  }
+
+  // Staff (role "employee") may only record visits for themselves.
+  if (context.role === "employee" && parsed.data.employeeId !== await ownEmployee(context.companyId, context.userId)) {
+    return Response.json({ error: "Anda hanya dapat mencatat kunjungan untuk diri sendiri." }, { status: 403 });
   }
 
   // Handle selfie
@@ -79,4 +92,10 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+}
+
+async function ownEmployee(companyId: string, userId: string) {
+  const [row] = await db.select({ id: employees.id }).from(employees)
+    .where(and(eq(employees.companyId, companyId), eq(employees.userId, userId), eq(employees.status, "active"))).limit(1);
+  return row?.id;
 }

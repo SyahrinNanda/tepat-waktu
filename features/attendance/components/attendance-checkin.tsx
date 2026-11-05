@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- camera previews are ephemeral data URLs */
 
 import { Camera, Check, Clock3, LoaderCircle, LocateFixed, RefreshCw, ShieldCheck, X } from "lucide-react";
+import { resolveTimeZone } from "@/lib/timezone";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Phase = "ready" | "camera" | "preview" | "success";
@@ -14,6 +15,8 @@ type StatusResponse = {
   attendance: { id: string; checkIn: string | null; checkOut: string | null; status: string } | null;
   nextAction: AttendanceAction | null;
   serverTime: string;
+  /** Set when the company IP whitelist does not include this network. */
+  networkError?: string | null;
 };
 
 export function AttendanceCheckin() {
@@ -121,6 +124,7 @@ export function AttendanceCheckin() {
   }, [cameraStarting, phase]);
 
   const openCamera = useCallback(async (nextAction: AttendanceAction) => {
+    if (status?.networkError) { setError(status.networkError); return; }
     setError("");
     setPhoto("");
     setAction(nextAction);
@@ -175,7 +179,7 @@ export function AttendanceCheckin() {
       setCameraFailed(true);
       setError(cameraErrorMessage(cause));
     }
-  }, [stopCamera]);
+  }, [status, stopCamera]);
 
   const autoOpenedRef = useRef(false);
   useEffect(() => {
@@ -240,7 +244,7 @@ export function AttendanceCheckin() {
     setPhoto("");
   }
 
-  const timezone = status?.company.timezone || "Asia/Makassar";
+  const timezone = resolveTimeZone(status?.company.timezone);
   const time = new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: timezone }).format(now);
   const date = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: timezone }).format(now);
   const dayStatus: DayStatus = !status?.attendance?.checkIn ? "missing-checkin" : !status.attendance.checkOut ? "missing-checkout" : "complete";

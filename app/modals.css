@@ -1,0 +1,100 @@
+/*
+ * Responsive layer for every modal, dialog and drawer. Loaded last so it wins over older rules.
+ *
+ * Why: overlays used to centre the dialog with `align-items: center` and cap it with
+ * `max-height` + `overflow: hidden`. When the viewport shrinks (browser zoom-in, small laptop,
+ * phone) the top of a tall dialog was pushed off-screen and could not be scrolled back, and the
+ * bottom (often the submit button) was clipped.
+ *
+ * Now: the overlay scrolls, the dialog is centred with `margin: auto` (centred when it fits,
+ * starts at the top and scrolls when it does not), never exceeds the viewport width, and is
+ * never clipped by its own height cap.
+ */
+
+/* ---------- Centred dialogs ---------- */
+:is(.standard-modal-overlay, .subscription-backdrop, .visit-modal-backdrop, .daily-modal-backdrop,
+    .monthly-modal-backdrop, .salary-modal-backdrop, .reference-modal-backdrop, .location-modal-backdrop,
+    .profile-reset-backdrop, .confirm-backdrop, .camera-backdrop, .announcement-overlay) {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: clamp(8px, 3vh, 28px) clamp(8px, 2.5vw, 28px) !important;
+}
+
+:is(.standard-modal-card, .subscription-dialog, .visit-modal, .daily-confirm-dialog, .monthly-modal-card,
+    .salary-modal, .reference-modal, .location-modal, .profile-reset-modal, .confirm-dialog, .camera-dialog,
+    .announcement-modal) {
+  margin: auto !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Inner panes that had their own viewport-based height cap: let them grow, the overlay scrolls. */
+:is(.salary-modal-body, .announcement-modal-body, .standard-modal-body, .visit-modal-content, .subscription-dialog-body) {
+  max-height: none !important;
+  min-width: 0;
+}
+
+/* Long words, emails and invoice numbers wrap instead of widening the dialog. */
+:is(.standard-modal-card, .subscription-dialog, .visit-modal, .monthly-modal-card, .salary-modal,
+    .reference-modal, .location-modal, .confirm-dialog, .announcement-modal) :is(p, small, span, strong, label, td) {
+  overflow-wrap: anywhere;
+}
+
+/* Header close buttons stay visible next to long titles. */
+.standard-modal-header { gap: 12px; }
+.standard-modal-header > div { min-width: 0; }
+.standard-modal-header .icon-button { flex-shrink: 0; }
+
+/* Footers wrap their buttons on narrow screens instead of pushing past the edge. */
+:is(.standard-modal-footer, .visit-modal-footer, .monthly-modal-footer, .subscription-dialog footer) {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Side drawers: full viewport height, content scrolls inside ---------- */
+.master-drawer-overlay { overflow: hidden; }
+.master-drawer { height: 100dvh !important; max-height: 100dvh; overflow-y: auto; overscroll-behavior: contain; max-width: 100%; }
+.modal-backdrop { overflow: hidden !important; }
+.demo-modal { height: 100dvh !important; max-height: 100dvh !important; overflow-y: auto !important; overscroll-behavior: contain; max-width: 100% !important; }
+
+/* ---------- Narrow viewports (phones, or desktop zoomed to ~150% and beyond) ---------- */
+@media (max-width: 640px) {
+  /* Side-by-side form columns inside dialogs stack, including inline-styled grids. */
+  :is(.standard-modal-card, .subscription-dialog, .visit-modal, .monthly-modal-card, .salary-modal,
+      .reference-modal, .location-modal, .announcement-modal, .demo-modal)
+    :is([class*="-grid"], [class*="-row"], [class*="-cols"], .plan-request-summary, .custom-plan-estimate, .custom-plan-proposal) {
+    grid-template-columns: 1fr !important;
+  }
+  :is(.standard-modal-card, .subscription-dialog, .visit-modal, .monthly-modal-card, .salary-modal,
+      .reference-modal, .announcement-modal, .demo-modal) [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Two-column flex rows wrap as well. */
+  :is(.visit-modal-top-row, .visit-modal-body-cols) { flex-wrap: wrap; }
+  :is(.visit-modal-top-row, .visit-modal-body-cols) > * { min-width: 0; flex: 1 1 100%; }
+
+  .standard-modal-header { padding: 18px 18px 10px !important; }
+  .standard-modal-body { padding: 8px 18px 18px !important; }
+  .standard-modal-footer { padding: 14px 18px 16px !important; }
+  :is(.standard-modal-footer, .visit-modal-footer, .monthly-modal-footer) > :is(button, a) { flex: 1 1 auto; }
+  .standard-modal-card, .monthly-modal-card { border-radius: 18px !important; }
+}
+
+/* Very short viewports (landscape phone, heavy zoom): tighten vertical padding. */
+@media (max-height: 520px) {
+  :is(.standard-modal-overlay, .subscription-backdrop, .visit-modal-backdrop, .daily-modal-backdrop,
+      .monthly-modal-backdrop, .salary-modal-backdrop, .reference-modal-backdrop, .location-modal-backdrop,
+      .profile-reset-backdrop, .confirm-backdrop, .camera-backdrop, .announcement-overlay) {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+}

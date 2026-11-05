@@ -5,7 +5,6 @@ import { ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from "lucide
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
-import { supabaseAuthEnabled, supabaseBrowser } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const router = useRouter();
@@ -19,52 +18,32 @@ export function LoginForm() {
     setLoading(true);
     setError("");
 
-    let unconfirmedSupabase = false;
     try {
-      if (supabaseAuthEnabled()) {
-        const client = supabaseBrowser();
-        const { error: supabaseError } = await client.auth.signInWithPassword({ email: String(form.get("email")), password: String(form.get("password")) });
-        if (!supabaseError) { router.push("/masuk/lanjut"); router.refresh(); return; }
-        unconfirmedSupabase = supabaseError.code === "email_not_confirmed";
-        await client.auth.signOut();
-      }
       const result = await signIn.email({
-        email: String(form.get("email")),
+        email: String(form.get("email")).trim().toLowerCase(),
         password: String(form.get("password")),
         rememberMe: form.get("remember") === "on",
         callbackURL: "/masuk/lanjut",
       });
-
       if (result.error) {
-        if (unconfirmedSupabase && result.error.code !== "EMAIL_NOT_VERIFIED") {
-          setError("Email belum diverifikasi. Buka tautan di kotak masuk Anda.");
-        } else if (result.error.code === "EMAIL_NOT_VERIFIED") {
-          setError("Akun lama belum diverifikasi. Hubungi administrator untuk bantuan aktivasi.");
+        if (result.error.code === "EMAIL_NOT_VERIFIED") {
+          // Better Auth (sendOnSignIn) has just emailed a fresh verification link.
+          setError("Email belum diverifikasi. Kami sudah mengirim ulang tautan verifikasi ke email Anda; buka tautan itu untuk mengaktifkan akun.");
+        } else if (result.error.status === 429) {
+          setError("Terlalu banyak percobaan masuk. Tunggu sebentar lalu coba lagi.");
         } else {
-          setError(result.error.message ?? "Email atau password belum tepat.");
+          setError("Email atau password belum tepat.");
         }
+        return;
       }
+      router.push("/masuk/lanjut");
+      router.refresh();
     } catch {
-      setError("Tidak dapat menghubungi server autentikasi. Periksa alamat dan port aplikasi, lalu coba lagi.");
+      setError("Tidak dapat menghubungi server autentikasi. Periksa koneksi lalu coba lagi.");
     } finally {
       setLoading(false);
     }
   }
-
-  async function googleSignIn() {
-    setLoading(true);
-    setError("");
-    try {
-      const result = await supabaseBrowser().auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } });
-      if (result.error) setError("Login Google belum dikonfigurasi di Supabase Auth.");
-    } catch {
-      setError("Tidak dapat menghubungi server autentikasi.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const googleEnabled = supabaseAuthEnabled();
 
   return (
     <form onSubmit={submit}>
@@ -92,9 +71,6 @@ export function LoginForm() {
           {loading && <LoaderCircle size={16} className="spin" />}
           {loading ? "Memeriksa akun…" : "Masuk sekarang"}
           {!loading && <ArrowRight size={17} />}
-        </button>
-        <button className="btn btn-outline btn-block" type="button" disabled={!googleEnabled || loading} onClick={googleSignIn} title={googleEnabled ? undefined : "Isi URL dan publishable key Supabase di .env.local, lalu bangun ulang aplikasi"}>
-          <span aria-hidden="true">G</span> Lanjutkan dengan Google
         </button>
       </div>
       <div className="auth-foot">

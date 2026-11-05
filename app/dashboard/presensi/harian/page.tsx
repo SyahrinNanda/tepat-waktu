@@ -17,7 +17,7 @@ import {
 } from "@/features/attendance/components/daily-attendance-manager";
 
 export const metadata: Metadata = {
-  title: "Presensi Harian | TepatWaktu",
+  title: "Kehadiran | TepatWaktu",
   description: "Kelola catatan presensi harian karyawan secara lengkap dan akurat.",
 };
 

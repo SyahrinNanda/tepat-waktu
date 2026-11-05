@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { attendanceEvents, attendances, employees, fileAssets } from "@/db/schema";
+import { attendanceEvents, attendanceLocations, attendances, employees, fileAssets, workSchedules } from "@/db/schema";
 import {
   AttendanceError,
   attendanceManagerContext,
@@ -43,6 +43,17 @@ export async function POST(request: Request) {
     const shiftId = String(form.get("shiftId") || "").trim() || null;
     const checkInLocationId = String(form.get("checkInLocationId") || "").trim() || null;
     const checkOutLocationId = String(form.get("checkOutLocationId") || "").trim() || null;
+    // Referenced shift and locations must belong to this company.
+    const parsedIds = z.uuid().nullable().array().safeParse([shiftId, checkInLocationId, checkOutLocationId]);
+    if (!parsedIds.success) throw new AttendanceError("Shift atau lokasi presensi tidak valid.", 400);
+    if (shiftId) {
+      const [shift] = await db.select({ id: workSchedules.id }).from(workSchedules).where(and(eq(workSchedules.id, shiftId), eq(workSchedules.companyId, context.companyId))).limit(1);
+      if (!shift) throw new AttendanceError("Shift tidak ditemukan di perusahaan ini.", 404);
+    }
+    for (const locationId of new Set([checkInLocationId, checkOutLocationId].filter((value): value is string => Boolean(value)))) {
+      const [location] = await db.select({ id: attendanceLocations.id }).from(attendanceLocations).where(and(eq(attendanceLocations.id, locationId), eq(attendanceLocations.companyId, context.companyId))).limit(1);
+      if (!location) throw new AttendanceError("Lokasi presensi tidak ditemukan di perusahaan ini.", 404);
+    }
     const statusRaw = String(form.get("status") || "present").trim() as "present" | "late" | "absent" | "leave";
     const status = ["present", "late", "absent", "leave"].includes(statusRaw) ? statusRaw : "present";
     const note = String(form.get("note") || "Presensi dicatat oleh administrator").trim();

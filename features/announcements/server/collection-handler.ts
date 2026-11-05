@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     if ("error" in context) return context.error;
     const form = await request.formData();
     const parsed = inputSchema.safeParse({ title: form.get("title"), summary: form.get("summary"), content: form.get("content") });
-    if (!parsed.success) return Response.json({ error: "Judul, deskripsi singkat, dan isi pengumuman wajib diisi dengan benar." }, { status: 400 });
+    if (!parsed.success) return Response.json({ error: "Judul, deskripsi singkat, dan isi pemberitahuan wajib diisi dengan benar." }, { status: 400 });
     const image = form.get("image");
     if (image instanceof File && image.size > 0) asset = await storeAnnouncementImage(image, context.companyId, context.userId);
     const [row] = await db.insert(announcements).values({
@@ -44,6 +44,6 @@ export async function POST(request: Request) {
     if (asset) await removeStoredAsset(asset).catch(() => undefined);
     if (error instanceof ImageUploadError) return Response.json({ error: error.message }, { status: error.status });
     console.error("Create announcement failed", error);
-    return Response.json({ error: "Pengumuman belum dapat disimpan." }, { status: 500 });
+    return Response.json({ error: "Pemberitahuan belum dapat disimpan." }, { status: 500 });
   }
 }
