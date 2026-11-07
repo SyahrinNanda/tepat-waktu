@@ -2,7 +2,7 @@
 #
 # - PostgreSQL: resource database Coolify (atau server lain), isi DATABASE_URL.
 # - File: Cloudflare R2 (S3-compatible), isi OBJECT_STORAGE_*.
-# - Email: Brevo → Mailjet → Mailtrap (MAIL_PROVIDERS + SMTP_<NAMA>_*).
+# - Email: Mailjet → Mailtrap → Brevo (MAIL_PROVIDERS + SMTP_<NAMA>_*).
 # - Domain & HTTPS: atur di Coolify pada service "app" (port 3000).
 # Variabel bertanda :? wajib diisi; deploy berhenti dengan pesan jelas jika kosong.
 # Panduan lengkap: docs/DEPLOY-VPS-COOLIFY.md
@@ -55,7 +55,7 @@ services:
       GEOAPIFY_API_KEY: ${GEOAPIFY_API_KEY:-}
       TOMTOM_API_KEY: ${TOMTOM_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:?Isi MAIL_FROM, mis. "TepatWaktu <noreply@domain-anda>"}
-      MAIL_PROVIDERS: ${MAIL_PROVIDERS:?Isi MAIL_PROVIDERS, mis. brevo,mailjet,mailtrap}
+      MAIL_PROVIDERS: ${MAIL_PROVIDERS:?Isi MAIL_PROVIDERS, mis. mailjet,mailtrap,brevo}
       SMTP_BREVO_HOST: ${SMTP_BREVO_HOST:-}
       SMTP_BREVO_PORT: ${SMTP_BREVO_PORT:-}
       SMTP_BREVO_SECURE: ${SMTP_BREVO_SECURE:-}

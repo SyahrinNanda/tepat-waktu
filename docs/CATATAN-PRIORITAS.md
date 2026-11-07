@@ -10,7 +10,10 @@ Hasil analisis kode tanggal 1 November 2026. Saat analisis, `tsc --noEmit`, `esl
 ## 2. Ketahanan presensi
 
 - [x] **Check-in bersamaan** (6 Nov 2026). Uji 12 check-in serentak dengan `serializable` + retry masih menyisakan error, jadi `recordAttendanceEvent` diganti ke *read committed* dengan kunci baris presensi per karyawan per hari (`FOR UPDATE`). Duplikat tetap dicegah unique index. Retry otomatis untuk `40001`/`40P01` dipertahankan sebagai pengaman. Teruji: 30 check-in dan 30 check-out serentak berhasil semua; 5 check-in paralel karyawan yang sama → 1 berhasil, 4 ditolak 409.
-- [ ] **Gabungkan logika jadwal kerja.** `getSelfAttendanceStatus` dan `recordAttendanceEvent` menghitung jadwal secara terpisah dengan aturan yang sedikit berbeda: field `enabled` untuk hari libur hanya dicek di salah satunya. Pindahkan ke satu fungsi `resolveSchedule()`.
+- [x] (7 Nov 2026) **Logika jadwal kerja digabung** ke `resolveSchedule()` (`features/attendance/server/attendance-service.ts`), dipakai layar check-in dan pencatatan presensi. Aturan: jadwal aktif divisi → jadwal aktif perusahaan tertua (urutan tetap, dulu acak) → default 08:00–17:00 yang tidak menilai terlambat. Baris hari ini menimpa jam dasar; baris nonaktif = hari libur (tidak pernah terlambat, layar menampilkan "Hari libur").
+  - **Bug yang diperbaiki:** jadwal divisi tanpa baris per hari (shift dibuat lewat Master → Shift tanpa diatur di Jam Kerja) dinilai memakai jadwal perusahaan lain, sehingga karyawan yang datang sebelum jam masuk shift-nya tercatat **terlambat**. Terbukti dengan tes terhadap kode lama.
+  - Layar check-in dulu tidak menandai hari libur dan menampilkan 08:00 tanpa keterangan saat jadwal belum diatur; kini keduanya diberi keterangan.
+  - Slip gaji (`workWeekFor`) kini juga mengabaikan jadwal divisi yang nonaktif, sama seperti presensi.
 - [ ] (Catatan) Jadwal karyawan dihubungkan lewat nama divisi (`divisions.name = employees.department`), bukan foreign key, sehingga bisa putus kalau divisi diganti nama.
 - [x] **IP whitelist dihapus permanen** (6 Nov 2026, keputusan pemilik): halaman Pengaturan → IP Whitelist, menu, dan pembatasan presensi berbasis IP dibuang; data lama dihapus lewat migrasi `0038`. IP pengunjung tetap dicatat di log presensi dan dipakai rate limit login, dibaca dari header proxy tepercaya (`CLIENT_IP_HEADER`, `lib/client-ip.ts`).
 - [ ] (Catatan) **Geofence tetap bisa dipalsukan.** Koordinat berasal dari browser, dan aplikasi web tidak bisa membuktikan GPS asli (aplikasi fake GPS atau DevTools bisa mengubahnya). Andalkan foto langsung dan peninjauan admin. Pencegahan yang lebih kuat butuh aplikasi native (deteksi mock location).
@@ -27,15 +30,15 @@ Hasil analisis kode tanggal 1 November 2026. Saat analisis, `tsc --noEmit`, `esl
 ## 4. Tes
 
 - [x] **Tes isolasi antar perusahaan** (6 Nov 2026): `npm run test:isolation` (`scripts/test-tenant-isolation.mjs`, butuh aplikasi berjalan dan `DATABASE_URL`). 115 pemeriksaan pada semua API berdata perusahaan: baca, ubah, hapus, daftar, dan ekspor. Bug yang ditemukan dan sudah diperbaiki: input presensi admin menerima ID shift/lokasi milik perusahaan lain (nama shift/lokasi perusahaan lain muncul di ekspor harian). Juga diperbaiki: ekspor presensi menjawab 500 alih-alih 403, ekspor kunjungan oleh karyawan berisi kunjungan seluruh perusahaan, dan respons error ekspor kunjungan memuat stack trace.
-- [ ] Tes `recordAttendanceEvent`: status terlambat, check-out tanpa check-in, presensi ganda, dan geofence.
+- [x] (7 Nov 2026) **Tes aturan presensi**: `npm run test:attendance` (`scripts/test-attendance.mjs`, butuh aplikasi berjalan). 23 pemeriksaan lewat API check-in karyawan: terlambat / tepat waktu / dalam toleransi, hari libur, jam khusus hari ini, jadwal divisi nonaktif, tanpa divisi, perusahaan tanpa jadwal, check-out sebelum check-in, check-in/out ganda, 6 check-in bersamaan, dan geofence (tanpa koordinat, di luar, di dalam, kelonggaran akurasi GPS dan batas 50 m-nya). Skenario jadwal dibuat relatif terhadap jam saat tes dijalankan; mendekati tengah malam (WIB) skenario waktu dilewati.
 
 ## 5. Belum diuji: langganan, retensi, dan email pengingat
 
 Fitur Retensi Pelanggan, Laporan Pendapatan, Konversi Trial, dan email pengingat H-5/H-2 sudah diuji di Docker lokal pada 4 November 2026. Dua hal berikut belum diuji:
 
 - [ ] **Pengiriman lewat SMTP sungguhan.** Lihat bagian 9 (rencana uji email).
-- [ ] **Tampilan di layar HP.** Semua pengujian dilakukan di layar desktop (1280–1440 px). Cek di lebar ±375 px:
-  - halaman `/superadmin/retensi`, `/superadmin/pendapatan`, dan `/superadmin/konversi`;
+- [x] **Tampilan di layar HP.** Semua pengujian dilakukan di layar desktop (1280–1440 px). Cek di lebar ±375 px:
+  - (Selesai 8 Nov 2026, lihat bagian 7 langkah 8.) halaman `/superadmin/retensi`, `/superadmin/pendapatan`, dan `/superadmin/konversi`;
   - popup Perpanjang manual;
   - banner, popup, dan lonceng peringatan masa aktif di dashboard perusahaan;
   - halaman `/langganan-berakhir`.
@@ -47,8 +50,6 @@ Fitur Retensi Pelanggan, Laporan Pendapatan, Konversi Trial, dan email pengingat
 ## Lain-lain
 
 - Pecah komponen besar: `features/attendance/components/daily-attendance-manager.tsx` (±1.600 baris) dan `features/visits/components/visit-list-manager.tsx` (±800 baris).
-- Repo baru punya satu commit, dengan sekitar 130 file berubah atau dihapus di branch `main`. Commit atau pindahkan ke branch tersendiri supaya mudah dilacak.
-
 ## 6. Fallback email (Brevo → Mailjet → Mailtrap) — belum diuji dengan layanan sungguhan
 
 Logika fallback, penghitung kuota harian, dan jeda saat error sudah diuji dengan Mailpit (termasuk server yang menolak kiriman dan kuota yang habis). Yang belum:
@@ -57,37 +58,38 @@ Logika fallback, penghitung kuota harian, dan jeda saat error sudah diuji dengan
 - Setelah aplikasi online, uji daftar akun dan reset password dengan email sungguhan (checklist di `docs/DEPLOY-VPS-COOLIFY.md`).
 - Memastikan teks error kuota dari tiap layanan dikenali (`isQuotaError` di `lib/mailer.ts`). Jika tidak, layanan tetap dilewati 5 menit sekali lalu dicoba lagi, dan batas `SMTP_<NAMA>_DAILY_LIMIT` tetap mencegah kiriman berlebih.
 
-## 7. Rencana deploy (diperbarui 7 Nov 2026)
+## 7. Rencana deploy (diperbarui 8 Nov 2026)
+
+**Keputusan pemilik (8 Nov 2026):**
+- **Staging cukup di lokal** (Docker di laptop). Di server hanya ada **satu environment: production**, dari branch `main`. Uji yang butuh server sungguhan (webhook Midtrans, R2, IP, email dari server) dilakukan langsung di production sebelum dibuka untuk pelanggan.
+- **Backup database ditangani pemilik** dengan export database setiap hari, jadi tidak masuk checklist.
 
 Kerjakan berurutan.
 
 **A. Wajib sebelum deploy pertama**
-- [ ] 1. **Commit dan push semua perubahan** di branch `dev` (±40 file/folder belum di-commit per 7 Nov 2026: Midtrans, hapus akun, perbaikan presensi, dll.) ke `SyahrinNanda/tepat-waktu`. Coolify men-deploy dari GitHub, jadi yang belum di-push tidak ikut.
-- [x] 2. (7 Nov 2026) **Perintah pembuat superadmin pertama** tanpa data demo: `scripts/create-superadmin.mjs` (`npm run superadmin:create`). Service `migrate` menjalankannya otomatis setelah migrasi bila `SUPERADMIN_EMAIL`/`SUPERADMIN_PASSWORD` diisi dan belum ada superadmin. Diuji: dibuat, deploy ulang dilewati, tanpa env dilewati, `--reset-password`, validasi password, login + halaman `/superadmin` di image production.
-- [x] 3. (7 Nov 2026) **Uji migrasi di database kosong** dengan image `migrator`: 40/40 migrasi sukses; kolom (478), index, dan constraint identik dengan database lokal (hanya nama 3 FK `payrolls` berbeda, aturannya sama); 8 paket aktif; 0 perusahaan/karyawan demo.
+- [x] 1. (7 Nov 2026) Commit dan push ke `dev` (commit `750a306`).
+- [x] 2. (7 Nov 2026) **Perintah pembuat superadmin pertama** tanpa data demo: `scripts/create-superadmin.mjs` (`npm run superadmin:create`). Service `migrate` menjalankannya otomatis setelah migrasi bila `SUPERADMIN_EMAIL`/`SUPERADMIN_PASSWORD` diisi dan belum ada superadmin.
+- [x] 3. (7 Nov 2026) **Uji migrasi di database kosong**: 40/40 migrasi sukses, skema identik dengan database lokal, 8 paket aktif, tanpa data demo.
+- [x] 4. (8 Nov 2026) DNS email `tepat-waktu.id` lengkap; Mailjet dan Mailtrap terbukti sampai inbox; urutan `mailjet,mailtrap,brevo` + fallback diuji (bagian 9).
+- [x] 5. (8 Nov 2026) Commit dan push perubahan terakhir (perbaikan jadwal presensi, `test:attendance`, urutan email, perbaikan tampilan HP, dokumen), lalu **merge `dev` → `main`** (Coolify production men-deploy dari `main`).
+- [ ] 6. Konfirmasi email uji Brevo #3 sampai (Gmail atau log Brevo). Jika log Brevo masih "sender not valid": Senders → Add a sender `no-reply@tepat-waktu.id`.
+- [ ] 7. (Disarankan, di lokal) **Uji R2 dari lokal**: isi `OBJECT_STORAGE_*` di `.env.local` dengan bucket R2, upload foto presensi/kunjungan, pastikan foto tampil; lalu kembalikan ke SeaweedFS lokal.
+- [x] 8. (8 Nov 2026) **Cek tampilan HP (375 × 812, mode mobile)** di lokal: `/superadmin/retensi` + popup Perpanjang manual, `/superadmin/pendapatan`, `/superadmin/konversi`, `/superadmin/langganan`, dashboard admin (popup peringatan, banner, lonceng), `/dashboard/langganan`, `/langganan-berakhir` (karyawan), beranda karyawan. Semua 12 tampilan tanpa scroll horizontal. Diperbaiki (`app/refresh.css`, blok "Mobile fixes"): panel notifikasi lonceng terpotong di kiri; grafik bulanan Pendapatan/Konversi tampak kosong karena membuka bulan terlama (kini mulai dari bulan terbaru); kartu Retensi dipaksa 3 kolom (kini 2); teks banner masa aktif terjepit tombol (tombol pindah ke bawah). Kamera dan GPS check-in tetap perlu dicoba di HP sungguhan setelah deploy (langkah 11).
 
-**B. Saat deploy ke staging** (mis. `staging.domain-anda.com`)
-- [ ] 4. Isi environment di Coolify (daftar lengkap di `docs/DEPLOY-VPS-COOLIFY.md`):
-  - `BETTER_AUTH_SECRET` dan `BETTER_AUTH_URL`;
-  - R2 (`OBJECT_STORAGE_*`);
-  - `CLIENT_IP_HEADER`;
-  - email: **Brevo, Mailjet, dan Mailtrap ketiganya wajib** (lihat bagian 9);
-  - Midtrans **sandbox** (`MIDTRANS_IS_PRODUCTION=false`), belum production.
-- [ ] 5. Jalankan checklist staging (bagian 5 di `docs/DEPLOY-VPS-COOLIFY.md` + bagian 9 di sini):
-  - email sungguhan (keenam email, tiap layanan, dan fallback);
-  - webhook Midtrans asli (Notification URL diisi, paket aktif tanpa membuka halaman hasil; lihat bagian 8);
-  - upload foto ke R2;
-  - tampilan di HP;
-  - IP pengunjung terbaca benar;
-  - backup database.
+**B. Deploy production** (domain utama)
+- [ ] 9. Isi environment di Coolify (daftar lengkap di `docs/DEPLOY-VPS-COOLIFY.md`): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL` (Build Variable), R2 (`OBJECT_STORAGE_*`), `CLIENT_IP_HEADER`, email (`MAIL_FROM=TepatWaktu <no-reply@tepat-waktu.id>`, `MAIL_PROVIDERS=mailjet,mailtrap,brevo`, kredensial ketiga layanan), `REMINDER_SCHEDULER=on`, Midtrans **sandbox dulu** (`MIDTRANS_IS_PRODUCTION=false`), `SUPERADMIN_EMAIL`/`SUPERADMIN_PASSWORD`.
+- [ ] 10. Deploy, login superadmin, lalu **hapus `SUPERADMIN_PASSWORD`** dari Coolify.
+- [ ] 11. Uji di production (dengan perusahaan uji):
+  - email dari server (daftar akun, lupa password);
+  - webhook Midtrans sandbox: isi Notification URL, bayar VA di simulator tanpa membuka halaman hasil, paket harus aktif (bagian 8);
+  - upload foto presensi/kunjungan ke R2;
+  - tampilan dan check-in dari HP sungguhan (kamera + lokasi);
+  - IP pengunjung tercatat benar (bukan IP proxy).
+- [ ] 12. Ganti ke **Midtrans production** setelah aktivasi selesai: cocokkan tarif `paymentAdminFee` dengan kontrak, isi key production + `MIDTRANS_IS_PRODUCTION=true`, ubah Notification URL di dashboard Midtrans live, uji satu transaksi kecil sungguhan.
+- [ ] 13. **Bersihkan data uji** di production (perusahaan/akun/invoice uji) sebelum pelanggan masuk.
+- [ ] 14. Buka untuk beberapa pelanggan awal.
 
-**C. Setelah staging lolos**
-- [ ] 6. Ganti ke **Midtrans production** setelah aktivasi selesai (2–3 hari kerja sejak 7 Nov 2026). Cocokkan dulu tarif biaya admin (`paymentAdminFee`) dengan kontrak, lalu uji satu transaksi kecil sungguhan.
-- [ ] 7. Buka untuk beberapa pelanggan awal.
-
-**Bisa menyusul setelah live:** pecah komponen besar, tes `recordAttendanceEvent`, gabungkan logika jadwal kerja (bagian 2, 4, dan Lain-lain).
-
-Prasyarat yang sudah siap menurut pemilik (6 Nov 2026): domain ke VPS, akun Brevo/Mailjet/Mailtrap + SPF/DKIM, bucket R2, `BETTER_AUTH_SECRET`, backup database di Coolify. Uji kondisi nyata (SMTP, VPS/Coolify, R2, HP) akan dilakukan langsung di production.
+**Bisa menyusul setelah live:** pecah komponen besar (Lain-lain), jadwal lewat ID divisi alih-alih nama (bagian 2).
 
 ## 8. Midtrans (6 Nov 2026)
 
@@ -125,13 +127,26 @@ Email yang dikirim aplikasi (semua lewat `lib/mailer.ts`):
 
 **Keputusan (7 Nov 2026): ketiga layanan (Brevo, Mailjet, Mailtrap) WAJIB diisi sejak deploy staging**, supaya saat kuota harian satu layanan habis atau error, email otomatis pindah ke layanan berikutnya (kapasitas gabungan ±650 email/hari).
 
+**Keputusan (8 Nov 2026): urutan `MAIL_PROVIDERS=mailjet,mailtrap,brevo`** (aturan fallback tetap sama). Alasan: Brevo **menerima** email lalu **menolaknya belakangan** ("sender … is not valid") selama domain/sender belum terautentikasi. Aplikasi menganggapnya terkirim, jadi tidak pindah ke layanan lain dan email hilang diam-diam. Mailjet dan Mailtrap sudah terbukti sampai inbox. Brevo boleh dipindah ke depan lagi setelah domain *Authenticated*, sender `no-reply@tepat-waktu.id` aktif, dan email uji lewat Brevo terbukti sampai.
+
 Langkah uji:
 1. Verifikasi domain pengirim di **ketiga** layanan (Brevo: Senders, Domains & Dedicated IPs → Domains; Mailjet; Mailtrap Sending Domains) sampai statusnya terverifikasi. Pasang DKIM dan DMARC sesuai petunjuk masing-masing.
 2. **SPF hanya boleh satu record** per domain: gabungkan `include:` dari ketiga layanan dalam satu TXT `v=spf1 include:... include:... include:... ~all` (nilai persisnya dari dashboard tiap layanan). Record DKIM tetap terpisah per layanan.
 3. Isi environment Coolify (server) atau `.env.local` (lokal) sesuai daftar di `docs/DEPLOY-VPS-COOLIFY.md`:
-   `MAIL_FROM="TepatWaktu <no-reply@domain-anda>"`, `MAIL_PROVIDERS=brevo,mailjet,mailtrap`, dan `SMTP_BREVO_*`, `SMTP_MAILJET_*`, `SMTP_MAILTRAP_*` lengkap (HOST, PORT, USER, PASS, DAILY_LIMIT). Layanan dengan HOST kosong diabaikan diam-diam.
+   `MAIL_FROM="TepatWaktu <no-reply@domain-anda>"`, `MAIL_PROVIDERS=mailjet,mailtrap,brevo`, dan `SMTP_BREVO_*`, `SMTP_MAILJET_*`, `SMTP_MAILTRAP_*` lengkap (HOST, PORT, USER, PASS, DAILY_LIMIT). Layanan dengan HOST kosong diabaikan diam-diam.
 4. Set `DAILY_LIMIT` sedikit di bawah kuota asli (mis. Brevo 290, Mailjet 190, Mailtrap 140), karena kiriman di luar aplikasi ikut memakai kuota. Hitungan direset 00:00 UTC (07:00 WIB).
 5. Picu keenam email di atas ke alamat email asli dan cek inbox (bukan spam). Cek skor di mail-tester.com (target ≥ 9/10).
-6. **Uji tiap layanan cadangan**: urutkan sementara `MAIL_PROVIDERS=mailjet` lalu `MAIL_PROVIDERS=mailtrap` dan kirim satu email per layanan (mis. Lupa password), supaya domain dan kredensial terbukti benar sebelum benar-benar dibutuhkan. Lalu kembalikan ke `brevo,mailjet,mailtrap` dan uji fallback: isi password Brevo salah → email harus tetap sampai lewat Mailjet; kembalikan password yang benar.
+6. **Uji tiap layanan cadangan**: urutkan sementara `MAIL_PROVIDERS=mailjet` lalu `MAIL_PROVIDERS=mailtrap` dan kirim satu email per layanan (mis. Lupa password), supaya domain dan kredensial terbukti benar sebelum benar-benar dibutuhkan. Lalu kembalikan ke `mailjet,mailtrap,brevo` dan uji fallback: isi password Mailjet salah → email harus tetap sampai lewat Mailtrap; kembalikan password yang benar.
 
 Catatan: `docker-compose.yml` dulu menimpa `MAIL_*`/`SMTP_*` dari `.env.local` dengan nilai kosong; sudah diperbaiki 7 Nov 2026, kini dibaca langsung dari `.env.local`.
+
+**Hasil uji 8 Nov 2026** (lokal, `MAIL_FROM=no-reply@tepat-waktu.id`, penerima `sharin783@gmail.com` / `sharin783+tepatwaktu@gmail.com`):
+- [x] Login SMTP Brevo, Mailjet, Mailtrap: OK.
+- [x] Kirim langsung lewat tiap layanan: ketiganya menjawab `250 queued`.
+- [x] Lewat aplikasi (`MAIL_PROVIDERS=brevo,mailjet,mailtrap`): reset password, verifikasi email, dan invoice lunas dari **aktivasi manual superadmin** terkirim lewat Brevo.
+- [x] Fallback: password Brevo salah → terkirim lewat Mailjet; Brevo + Mailjet salah → lewat Mailtrap. Kegagalan tercatat di `mail_provider_usage` dan layanan dijeda 5 menit.
+- [x] Sampai inbox (bukan Spam): **Mailtrap** dan **Mailjet** (API Mailjet: status `opened` untuk 3 pesan uji). **Brevo tidak sampai**: log Brevo "Sending has been rejected because the sender you used no-reply@tepat-waktu.id is not valid".
+- [x] **DNS `tepat-waktu.id` lengkap** (8 Nov 2026, sudah menyebar ke 8.8.8.8 dan 1.1.1.1): satu SPF `v=spf1 include:spf.brevo.com include:spf.mailjet.com include:_spf.smtp.mailtrap.live ~all` (3 dari maks. 10 lookup), TXT `brevo-code`, DKIM Brevo (`brevo1/brevo2`), Mailjet (`mailjet._domainkey`), Mailtrap (`rwmt1/rwmt2`), dan DMARC `p=none`. Email uji kedua lewat ketiga layanan: `250 queued`.
+- [ ] **Brevo**: domain masih "Your records don't match yet". Setelah *Authenticated*, tambahkan sender `no-reply@tepat-waktu.id` (Senders → Add a sender), kirim ulang email uji, lalu pertimbangkan mengembalikan Brevo ke urutan depan.
+- [ ] Setelah beberapa minggu tanpa masalah, pertimbangkan DMARC `p=quarantine` agar domain lebih sulit dipalsukan.
+- [ ] `MAIL_PROVIDERS` di `.env.local` masih `mailpit` (sengaja, untuk pengembangan lokal). Di Coolify isi `mailjet,mailtrap,brevo`.

@@ -944,3 +944,21 @@ td.retention-actions form { gap: 0; }
 /* Absolutely positioned helpers (e.g. .sr-only labels) inside scrollable tables stay inside the scroller
    instead of widening the page on phones. */
 .table-scroll, .table-wrap { position: relative; }
+
+/* Mobile fixes (8 Nov 2026) */
+@media (max-width: 720px) {
+  /* Monthly bar charts scroll sideways on phones: start at the newest months (right) instead of the oldest. */
+  .complaint-chart:has(.report-vbars) { direction: rtl; }
+  .complaint-chart:has(.report-vbars) > * { direction: ltr; }
+}
+@media (max-width: 640px) {
+  /* The bell is not the right-most header button, so a panel anchored to it ran off the left edge. */
+  .notification-panel { position: fixed; top: 76px; left: 16px; right: 16px; width: auto; max-height: calc(100dvh - 96px); overflow-y: auto; }
+  /* Placed after the 1180px rule so it is not overridden: 2 columns, highlighted first tile full width. */
+  .retention-tiles { grid-template-columns: 1fr 1fr; }
+  .retention-tiles > :first-child { grid-column: 1 / -1; }
+  /* Expiry banner: the button squeezed the text into a narrow column; put it on its own row under the text. */
+  .subscription-banner { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; column-gap: 10px; row-gap: 10px; }
+  .subscription-banner > svg { margin-top: 2px; }
+  .subscription-banner .btn { grid-column: 2; justify-self: start; }
+}

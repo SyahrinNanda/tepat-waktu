@@ -11,7 +11,7 @@ type DayStatus = "missing-checkin" | "missing-checkout" | "complete";
 type StatusResponse = {
   employee: { id: string; name: string };
   company: { id: string; name: string; timezone: string };
-  schedule: { name: string; startTime: string; endTime: string; graceMinutes: number };
+  schedule: { name: string; startTime: string; endTime: string; graceMinutes: number; isWorkday?: boolean; source?: "division" | "company" | "default" };
   attendance: { id: string; checkIn: string | null; checkOut: string | null; status: string } | null;
   nextAction: AttendanceAction | null;
   serverTime: string;
@@ -256,7 +256,12 @@ export function AttendanceCheckin() {
       <div className="attendance-self-grid">
         <section className="module-card attendance-clock-card">
           <span className="eyebrow">WAKTU PERUSAHAAN · {timezone}</span><strong className="live-clock">{time}</strong><p>{date}</p>
-          <div className="shift-summary"><span>{status?.schedule.name ?? "Jadwal Perusahaan"}</span><strong>{shortTime(status?.schedule.startTime) ?? "08:00"} — {shortTime(status?.schedule.endTime) ?? "17:00"}</strong><small>Toleransi keterlambatan {status?.schedule.graceMinutes ?? 15} menit</small></div>
+          <div className="shift-summary"><span>{status?.schedule.name ?? "Jadwal Perusahaan"}</span>
+            {status?.schedule.isWorkday === false
+              ? <><strong>Hari libur</strong><small>Hari ini libur menurut jadwal Anda. Presensi tetap bisa dicatat dan tidak dihitung terlambat.</small></>
+              : <><strong>{shortTime(status?.schedule.startTime) ?? "08:00"} — {shortTime(status?.schedule.endTime) ?? "17:00"}</strong>
+                <small>{status?.schedule.source === "default" ? "Jadwal kerja belum diatur admin, jadi keterlambatan belum dihitung." : `Toleransi keterlambatan ${status?.schedule.graceMinutes ?? 15} menit`}</small></>}
+          </div>
           {!loadingStatus && dayStatus !== "complete" ? <button className="attendance-main-action" onClick={() => openCamera(nextAction)}><span><Camera size={29} /></span><strong>Ambil Foto & {actionLabel(nextAction)}</strong><small>Foto hanya dapat diambil langsung dari kamera</small></button> : dayStatus === "complete" ? <div className="attendance-complete-state"><Check size={28} /><strong>Semua presensi selesai</strong><small>Tidak ada tindakan lain yang diperlukan hari ini.</small></div> : <div className="attendance-complete-state"><LoaderCircle className="spin" size={28} /><strong>Memuat status presensi</strong></div>}
           {error ? <div className="camera-error" role="alert">{error}<button onClick={() => void loadStatus()}><RefreshCw size={14} /> Muat ulang</button></div> : null}
         </section>

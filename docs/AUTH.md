@@ -40,7 +40,7 @@ Aturan tambahan:
 
 ## Pengiriman email
 
-Email verifikasi dan reset password dikirim lewat `lib/mailer.ts` dengan fallback Brevo → Mailjet → Mailtrap (lihat `.env.example`, `MAIL_PROVIDERS`). Isi email ada di `lib/registration/auth-emails.ts`. Pengiriman tidak ditunggu (praktik yang dianjurkan Better Auth untuk mencegah timing attack); kegagalan dicatat di log aplikasi dan pengguna bisa meminta tautan baru.
+Email verifikasi dan reset password dikirim lewat `lib/mailer.ts` dengan fallback Mailjet → Mailtrap → Brevo (urutan dari `MAIL_PROVIDERS`; lihat `.env.example`, `MAIL_PROVIDERS`). Isi email ada di `lib/registration/auth-emails.ts`. Pengiriman tidak ditunggu (praktik yang dianjurkan Better Auth untuk mencegah timing attack); kegagalan dicatat di log aplikasi dan pengguna bisa meminta tautan baru.
 
 ## Keamanan bawaan
 

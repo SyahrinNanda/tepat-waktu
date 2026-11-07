@@ -14,7 +14,7 @@ const developmentOrigins =
 
 /**
  * Accounts, sessions, email verification and password reset all live in this app's PostgreSQL.
- * Emails go through lib/mailer.ts (Brevo → Mailjet → Mailtrap fallback).
+ * Emails go through lib/mailer.ts (fallback in MAIL_PROVIDERS order, production: Mailjet → Mailtrap → Brevo).
  */
 export const auth = betterAuth({
   appName: "TepatWaktu",

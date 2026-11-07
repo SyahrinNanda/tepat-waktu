@@ -9,7 +9,7 @@ Payroll lama (istilah payroll), kasbon, klaim beban, dan laporan keuangan **tida
 ## Sudah tersambung ke data nyata
 
 - **Akun (Better Auth saja):** login email/password, pendaftaran perusahaan dengan verifikasi email, lupa/atur ulang password, sesi, ganti password, role superadmin dan role perusahaan. Penghapusan akun: pengguna mengajukan di `/penghapusan-akun`, mengonfirmasi lewat tautan email (24 jam), lalu superadmin memproses atau menolak di Superadmin → Permintaan Hapus Akun; pemohon menerima email hasilnya. Tidak ada Supabase dan login Google. Detail: `docs/AUTH.md`.
-- **Email:** verifikasi akun, reset password, konfirmasi dan hasil penghapusan akun, dan pengingat langganan lewat fallback Brevo → Mailjet → Mailtrap dengan penghitung kuota harian (`lib/mailer.ts`).
+- **Email:** verifikasi akun, reset password, konfirmasi dan hasil penghapusan akun, dan pengingat langganan lewat fallback Mailjet → Mailtrap → Brevo dengan penghitung kuota harian (`lib/mailer.ts`).
 - **Presensi:** check-in/out kamera langsung, aman untuk check-in serentak, foto privat di object storage, input oleh admin/superadmin, kehadiran harian, laporan bulanan, riwayat.
 - **Pengajuan:** izin/cuti dan lembur dengan persetujuan, laporan cuti.
 - **Karyawan:** daftar, detail, user login per role, keluhan karyawan.

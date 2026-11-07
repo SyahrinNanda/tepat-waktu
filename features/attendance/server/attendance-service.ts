@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { clientIp } from "@/lib/client-ip";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   attendanceEvents,
@@ -197,24 +197,66 @@ function distanceInMeters(latitudeA: number, longitudeA: number, latitudeB: numb
   return 2 * earthRadius * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
 }
 
+type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * The work schedule that applies to one employee on one date. Used by both the check-in screen and
+ * the recorder, so what the employee sees is exactly what lateness is judged against.
+ * - source "division": the active schedule of the employee's active division;
+ * - source "company":  otherwise the company's oldest active schedule;
+ * - source "default":  no schedule configured yet: 08:00–17:00 is shown, but lateness is not judged.
+ * The schedule's row for that weekday overrides its times; a disabled row makes it a day off.
+ */
+export type ResolvedSchedule = { name: string; startTime: string; endTime: string; graceMinutes: number; isWorkday: boolean; source: "division" | "company" | "default" };
+
+export const DEFAULT_SCHEDULE: ResolvedSchedule = { name: "Jadwal perusahaan", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15, isWorkday: true, source: "default" };
+
+export async function resolveSchedule(executor: Executor, input: { companyId: string; department: string | null; date: string }): Promise<ResolvedSchedule> {
+  const dayOfWeek = weekdayNumber(input.date);
+  const columns = {
+    name: workSchedules.name, baseStart: workSchedules.startTime, baseEnd: workSchedules.endTime, graceMinutes: workSchedules.graceMinutes,
+    dayEnabled: workScheduleDays.enabled, dayStart: workScheduleDays.startTime, dayEnd: workScheduleDays.endTime,
+  };
+  const dayJoin = and(eq(workScheduleDays.scheduleId, workSchedules.id), eq(workScheduleDays.dayOfWeek, dayOfWeek));
+
+  const [division] = input.department ? await executor.select(columns).from(divisions)
+    .innerJoin(workSchedules, and(eq(workSchedules.id, divisions.scheduleId), eq(workSchedules.active, true)))
+    .leftJoin(workScheduleDays, dayJoin)
+    .where(and(eq(divisions.companyId, input.companyId), eq(divisions.name, input.department), eq(divisions.active, true))).limit(1) : [];
+  const [company] = division ? [] : await executor.select(columns).from(workSchedules)
+    .leftJoin(workScheduleDays, dayJoin)
+    .where(and(eq(workSchedules.companyId, input.companyId), eq(workSchedules.active, true)))
+    .orderBy(asc(workSchedules.createdAt), asc(workSchedules.id)).limit(1);
+
+  const row = division ?? company;
+  if (!row) return DEFAULT_SCHEDULE;
+  return {
+    name: row.name,
+    startTime: row.dayStart ?? row.baseStart,
+    endTime: row.dayEnd ?? row.baseEnd,
+    graceMinutes: row.graceMinutes ?? 15,
+    isWorkday: row.dayEnabled !== false,
+    source: division ? "division" : "company",
+  };
+}
+
+/** Late only on a working day of a configured schedule, and only past start time + grace. */
+export function isLateCheckIn(schedule: ResolvedSchedule, time: string) {
+  return schedule.isWorkday && schedule.source !== "default" && isLate(time, schedule.startTime, schedule.graceMinutes);
+}
+
 export async function getSelfAttendanceStatus(context: SelfAttendanceContext) {
   const now = new Date();
   const zoned = zonedParts(now, context.timezone);
-  const dayOfWeek = weekdayNumber(zoned.date);
-  const [[assigned], [fallback], [attendance]] = await Promise.all([
-    db.select({ name: workSchedules.name, startTime: workScheduleDays.startTime, endTime: workScheduleDays.endTime, enabled: workScheduleDays.enabled, graceMinutes: workSchedules.graceMinutes }).from(employees)
-      .leftJoin(divisions, and(eq(divisions.companyId, employees.companyId), eq(divisions.name, employees.department), eq(divisions.active, true)))
-      .leftJoin(workSchedules, and(eq(workSchedules.id, divisions.scheduleId), eq(workSchedules.active, true)))
-      .leftJoin(workScheduleDays, and(eq(workScheduleDays.scheduleId, workSchedules.id), eq(workScheduleDays.dayOfWeek, dayOfWeek)))
-      .where(and(eq(employees.id, context.employeeId), eq(employees.companyId, context.companyId))).limit(1),
-    db.select({ name: workSchedules.name, startTime: workSchedules.startTime, endTime: workSchedules.endTime, graceMinutes: workSchedules.graceMinutes }).from(workSchedules).where(and(eq(workSchedules.companyId, context.companyId), eq(workSchedules.active, true))).limit(1),
+  const [[employee], [attendance]] = await Promise.all([
+    db.select({ department: employees.department }).from(employees).where(and(eq(employees.id, context.employeeId), eq(employees.companyId, context.companyId))).limit(1),
     db.select({ id: attendances.id, checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.employeeId, context.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1),
   ]);
-  const schedule = assigned?.name && assigned.startTime && assigned.endTime ? { name: assigned.name, startTime: assigned.startTime, endTime: assigned.endTime, graceMinutes: assigned.graceMinutes ?? 15, enabled: assigned.enabled ?? true } : fallback;
+  const schedule = await resolveSchedule(db, { companyId: context.companyId, department: employee?.department ?? null, date: zoned.date });
   return {
     employee: { id: context.employeeId, name: context.employeeName },
     company: { id: context.companyId, name: context.companyName, timezone: context.timezone },
-    schedule: schedule ?? { name: "Jadwal perusahaan", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15 },
+    schedule,
     attendance: attendance ?? null,
     nextAction: !attendance?.checkIn ? "check_in" : !attendance.checkOut ? "check_out" : null,
     serverTime: now.toISOString(),
@@ -292,14 +334,8 @@ export async function recordAttendanceEvent(input: {
         photoAssetId = asset.id;
       }
 
-      const dayOfWeek = weekdayNumber(zoned.date);
-      const [assignedSchedule] = await tx.select({ startTime: workScheduleDays.startTime, enabled: workScheduleDays.enabled, graceMinutes: workSchedules.graceMinutes }).from(divisions)
-        .innerJoin(workSchedules, and(eq(workSchedules.id, divisions.scheduleId), eq(workSchedules.active, true)))
-        .leftJoin(workScheduleDays, and(eq(workScheduleDays.scheduleId, workSchedules.id), eq(workScheduleDays.dayOfWeek, dayOfWeek)))
-        .where(and(eq(divisions.companyId, input.companyId), eq(divisions.name, employee.department), eq(divisions.active, true))).limit(1);
-      const [fallbackSchedule] = assignedSchedule?.startTime ? [undefined] : await tx.select({ startTime: workSchedules.startTime, graceMinutes: workSchedules.graceMinutes }).from(workSchedules).where(and(eq(workSchedules.companyId, input.companyId), eq(workSchedules.active, true))).limit(1);
-      const schedule = assignedSchedule?.startTime && assignedSchedule.enabled !== false ? assignedSchedule : fallbackSchedule;
-      const status = input.action === "check_in" && schedule?.startTime && isLate(zoned.time, schedule.startTime, schedule.graceMinutes) ? "late" : attendance.status;
+      const schedule = await resolveSchedule(tx, { companyId: input.companyId, department: employee.department, date: zoned.date });
+      const status = input.action === "check_in" && isLateCheckIn(schedule, zoned.time) ? "late" : attendance.status;
       await tx.insert(attendanceEvents).values({
         attendanceId: attendance.id,
         companyId: input.companyId,

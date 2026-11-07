@@ -6,7 +6,7 @@ Susunan produksi:
 - **`docker-compose.prod.yml`**: service `migrate` (migrasi database tiap deploy) lalu `app` (Next.js dari `Dockerfile`).
 - **PostgreSQL**: resource database di Coolify (atau server lain).
 - **Cloudflare R2**: penyimpanan file (foto presensi, dokumen) lewat protokol S3.
-- **Email**: Brevo → Mailjet → Mailtrap dengan fallback (lihat `docs/AUTH.md`).
+- **Email**: Mailjet → Mailtrap → Brevo dengan fallback (lihat `docs/AUTH.md`).
 
 ## 1. Siapkan layanan luar
 
@@ -43,7 +43,7 @@ OBJECT_STORAGE_FORCE_PATH_STYLE=true
 OBJECT_STORAGE_AUTO_CREATE_BUCKET=false
 
 MAIL_FROM="TepatWaktu <noreply@domain-anda.com>"
-MAIL_PROVIDERS=brevo,mailjet,mailtrap   # wajib ketiganya: fallback otomatis saat kuota/error
+MAIL_PROVIDERS=mailjet,mailtrap,brevo   # wajib ketiganya; urutan = urutan fallback saat kuota/error
                                         # SPF: satu record TXT gabungan include ketiga layanan
                                         # DAILY_LIMIT sebaiknya sedikit di bawah kuota asli (mis. 290/190/140)
 SMTP_BREVO_HOST=smtp-relay.brevo.com
@@ -105,7 +105,7 @@ Pindah ke live: ganti kedua key dengan key production dan set `MIDTRANS_IS_PRODU
 - [ ] Super Admin → Retensi menampilkan layanan email "Siap".
 - [ ] Setelah check-in, IP yang tercatat di detail presensi adalah IP publik pengguna (bukan IP Docker/Cloudflare seperti `10.x`, `172.x`). Jika salah, sesuaikan `CLIENT_IP_HEADER`.
 - [ ] Midtrans sandbox: buat invoice berbayar → Bayar Sekarang → bayar dengan simulator (simulator.sandbox.midtrans.com) → paket aktif otomatis dan status di Super Admin → Semua Langganan menjadi "Lunas via Midtrans". Dashboard Midtrans → Notification history menunjukkan respons 200.
-- [ ] Backup database terjadwal aktif di Coolify (Database → Backups), dan satu kali restore sudah dicoba.
+- Backup database: ditangani pemilik dengan export harian (keputusan 8 Nov 2026), bukan backup terjadwal Coolify.
 
 ## Catatan
 

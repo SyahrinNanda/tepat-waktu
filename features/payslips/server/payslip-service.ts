@@ -25,14 +25,18 @@ export type { Payslip, PayslipLine, PayslipSummary, SalaryBasis };
 
 
 
-/** Weekday (1 = Monday) -> scheduled hours, from the employee's division schedule or the company default. */
+/**
+ * Weekday (1 = Monday) -> scheduled hours, from the employee's division schedule or the company default.
+ * Picks the schedule with the same rule as attendance (`resolveSchedule`): only active schedules count.
+ */
 async function workWeekFor(companyId: string, department: string) {
-  const [assigned] = await db.select({ scheduleId: divisions.scheduleId }).from(divisions)
+  const [assigned] = await db.select({ scheduleId: workSchedules.id }).from(divisions)
+    .innerJoin(workSchedules, and(eq(workSchedules.id, divisions.scheduleId), eq(workSchedules.active, true)))
     .where(and(eq(divisions.companyId, companyId), eq(divisions.name, department), eq(divisions.active, true))).limit(1);
   let scheduleId = assigned?.scheduleId ?? null;
   if (!scheduleId) {
     const [fallback] = await db.select({ id: workSchedules.id }).from(workSchedules)
-      .where(and(eq(workSchedules.companyId, companyId), eq(workSchedules.active, true))).orderBy(asc(workSchedules.createdAt)).limit(1);
+      .where(and(eq(workSchedules.companyId, companyId), eq(workSchedules.active, true))).orderBy(asc(workSchedules.createdAt), asc(workSchedules.id)).limit(1);
     scheduleId = fallback?.id ?? null;
   }
   if (!scheduleId) return DEFAULT_WORK_WEEK;
