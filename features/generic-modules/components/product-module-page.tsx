@@ -293,18 +293,6 @@ const screens: Record<string, ScreenConfig> = {
       ["Karyawan / Staf", "Data pribadi", "Presensi dan pengajuan sendiri", "Tidak dapat melihat data karyawan lain", "29", ""],
     ],
   },
-  "pengaturan/ip-whitelist": {
-    title: "Daftar IP Whitelist",
-    description: "Batasi akses admin panel dari alamat jaringan yang dipercaya.",
-    breadcrumb: "Beranda / Pengaturan / IP Whitelist",
-    action: "Tambah IP Whitelist",
-    columns: ["Alamat IP / CIDR", "Keterangan", "Tanggal Dibuat", "Dibuat Oleh", "Status", "Aksi"],
-    rows: [
-      ["103.144.22.18", "Kantor Utama", "12 Okt 2026", "Administrator", "Aktif", ""],
-      ["36.88.0.0/16", "VPN Perusahaan", "08 Okt 2026", "Administrator", "Aktif", ""],
-    ],
-    form: ["Alamat IP atau CIDR", "Keterangan", "Status"],
-  },
 };
 
 export function ProductModulePage({ slug }: { slug: string }) {

@@ -89,34 +89,16 @@ services:
       OBJECT_STORAGE_AUTO_CREATE_BUCKET: "true"
       GEOCODING_BASE_URL: ${GEOCODING_BASE_URL:-https://nominatim.openstreetmap.org}
       GEOCODING_USER_AGENT: ${GEOCODING_USER_AGENT:-TepatWaktu/0.1}
-      MAIL_FROM: ${MAIL_FROM:-TepatWaktu <no-reply@tepatwaktu.local>}
-      # Lokal: semua email masuk Mailpit (http://localhost:8025). Ganti mis. "brevo,mailjet,mailtrap" untuk uji kirim sungguhan.
-      MAIL_PROVIDERS: ${MAIL_PROVIDERS:-mailpit}
+      # Email: MAIL_FROM, MAIL_PROVIDERS dan SMTP_<NAMA>_* dibaca dari .env.local (env_file). Sengaja tidak
+      # ditulis di sini agar nilai .env.local tidak tertimpa string kosong. Lokal: MAIL_PROVIDERS=mailpit
+      # (inbox http://localhost:8025); uji kirim sungguhan: mis. MAIL_PROVIDERS=brevo,mailpit.
+      # Hanya host Mailpit yang ditimpa, karena dari dalam container alamatnya "mailpit", bukan localhost.
       SMTP_MAILPIT_HOST: mailpit
       SMTP_MAILPIT_PORT: "1025"
-      SMTP_BREVO_HOST: ${SMTP_BREVO_HOST:-}
-      SMTP_BREVO_PORT: ${SMTP_BREVO_PORT:-}
-      SMTP_BREVO_SECURE: ${SMTP_BREVO_SECURE:-}
-      SMTP_BREVO_USER: ${SMTP_BREVO_USER:-}
-      SMTP_BREVO_PASS: ${SMTP_BREVO_PASS:-}
-      SMTP_BREVO_DAILY_LIMIT: ${SMTP_BREVO_DAILY_LIMIT:-}
-      SMTP_BREVO_FROM: ${SMTP_BREVO_FROM:-}
-      SMTP_MAILJET_HOST: ${SMTP_MAILJET_HOST:-}
-      SMTP_MAILJET_PORT: ${SMTP_MAILJET_PORT:-}
-      SMTP_MAILJET_SECURE: ${SMTP_MAILJET_SECURE:-}
-      SMTP_MAILJET_USER: ${SMTP_MAILJET_USER:-}
-      SMTP_MAILJET_PASS: ${SMTP_MAILJET_PASS:-}
-      SMTP_MAILJET_DAILY_LIMIT: ${SMTP_MAILJET_DAILY_LIMIT:-}
-      SMTP_MAILJET_FROM: ${SMTP_MAILJET_FROM:-}
-      SMTP_MAILTRAP_HOST: ${SMTP_MAILTRAP_HOST:-}
-      SMTP_MAILTRAP_PORT: ${SMTP_MAILTRAP_PORT:-}
-      SMTP_MAILTRAP_SECURE: ${SMTP_MAILTRAP_SECURE:-}
-      SMTP_MAILTRAP_USER: ${SMTP_MAILTRAP_USER:-}
-      SMTP_MAILTRAP_PASS: ${SMTP_MAILTRAP_PASS:-}
-      SMTP_MAILTRAP_DAILY_LIMIT: ${SMTP_MAILTRAP_DAILY_LIMIT:-}
-      SMTP_MAILTRAP_FROM: ${SMTP_MAILTRAP_FROM:-}
       CRON_SECRET: ${CRON_SECRET:-}
       REMINDER_SCHEDULER: ${REMINDER_SCHEDULER:-on}
+      # Midtrans: MIDTRANS_SERVER_KEY / CLIENT_KEY / IS_PRODUCTION dibaca dari .env.local (env_file).
+      # Sengaja tidak ditulis di sini agar nilai .env.local tidak tertimpa string kosong.
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:

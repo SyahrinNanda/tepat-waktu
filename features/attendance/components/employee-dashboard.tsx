@@ -19,7 +19,6 @@ type StatusResponse = {
   company: { name: string; timezone: string };
   attendance: AttendanceState;
   nextAction: AttendanceAction | null;
-  networkError?: string | null;
 };
 
 export function EmployeeDashboard({ name, date, timezone, initialAttendance, display = "full" }: {
@@ -124,12 +123,6 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
   }, [router]);
 
   const openCamera = useCallback(async (nextAction: AttendanceAction) => {
-    // Company IP whitelist: say so before the camera opens, not after the photo is taken.
-    try {
-      const check = await fetch("/api/attendance/me", { cache: "no-store" });
-      const body = await check.json() as Partial<StatusResponse> & { message?: string };
-      if (body.networkError) { setError(body.networkError); return; }
-    } catch { /* Network hiccup: the submit itself reports any problem. */ }
     setError("");
     setPhoto("");
     setAction(nextAction);

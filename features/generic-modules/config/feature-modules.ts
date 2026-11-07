@@ -4,7 +4,6 @@ export const featureModules = [
   "master/lokasi-presensi",
   "pengajuan/izin-cuti", "pengajuan/lembur",
   "kunjungan", "kunjungan/laporan", "karyawan/laporan-cuti",
-  "pengaturan/ip-whitelist",
 ] as const;
 
 export type FeatureModule = typeof featureModules[number];

@@ -5,6 +5,7 @@ import { employees, subscriptionOrders, subscriptionPlans } from "@/db/schema";
 import { redirect } from "next/navigation";
 import { requireCompany, SUBSCRIPTION_LOCKED_PATH } from "@/lib/current-company";
 import { SubscriptionManager } from "./subscription-manager";
+import { midtransPublicConfig } from "@/lib/midtrans";
 
 export const metadata: Metadata = { title: "Langganan" };
 
@@ -27,6 +28,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
       adminFee: subscriptionOrders.adminFee,
       status: subscriptionOrders.status,
       paymentMethod: subscriptionOrders.paymentMethod,
+      gatewayStatus: subscriptionOrders.gatewayStatus,
       durationMonths: subscriptionOrders.durationMonths,
       durationDays: subscriptionOrders.durationDays,
       transactionType: subscriptionOrders.transactionType,
@@ -55,6 +57,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
       orders={orders.map((order) => ({ ...order, createdAt: order.createdAt.toISOString() }))}
       canManage={context.role === "admin" || context.role === "owner"}
       initialInvoiceId={invoice}
+      midtrans={midtransPublicConfig()}
     />
   </div>;
 }

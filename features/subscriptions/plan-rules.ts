@@ -40,12 +40,31 @@ export function durationLabel(order: { durationMonths: number; durationDays?: nu
 export const formatRupiah = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
 export const PAYMENT_LABELS: Record<string, string> = {
-  credit_card: "Kartu Kredit",
-  bank_transfer: "Bank Transfer",
+  bank_transfer: "Virtual Account (BCA, BNI, BRI, Mandiri, Permata, CIMB)",
+  qris: "QRIS",
+  gopay: "GoPay",
   shopeepay: "ShopeePay",
+  credit_card: "Kartu Kredit/Debit",
   indomaret: "Indomaret",
   alfamart: "Alfamart",
   akulaku: "Akulaku Paylater",
-  qris: "QRIS",
   manual: "Manual (superadmin)",
 };
+
+/** Methods the company admin can pay with through Midtrans, in display order. */
+export const ONLINE_PAYMENT_METHODS = ["bank_transfer", "qris", "gopay", "shopeepay", "credit_card", "indomaret", "alfamart", "akulaku"] as const;
+export type OnlinePaymentMethod = typeof ONLINE_PAYMENT_METHODS[number];
+
+/** Admin fee charged to the customer per method (follows Midtrans' fee per channel). */
+export function paymentAdminFee(method: string, packagePrice: number) {
+  switch (method) {
+    case "credit_card": return Math.round(packagePrice * 0.029) + 2_000;
+    case "bank_transfer": return 4_000;
+    case "qris": return Math.round(packagePrice * 0.007);
+    case "gopay": return Math.round(packagePrice * 0.02);
+    case "shopeepay": return Math.round(packagePrice * 0.02);
+    case "indomaret": case "alfamart": return 5_000;
+    case "akulaku": return Math.round(packagePrice * 0.017);
+    default: return 0;
+  }
+}

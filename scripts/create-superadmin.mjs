@@ -1,0 +1,89 @@
+// Creates (or promotes) a platform superadmin without any demo data.
+//
+// Manual:   npm run superadmin:create -- --email admin@domain.com --password "RahasiaPanjang!" [--name "Nama"] [--reset-password]
+//           (or SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD / SUPERADMIN_NAME in the environment)
+// On deploy: the migrate service runs it with --if-none after the migrations. Nothing happens unless
+//           SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD are set, and only while no superadmin exists yet.
+import { randomUUID } from "node:crypto";
+import { createRequire } from "node:module";
+import { parseArgs } from "node:util";
+
+const require = createRequire(import.meta.url);
+const { loadEnvConfig } = require("@next/env");
+const pg = require("pg");
+const { hashPassword } = await import("better-auth/crypto");
+
+loadEnvConfig(process.cwd()); // .env.local when run locally; no-op inside containers.
+
+const { values: args } = parseArgs({
+  options: {
+    email: { type: "string" }, password: { type: "string" }, name: { type: "string" },
+    "if-none": { type: "boolean", default: false }, "reset-password": { type: "boolean", default: false },
+  },
+});
+const email = (args.email ?? process.env.SUPERADMIN_EMAIL ?? "").trim().toLowerCase();
+const password = args.password ?? process.env.SUPERADMIN_PASSWORD ?? "";
+const name = (args.name ?? process.env.SUPERADMIN_NAME ?? "Super Admin TepatWaktu").trim() || "Super Admin TepatWaktu";
+const ifNone = args["if-none"];
+
+const fail = (message) => { console.error(`[superadmin] ${message}`); process.exit(1); };
+
+if (!email && !password && ifNone) {
+  console.log("[superadmin] SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD tidak diisi, dilewati.");
+  process.exit(0);
+}
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail("Email tidak valid. Pakai --email atau SUPERADMIN_EMAIL.");
+// Same bounds as Better Auth's defaults, so the account can log in and change its password normally.
+if (password.length < 8 || password.length > 128) fail("Password harus 8–128 karakter. Pakai --password atau SUPERADMIN_PASSWORD.");
+if (!process.env.DATABASE_URL) fail("DATABASE_URL belum diisi.");
+
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+await db.connect();
+try {
+  await db.query("BEGIN");
+  if (ifNone) {
+    const { rows } = await db.query(`select email from "user" where platform_role = 'superadmin' limit 1`);
+    if (rows.length) {
+      console.log(`[superadmin] Sudah ada superadmin (${rows[0].email}), dilewati.`);
+      await db.query("ROLLBACK");
+      process.exit(0);
+    }
+  }
+
+  const passwordHash = await hashPassword(password);
+  const now = new Date();
+  const { rows: [existing] } = await db.query(`select id from "user" where email = $1 for update`, [email]);
+  let userId = existing?.id;
+  if (userId) {
+    await db.query(`update "user" set platform_role = 'superadmin', email_verified = true, updated_at = $2 where id = $1`, [userId, now]);
+  } else {
+    userId = randomUUID();
+    await db.query(
+      `insert into "user" (id, name, email, email_verified, platform_role, created_at, updated_at) values ($1, $2, $3, true, 'superadmin', $4, $4)`,
+      [userId, name, email, now],
+    );
+  }
+
+  const { rows: [credential] } = await db.query(`select id from account where user_id = $1 and provider_id = 'credential'`, [userId]);
+  let passwordNote;
+  if (!credential) {
+    await db.query(
+      `insert into account (id, account_id, provider_id, user_id, password, created_at, updated_at) values ($1, $2, 'credential', $2, $3, $4, $4)`,
+      [randomUUID(), userId, passwordHash, now],
+    );
+    passwordNote = "password diatur";
+  } else if (args["reset-password"]) {
+    await db.query(`update account set password = $2, updated_at = $3 where id = $1`, [credential.id, passwordHash, now]);
+    await db.query(`delete from session where user_id = $1`, [userId]);
+    passwordNote = "password diganti, sesi lama dikeluarkan";
+  } else {
+    passwordNote = "password lama dipertahankan (tambahkan --reset-password untuk menggantinya)";
+  }
+  await db.query("COMMIT");
+  console.log(`[superadmin] ${existing ? "Akun dijadikan superadmin" : "Superadmin dibuat"}: ${email} — ${passwordNote}.`);
+} catch (error) {
+  await db.query("ROLLBACK").catch(() => undefined);
+  fail(error instanceof Error ? error.message : String(error));
+} finally {
+  await db.end();
+}

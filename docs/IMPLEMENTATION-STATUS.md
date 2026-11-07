@@ -10,21 +10,21 @@ Payroll lama (istilah payroll), kasbon, klaim beban, dan laporan keuangan **tida
 
 - **Akun (Better Auth saja):** login email/password, pendaftaran perusahaan dengan verifikasi email, lupa/atur ulang password, sesi, ganti password, role superadmin dan role perusahaan. Penghapusan akun: pengguna mengajukan di `/penghapusan-akun`, mengonfirmasi lewat tautan email (24 jam), lalu superadmin memproses atau menolak di Superadmin → Permintaan Hapus Akun; pemohon menerima email hasilnya. Tidak ada Supabase dan login Google. Detail: `docs/AUTH.md`.
 - **Email:** verifikasi akun, reset password, konfirmasi dan hasil penghapusan akun, dan pengingat langganan lewat fallback Brevo → Mailjet → Mailtrap dengan penghitung kuota harian (`lib/mailer.ts`).
-- **Presensi:** check-in/out kamera langsung, IP whitelist per perusahaan, aman untuk check-in serentak, foto privat di object storage, input oleh admin/superadmin, kehadiran harian, laporan bulanan, riwayat.
+- **Presensi:** check-in/out kamera langsung, aman untuk check-in serentak, foto privat di object storage, input oleh admin/superadmin, kehadiran harian, laporan bulanan, riwayat.
 - **Pengajuan:** izin/cuti dan lembur dengan persetujuan, laporan cuti.
 - **Karyawan:** daftar, detail, user login per role, keluhan karyawan.
 - **Gaji:** Daftar Gaji Karyawan (basis gaji, upah lembur, kompensasi, potongan per karyawan) dan Slip Gaji bulanan dari kehadiran, izin/cuti, dan lembur, dengan kunci slip. Aturan hitung: `docs/SLIP-GAJI.md`.
 - **Kunjungan:** daftar dan laporan kunjungan.
 - **Master data:** jadwal kerja, hari dan waktu kerja, divisi, jabatan, lokasi kerja, pemberitahuan.
-- **Langganan:** batas jumlah karyawan aktif sesuai paket; katalog paket (Free Trial sampai Enterprise) dan paket custom >1000 karyawan; invoice, kupon diskon (termasuk di form pendaftaran), verifikasi manual superadmin; akses diblokir saat paket berakhir; peringatan H-5/H-2 di dashboard dan email ke admin.
+- **Langganan:** pembayaran online lewat Midtrans Snap (VA, QRIS, GoPay, ShopeePay, kartu, Indomaret, Alfamart, Akulaku) dengan biaya admin per metode dan aktivasi otomatis lewat webhook; verifikasi manual superadmin tetap ada; batas jumlah karyawan aktif sesuai paket; katalog paket (Free Trial sampai Enterprise) dan paket custom >1000 karyawan; invoice, kupon diskon (termasuk di form pendaftaran), verifikasi manual superadmin; akses diblokir saat paket berakhir; peringatan H-5/H-2 di dashboard dan email ke admin.
 - **Superadmin:** kelola perusahaan dan akun, masuk ke tenant, analitik bidang usaha, retensi dan monitor kapasitas, laporan pendapatan (ekspor Excel), konversi trial, kupon, pengumuman platform, log aktivitas, ubah tanggal daftar dan jatuh tempo.
 - **Zona waktu:** tanggal operasional perusahaan (hari presensi, laporan, tanggal langganan yang dilihat perusahaan) memakai zona waktu perusahaan (`companies.timezone`). Halaman superadmin memakai WITA sebagai zona waktu platform.
 - **Deploy:** `Dockerfile`, `docker-compose.yml` (lokal), dan `docker-compose.prod.yml` untuk VPS + Coolify + Cloudflare R2 (`docs/DEPLOY-VPS-COOLIFY.md`).
 
 ## Belum lengkap
 
-- **Pembayaran:** tidak ada payment gateway atau webhook; aktivasi paket berbayar diverifikasi manual oleh superadmin.
-- **Lokasi presensi:** geofence memakai koordinat browser yang bisa dipalsukan; untuk kantor tetap gunakan IP whitelist.
+- **Pembayaran:** Midtrans baru diuji dengan server tiruan; perlu diuji dengan akun sandbox sungguhan (lihat `docs/DEPLOY-VPS-COOLIFY.md` bagian 4b). Refund/chargeback hanya dicatat, tidak menonaktifkan paket otomatis.
+- **Lokasi presensi:** geofence memakai koordinat browser yang bisa dipalsukan. Fitur IP whitelist sudah dihapus (keputusan 6 Nov 2026).
 - **Master data:** shift, divisi, jabatan, dan lokasi belum menjadi referensi relasional wajib di semua aturan presensi lintas modul.
 - **Gaji:** belum ada perhitungan pajak dan BPJS otomatis, serta proses pembayaran gaji.
 - **Cuti:** kuota diasumsikan 12 hari per karyawan; belum ada kebijakan cuti per perusahaan dan kalender hari libur.

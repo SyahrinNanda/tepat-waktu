@@ -7,7 +7,9 @@ import { db } from "@/db";
 import { companies, couponRedemptions, subscriptionOrders, subscriptionPlans } from "@/db/schema";
 import { evaluateCoupon, normalizeCouponCode, type CouponCheck } from "@/features/subscriptions/server/coupons";
 import { requireCompanyRole } from "@/lib/current-company";
-import { DURATION_OPTIONS, periodEnd, trialPeriod } from "@/features/subscriptions/plan-rules";
+import { DURATION_OPTIONS, ONLINE_PAYMENT_METHODS, paymentAdminFee, periodEnd, trialPeriod } from "@/features/subscriptions/plan-rules";
+import { PaymentError, startMidtransPayment, syncInvoicePayment } from "@/features/subscriptions/server/midtrans-payments";
+import { midtransConfig, MidtransError } from "@/lib/midtrans";
 
 export type ActionState = {
   status: "idle" | "success" | "error";
@@ -16,15 +18,6 @@ export type ActionState = {
 };
 
 const durationSchema = z.coerce.number().int().refine((value) => (DURATION_OPTIONS as readonly number[]).includes(value), "Durasi paket tidak valid.");
-const paymentFees: Record<string, (subtotal: number) => number> = {
-  credit_card: (subtotal) => Math.round(subtotal * 0.036),
-  bank_transfer: () => 4_000,
-  shopeepay: (subtotal) => Math.round(subtotal * 0.015),
-  indomaret: () => 5_000,
-  alfamart: () => 5_000,
-  akulaku: (subtotal) => Math.round(subtotal * 0.02),
-  qris: (subtotal) => Math.round(subtotal * 0.007),
-};
 
 function refreshSubscriptionPages() {
   revalidatePath("/dashboard/langganan");
@@ -96,18 +89,44 @@ export async function requestSubscription(_previous: ActionState, formData: Form
   return { status: "success", message: order.amount === 0 ? "Paket berhasil diaktifkan." : "Invoice berhasil dibuat.", orderId: order.id };
 }
 
-export async function requestPayment(_previous: ActionState, formData: FormData): Promise<ActionState> {
+export type PaymentState = ActionState & {
+  /** Snap token to open the Midtrans popup. */
+  token?: string;
+  redirectUrl?: string | null;
+  /** The invoice turned out to be paid already. */
+  paid?: boolean;
+};
+
+/**
+ * "Bayar Sekarang": adds the admin fee of the chosen method and opens Midtrans Snap for it.
+ * Without Midtrans keys (local development) the method is only recorded for manual verification.
+ */
+export async function requestPayment(_previous: PaymentState, formData: FormData): Promise<PaymentState> {
   const context = await requireCompanyRole(["admin"], { allowExpired: true });
-  const parsed = z.object({ orderId: z.uuid(), paymentMethod: z.enum(["credit_card", "bank_transfer", "shopeepay", "indomaret", "alfamart", "akulaku", "qris"]) }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ orderId: z.uuid(), paymentMethod: z.enum(ONLINE_PAYMENT_METHODS) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "Pilih metode pembayaran yang tersedia." };
+
+  if (midtransConfig().configured) {
+    try {
+      const result = await startMidtransPayment({ orderId: parsed.data.orderId, companyId: context.companyId, method: parsed.data.paymentMethod, customer: { name: context.session.user.name, email: context.session.user.email } });
+      refreshSubscriptionPages();
+      if ("alreadyPaid" in result) return { status: "success", message: "Invoice ini sudah dibayar dan paket sudah aktif.", orderId: parsed.data.orderId, paid: true };
+      return { status: "success", message: "Membuka halaman pembayaran Midtrans…", orderId: parsed.data.orderId, token: result.token, redirectUrl: result.redirectUrl };
+    } catch (error) {
+      if (error instanceof PaymentError || error instanceof MidtransError) {
+        console.error("Midtrans payment start failed:", error.message);
+        return { status: "error", message: error instanceof PaymentError ? error.message : "Halaman pembayaran belum bisa dibuka. Coba lagi beberapa saat lagi." };
+      }
+      throw error;
+    }
+  }
 
   const [order] = await db.select({ id: subscriptionOrders.id, subtotal: subscriptionOrders.subtotal, discountAmount: subscriptionOrders.discountAmount })
     .from(subscriptionOrders)
     .where(and(eq(subscriptionOrders.id, parsed.data.orderId), eq(subscriptionOrders.companyId, context.companyId), eq(subscriptionOrders.status, "pending")))
     .limit(1);
   if (!order) return { status: "error", message: "Invoice tidak ditemukan atau sudah diproses." };
-
-  const adminFee = paymentFees[parsed.data.paymentMethod](order.subtotal);
+  const adminFee = paymentAdminFee(parsed.data.paymentMethod, order.subtotal - order.discountAmount);
   await db.update(subscriptionOrders).set({
     paymentMethod: parsed.data.paymentMethod,
     paymentRequestedAt: new Date(),
@@ -115,7 +134,18 @@ export async function requestPayment(_previous: ActionState, formData: FormData)
     amount: Math.max(0, order.subtotal - order.discountAmount + adminFee),
   }).where(and(eq(subscriptionOrders.id, order.id), eq(subscriptionOrders.companyId, context.companyId)));
   refreshSubscriptionPages();
-  return { status: "success", message: "Metode pembayaran tersimpan. Pembayaran menunggu verifikasi admin.", orderId: order.id };
+  return { status: "success", message: "Pembayaran online belum aktif. Metode tersimpan dan pembayaran menunggu verifikasi admin.", orderId: order.id };
+}
+
+/** Asks Midtrans for the latest status of an invoice (after the popup closes). */
+export async function checkPayment(orderId: string): Promise<{ paid: boolean }> {
+  const context = await requireCompanyRole(["admin"], { allowExpired: true });
+  const id = z.uuid().parse(orderId);
+  await syncInvoicePayment(id, context.companyId);
+  const [order] = await db.select({ status: subscriptionOrders.status }).from(subscriptionOrders)
+    .where(and(eq(subscriptionOrders.id, id), eq(subscriptionOrders.companyId, context.companyId))).limit(1);
+  refreshSubscriptionPages();
+  return { paid: order?.status === "active" };
 }
 
 export async function cancelSubscription(): Promise<ActionState> {

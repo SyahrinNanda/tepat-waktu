@@ -267,6 +267,20 @@
       "when": 1795000000000,
       "tag": "0037_one_company_per_user",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795100000000,
+      "tag": "0038_remove_ip_whitelist",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1795200000000,
+      "tag": "0039_midtrans_payments",
+      "breakpoints": true
     }
   ]
 }

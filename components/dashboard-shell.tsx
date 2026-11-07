@@ -118,7 +118,6 @@ const groups: NavGroup[] = [
       { href: "/dashboard/pengaturan/aplikasi", label: "Pengaturan Aplikasi", roles: ["admin"] },
       { href: "/dashboard/pengaturan/users", label: "User Login", roles: ["admin"] },
       { href: "/dashboard/pengaturan/roles", label: "User Level", roles: ["admin"] },
-      { href: "/dashboard/pengaturan/ip-whitelist", label: "IP Whitelist", roles: ["admin"] },
     ],
   },
 ];

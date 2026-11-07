@@ -10,6 +10,7 @@ export const AUDIT_ACTIONS = {
   "subscription.manual_extend": "Perpanjang manual",
   "payment.verify": "Verifikasi pembayaran",
   "payment.reject": "Tolak pembayaran",
+  "payment.gateway": "Pembayaran Midtrans diterima",
   "custom_plan.approve": "Setujui Paket Custom",
   "custom_plan.reject": "Tolak Paket Custom",
   "plan.create": "Tambah paket",

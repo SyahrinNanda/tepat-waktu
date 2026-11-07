@@ -10,7 +10,8 @@ RUN npm ci
 
 FROM dependencies AS migrator
 COPY . .
-CMD ["npm", "run", "db:migrate"]
+# After migrating, create the first superadmin when SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD are set and none exists yet.
+CMD ["sh", "-c", "npm run db:migrate && node scripts/create-superadmin.mjs --if-none"]
 
 FROM dependencies AS builder
 COPY . .

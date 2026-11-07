@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node scripts/seed-runner.mjs",
+    "superadmin:create": "node scripts/create-superadmin.mjs",
     "accounts:demo": "node scripts/list-demo-accounts.mjs",
     "storage:start": "powershell -ExecutionPolicy Bypass -File scripts/start-object-storage.ps1",
     "storage:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-object-storage.ps1"

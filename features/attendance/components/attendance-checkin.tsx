@@ -15,8 +15,6 @@ type StatusResponse = {
   attendance: { id: string; checkIn: string | null; checkOut: string | null; status: string } | null;
   nextAction: AttendanceAction | null;
   serverTime: string;
-  /** Set when the company IP whitelist does not include this network. */
-  networkError?: string | null;
 };
 
 export function AttendanceCheckin() {
@@ -124,7 +122,6 @@ export function AttendanceCheckin() {
   }, [cameraStarting, phase]);
 
   const openCamera = useCallback(async (nextAction: AttendanceAction) => {
-    if (status?.networkError) { setError(status.networkError); return; }
     setError("");
     setPhoto("");
     setAction(nextAction);
@@ -179,7 +176,7 @@ export function AttendanceCheckin() {
       setCameraFailed(true);
       setError(cameraErrorMessage(cause));
     }
-  }, [status, stopCamera]);
+  }, [stopCamera]);
 
   const autoOpenedRef = useRef(false);
   useEffect(() => {

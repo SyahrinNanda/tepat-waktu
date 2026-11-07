@@ -708,8 +708,31 @@ export const subscriptionOrders = pgTable("subscription_orders", {
   requestedBy: text("requested_by").notNull().references(() => user.id),
   verifiedBy: text("verified_by").references(() => user.id),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  /** Midtrans order_id of the latest payment attempt (invoice number + suffix). */
+  gatewayOrderId: text("gateway_order_id"),
+  snapToken: text("snap_token"),
+  snapRedirectUrl: text("snap_redirect_url"),
+  /** Last Midtrans transaction_status (pending, settlement, expire, ...). */
+  gatewayStatus: text("gateway_status"),
+  gatewayPaymentType: text("gateway_payment_type"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [index("subscription_orders_company_idx").on(table.companyId, table.createdAt), index("subscription_orders_status_idx").on(table.status), index("subscription_orders_verified_idx").on(table.verifiedAt)]);
+}, (table) => [index("subscription_orders_company_idx").on(table.companyId, table.createdAt), index("subscription_orders_status_idx").on(table.status), index("subscription_orders_verified_idx").on(table.verifiedAt), uniqueIndex("subscription_orders_gateway_order_idx").on(table.gatewayOrderId)]);
+
+/** Every Midtrans notification received, valid or not, for auditing and debugging. */
+export const paymentGatewayEvents = pgTable("payment_gateway_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id").references(() => subscriptionOrders.id, { onDelete: "set null" }),
+  gatewayOrderId: text("gateway_order_id").notNull(),
+  transactionStatus: text("transaction_status"),
+  paymentType: text("payment_type"),
+  grossAmount: text("gross_amount"),
+  signatureValid: boolean("signature_valid").notNull(),
+  /** What the app did: activated, recorded, ignored, rejected_signature, amount_mismatch, unknown_order. */
+  result: text("result").notNull(),
+  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("payment_gateway_events_order_idx").on(table.orderId, table.createdAt)]);
 
 export const customPlanRequests = pgTable("custom_plan_requests", {
   id: uuid("id").defaultRandom().primaryKey(),
