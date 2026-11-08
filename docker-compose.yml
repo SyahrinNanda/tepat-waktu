@@ -87,8 +87,7 @@ services:
       OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-tepatwaktu-local-storage-secret}
       OBJECT_STORAGE_FORCE_PATH_STYLE: "true"
       OBJECT_STORAGE_AUTO_CREATE_BUCKET: "true"
-      GEOCODING_BASE_URL: ${GEOCODING_BASE_URL:-https://nominatim.openstreetmap.org}
-      GEOCODING_USER_AGENT: ${GEOCODING_USER_AGENT:-TepatWaktu/0.1}
+      # GEOCODING_*, GEOAPIFY_API_KEY, TOMTOM_API_KEY juga dibaca dari .env.local.
       # Email: MAIL_FROM, MAIL_PROVIDERS dan SMTP_<NAMA>_* dibaca dari .env.local (env_file). Sengaja tidak
       # ditulis di sini agar nilai .env.local tidak tertimpa string kosong. Lokal: MAIL_PROVIDERS=mailpit
       # (inbox http://localhost:8025); uji kirim sungguhan: mis. MAIL_PROVIDERS=brevo,mailpit.

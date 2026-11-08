@@ -4,16 +4,30 @@
 //           (or SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD / SUPERADMIN_NAME in the environment)
 // On deploy: the migrate service runs it with --if-none after the migrations. Nothing happens unless
 //           SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD are set, and only while no superadmin exists yet.
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID, scrypt } from "node:crypto";
 import { createRequire } from "node:module";
 import { parseArgs } from "node:util";
 
 const require = createRequire(import.meta.url);
-const { loadEnvConfig } = require("@next/env");
 const pg = require("pg");
-const { hashPassword } = await import("better-auth/crypto");
 
-loadEnvConfig(process.cwd()); // .env.local when run locally; no-op inside containers.
+// .env.local when run locally. The production image has no @next/env (and no .env files), so it is optional.
+try { require("@next/env").loadEnvConfig(process.cwd()); } catch { /* container: environment comes from Coolify */ }
+
+/**
+ * Same format and parameters as Better Auth's hashPassword (@better-auth/utils/password, node build):
+ * scrypt(NFKC password, 16-byte hex salt string, N=16384 r=16 p=1, 64 bytes) -> "<salt>:<hex key>".
+ * Kept here so the script runs in the slim production image without Better Auth installed.
+ * Verified against Better Auth's verifyPassword (8 Nov 2026); re-check if Better Auth changes its hashing.
+ * SUPERADMIN_HASH_ONLY=1 node scripts/create-superadmin.mjs "<password>" prints a hash for such a check.
+ */
+export function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  return new Promise((resolve, reject) => scrypt(password.normalize("NFKC"), salt, 64, { N: 16384, r: 16, p: 1, maxmem: 128 * 16384 * 16 * 2 },
+    (error, key) => (error ? reject(error) : resolve(`${salt}:${key.toString("hex")}`))));
+}
+
+if (process.env.SUPERADMIN_HASH_ONLY === "1") { console.log(await hashPassword(process.argv[2] ?? "")); process.exit(0); }
 
 const { values: args } = parseArgs({
   options: {

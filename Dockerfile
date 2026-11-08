@@ -13,6 +13,12 @@ COPY . .
 # After migrating, create the first superadmin when SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD are set and none exists yet.
 CMD ["sh", "-c", "npm run db:migrate && node scripts/create-superadmin.mjs --if-none"]
 
+# Runtime-only dependencies for the startup tasks in the runner (migrations, first superadmin).
+FROM base AS ops
+WORKDIR /ops
+COPY scripts/ops/package.json ./
+RUN npm install --omit=dev --no-audit --no-fund
+
 FROM dependencies AS builder
 COPY . .
 
@@ -49,10 +55,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Startup tasks, so a plain "Dockerfile" deployment (e.g. Coolify Dockerfile build pack) migrates on its own:
+# apply pending migrations, create the first superadmin from SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD when none
+# exists, then start the server. A failed migration stops the container. RUN_MIGRATIONS=off skips migrations.
+COPY --from=ops --chown=nextjs:nodejs /ops/node_modules ./ops/node_modules
+COPY --chown=nextjs:nodejs drizzle ./ops/drizzle
+COPY --chown=nextjs:nodejs scripts/ops/migrate.mjs scripts/create-superadmin.mjs ./ops/
+
 USER nextjs
 EXPOSE 3000
 
-HEALTHCHECK --interval=10s --timeout=5s --start-period=25s --retries=6 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=6 \
   CMD node -e "fetch('http://127.0.0.1:3000').then((r)=>process.exit(r.status < 500 ? 0 : 1)).catch(()=>process.exit(1))"
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node ops/migrate.mjs && node ops/create-superadmin.mjs --if-none && exec node server.js"]

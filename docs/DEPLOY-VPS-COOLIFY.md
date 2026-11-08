@@ -3,7 +3,8 @@
 Susunan produksi:
 
 - **VPS + Coolify**: menjalankan container dan memasang HTTPS (Let's Encrypt) otomatis.
-- **`docker-compose.prod.yml`**: service `migrate` (migrasi database tiap deploy) lalu `app` (Next.js dari `Dockerfile`).
+- **`Dockerfile`** (build pack yang dipakai, keputusan 8 Nov 2026): satu container. Saat start, container menjalankan migrasi database (`ops/migrate.mjs`), membuat superadmin pertama bila belum ada (`ops/create-superadmin.mjs --if-none`), lalu menyalakan Next.js. Migrasi gagal = container berhenti (lihat log `[migrate] GAGAL: ...`).
+- Alternatif: **`docker-compose.prod.yml`** (service `migrate` lalu `app`). Tidak dipakai saat ini.
 - **PostgreSQL**: resource database di Coolify (atau server lain).
 - **Cloudflare R2**: penyimpanan file (foto presensi, dokumen) lewat protokol S3.
 - **Email**: Mailjet → Mailtrap → Brevo dengan fallback (lihat `docs/AUTH.md`).
@@ -20,9 +21,10 @@ Susunan produksi:
 ## 2. Siapkan Coolify
 
 1. Pasang Coolify di VPS (ikuti panduan resmi Coolify).
-2. Buat **PostgreSQL** (versi 17) sebagai resource. Salin *internal connection URL* untuk `DATABASE_URL`. Aktifkan **scheduled backup**; tujuan backup bisa diarahkan ke bucket R2 terpisah (S3-compatible).
-3. Buat resource aplikasi dari repository Git dengan **Build Pack: Docker Compose** dan file `docker-compose.prod.yml`.
-4. Pada service `app`, isi domain `https://app.domain-anda.com` dengan port **3000**.
+2. Buat **PostgreSQL** (versi 17) sebagai resource. Salin *internal connection URL* untuk `DATABASE_URL`. Backup: pemilik mengekspor database setiap hari (keputusan 8 Nov 2026).
+3. Buat resource aplikasi dari repository Git (branch `main`) dengan **Build Pack: Dockerfile**. Tidak perlu mengatur target build: target bawaan (`runner`) sudah menjalankan migrasi saat start. Port **3000**.
+   - Jika aplikasi dan PostgreSQL adalah resource terpisah dan aplikasi tidak bisa menjangkau database (`ENOTFOUND`), aktifkan **Connect To Predefined Network** atau pakai *internal URL* dari halaman database.
+4. Isi domain `https://tepat-waktu.id,https://www.tepat-waktu.id`.
 
 ## 3. Variabel lingkungan
 
@@ -41,6 +43,13 @@ OBJECT_STORAGE_ACCESS_KEY=...
 OBJECT_STORAGE_SECRET_KEY=...
 OBJECT_STORAGE_FORCE_PATH_STYLE=true
 OBJECT_STORAGE_AUTO_CREATE_BUCKET=false
+
+# Pencarian lokasi presensi (Master → Lokasi). Hasil TomTom, Geoapify, dan Nominatim digabung;
+# tanpa kedua key hanya Nominatim yang dipakai (hasil jauh lebih sedikit). Key hanya dipakai di server.
+GEOAPIFY_API_KEY=...                     # dianjurkan; myprojects.geoapify.com
+TOMTOM_API_KEY=...                       # dianjurkan; my.tomtom.com
+GEOCODING_BASE_URL=https://nominatim.openstreetmap.org
+GEOCODING_USER_AGENT="TepatWaktu/1.0 (https://app.domain-anda.com; admin@domain-anda.com)"   # kebijakan Nominatim: sertakan situs/kontak
 
 MAIL_FROM="TepatWaktu <noreply@domain-anda.com>"
 MAIL_PROVIDERS=mailjet,mailtrap,brevo   # wajib ketiganya; urutan = urutan fallback saat kuota/error
@@ -65,12 +74,13 @@ SMTP_MAILTRAP_DAILY_LIMIT=150
 CRON_SECRET=...                          # opsional, untuk cron eksternal
 REMINDER_SCHEDULER=on
 CLIENT_IP_HEADER=x-real-ip               # cf-connecting-ip jika domain lewat proxy Cloudflare
+RUN_MIGRATIONS=on                        # opsional; off untuk melewati migrasi saat start
 
 MIDTRANS_SERVER_KEY=...                  # Midtrans → Settings → Access Keys
 MIDTRANS_CLIENT_KEY=...
 MIDTRANS_IS_PRODUCTION=false             # true setelah akun Midtrans live disetujui
 
-# Superadmin pertama (dibaca service "migrate"). Hanya dibuat jika belum ada superadmin sama sekali.
+# Superadmin pertama (dibaca container saat start). Hanya dibuat jika belum ada superadmin sama sekali.
 SUPERADMIN_EMAIL=anda@domain-anda.com
 SUPERADMIN_PASSWORD=...                  # 8–128 karakter; HAPUS variabel ini setelah berhasil login
 SUPERADMIN_NAME="Nama Anda"              # opsional
@@ -80,9 +90,9 @@ Variabel wajib yang kosong membuat deploy berhenti dengan pesan "Isi ...".
 
 ## 4. Deploy
 
-1. Klik **Deploy**. Urutannya: build image → `migrate` menjalankan migrasi lalu berhenti → `app` menyala.
-2. Container `migrate` berstatus *exited (0)* setelah deploy; itu normal.
-3. **Superadmin pertama** dibuat otomatis oleh `migrate` dari `SUPERADMIN_EMAIL` dan `SUPERADMIN_PASSWORD` (log: `[superadmin] Superadmin dibuat: ...`). Login di `https://app.domain-anda.com`, lalu **hapus `SUPERADMIN_PASSWORD`** dari environment Coolify. Deploy berikutnya menulis `Sudah ada superadmin, dilewati`, jadi akun tidak pernah ditimpa. **Jangan jalankan `npm run db:seed` di production**: perintah itu membuat perusahaan dan akun demo dengan password yang diketahui umum.
+1. Klik **Deploy**. Urutannya: build image → container start → `[migrate] Selesai ... N migrasi baru diterapkan` → `[superadmin] ...` → `Ready`. Cek di **Logs** aplikasi.
+2. Deploy berikutnya: `0 migrasi baru` kecuali ada migrasi baru di kode; migrasi baru otomatis diterapkan sebelum server menyala.
+3. **Superadmin pertama** dibuat otomatis saat container start dari `SUPERADMIN_EMAIL` dan `SUPERADMIN_PASSWORD` (log: `[superadmin] Superadmin dibuat: ...`). Login di `https://app.domain-anda.com`, lalu **hapus `SUPERADMIN_PASSWORD`** dari environment Coolify. Deploy berikutnya menulis `Sudah ada superadmin, dilewati`, jadi akun tidak pernah ditimpa. **Jangan jalankan `npm run db:seed` di production**: perintah itu membuat perusahaan dan akun demo dengan password yang diketahui umum.
    - Lupa password superadmin atau perlu superadmin tambahan: dari terminal mana pun yang bisa menjangkau database, `DATABASE_URL=... npm run superadmin:create -- --email anda@domain.com --password "PasswordBaru" --reset-password`. Akun yang sudah ada dijadikan superadmin; tanpa `--reset-password` password lamanya dipertahankan.
 
 ## 4b. Midtrans
@@ -102,6 +112,7 @@ Pindah ke live: ganti kedua key dengan key production dan set `MIDTRANS_IS_PRODU
 - [ ] Daftar perusahaan baru → email verifikasi masuk → tautan membuka dashboard.
 - [ ] Lupa password → email masuk → password baru bisa dipakai login.
 - [ ] Upload foto presensi berhasil dan file muncul di bucket R2.
+- [ ] Master → Lokasi: cari nama tempat (mis. "Monas") → hasil muncul dari beberapa sumber (TomTom/Geoapify/Nominatim).
 - [ ] Super Admin → Retensi menampilkan layanan email "Siap".
 - [ ] Setelah check-in, IP yang tercatat di detail presensi adalah IP publik pengguna (bukan IP Docker/Cloudflare seperti `10.x`, `172.x`). Jika salah, sesuaikan `CLIENT_IP_HEADER`.
 - [ ] Midtrans sandbox: buat invoice berbayar → Bayar Sekarang → bayar dengan simulator (simulator.sandbox.midtrans.com) → paket aktif otomatis dan status di Super Admin → Semua Langganan menjadi "Lunas via Midtrans". Dashboard Midtrans → Notification history menunjukkan respons 200.

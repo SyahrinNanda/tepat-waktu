@@ -1,0 +1,10 @@
+{
+  "name": "tepatwaktu-ops",
+  "private": true,
+  "description": "Runtime-only dependencies for the startup tasks in the production image (migrations, first superadmin). Keep versions equal to the root package.json.",
+  "type": "module",
+  "dependencies": {
+    "drizzle-orm": "0.45.4",
+    "pg": "8.23.1"
+  }
+}

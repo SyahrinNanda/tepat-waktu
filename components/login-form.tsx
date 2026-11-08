@@ -31,6 +31,9 @@ export function LoginForm() {
           setError("Email belum diverifikasi. Kami sudah mengirim ulang tautan verifikasi ke email Anda; buka tautan itu untuk mengaktifkan akun.");
         } else if (result.error.status === 429) {
           setError("Terlalu banyak percobaan masuk. Tunggu sebentar lalu coba lagi.");
+        } else if ((result.error.status ?? 0) >= 500) {
+          // Server/database failure: do not tell the user their password is wrong.
+          setError("Server sedang bermasalah sehingga login belum bisa diproses. Coba lagi beberapa saat lagi atau hubungi admin TepatWaktu.");
         } else {
           setError("Email atau password belum tepat.");
         }
