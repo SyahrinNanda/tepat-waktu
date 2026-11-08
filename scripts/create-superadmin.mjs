@@ -40,22 +40,40 @@ const password = args.password ?? process.env.SUPERADMIN_PASSWORD ?? "";
 const name = (args.name ?? process.env.SUPERADMIN_NAME ?? "Super Admin TepatWaktu").trim() || "Super Admin TepatWaktu";
 const ifNone = args["if-none"];
 
-const fail = (message) => { console.error(`[superadmin] ${message}`); process.exit(1); };
-
-if (!email && !password && ifNone) {
-  console.log("[superadmin] SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD tidak diisi, dilewati.");
-  process.exit(0);
-}
-if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail("Email tidak valid. Pakai --email atau SUPERADMIN_EMAIL.");
-// Same bounds as Better Auth's defaults, so the account can log in and change its password normally.
-if (password.length < 8 || password.length > 128) fail("Password harus 8–128 karakter. Pakai --password atau SUPERADMIN_PASSWORD.");
+// --if-none runs on every container start: it must never stop the app. Problems are logged and skipped.
+const fail = (message) => {
+  if (ifNone) { console.warn(`[superadmin] ${message} Dilewati; aplikasi tetap dijalankan.`); process.exit(0); }
+  console.error(`[superadmin] ${message}`); process.exit(1);
+};
 if (!process.env.DATABASE_URL) fail("DATABASE_URL belum diisi.");
 
 const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await db.connect();
+
+if (ifNone) {
+  // Checked first: once a superadmin exists (e.g. SUPERADMIN_PASSWORD was removed after the first
+  // login, as the deploy guide says), the SUPERADMIN_* variables are irrelevant.
+  const { rows } = await db.query(`select email from "user" where platform_role = 'superadmin' limit 1`);
+  if (rows.length) {
+    console.log(`[superadmin] Sudah ada superadmin (${rows[0].email}), dilewati.`);
+    await db.end();
+    process.exit(0);
+  }
+  if (!email && !password) {
+    console.log("[superadmin] SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD tidak diisi, dilewati.");
+    await db.end();
+    process.exit(0);
+  }
+}
+const invalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? "Email tidak valid. Pakai --email atau SUPERADMIN_EMAIL."
+  // Same bounds as Better Auth's defaults, so the account can log in and change its password normally.
+  : password.length < 8 || password.length > 128 ? "Password harus 8–128 karakter. Pakai --password atau SUPERADMIN_PASSWORD." : null;
+if (invalid) { await db.end(); fail(invalid); }
+
 try {
   await db.query("BEGIN");
   if (ifNone) {
+    // Re-check inside the transaction in case another container created one meanwhile.
     const { rows } = await db.query(`select email from "user" where platform_role = 'superadmin' limit 1`);
     if (rows.length) {
       console.log(`[superadmin] Sudah ada superadmin (${rows[0].email}), dilewati.`);

@@ -68,4 +68,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=6 \
   CMD node -e "fetch('http://127.0.0.1:3000').then((r)=>process.exit(r.status < 500 ? 0 : 1)).catch(()=>process.exit(1))"
 
-CMD ["sh", "-c", "node ops/migrate.mjs && node ops/create-superadmin.mjs --if-none && exec node server.js"]
+# Only a failed migration stops the container; the superadmin step never blocks the server.
+CMD ["sh", "-c", "node ops/migrate.mjs && { node ops/create-superadmin.mjs --if-none || echo '[superadmin] langkah superadmin gagal; server tetap dijalankan.'; } && exec node server.js"]
