@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { hashPassword } from "better-auth/crypto";
 import { db } from "@/db";
-import { account, user } from "@/db/schema";
+import { account, companies, companyMembers, user } from "@/db/schema";
+import { revokeUserSessions } from "@/lib/member-status";
 import { requireSuperAdmin } from "@/lib/superadmin";
 import { recordAudit } from "@/lib/audit";
 
@@ -78,3 +79,22 @@ export async function deleteUserAccount(formData: FormData) {
   revalidatePath("/superadmin");
 }
 
+
+/** Superadmin: activate/deactivate a company member (the only way to change an Administrator's status). */
+export async function setMemberStatus(formData: FormData) {
+  const currentSession = await requireSuperAdmin();
+  const userId = z.string().min(1).parse(formData.get("userId"));
+  const active = z.enum(["true", "false"]).parse(formData.get("active")) === "true";
+  const [member] = await db.select({ id: companyMembers.id, role: companyMembers.role, companyId: companyMembers.companyId, companyName: companies.name, email: user.email })
+    .from(companyMembers).innerJoin(user, eq(user.id, companyMembers.userId)).innerJoin(companies, eq(companies.id, companyMembers.companyId))
+    .where(eq(companyMembers.userId, userId)).limit(1);
+  if (!member) throw new Error("Akun ini tidak terhubung ke perusahaan mana pun.");
+  await db.update(companyMembers).set({ isActive: active }).where(eq(companyMembers.id, member.id));
+  if (!active) await revokeUserSessions(userId);
+  await recordAudit(currentSession, {
+    action: active ? "user.activate" : "user.deactivate", companyId: member.companyId,
+    summary: `${active ? "Mengaktifkan" : "Menonaktifkan"} akun ${member.email} (${member.role === "admin" || member.role === "owner" ? "Administrator" : member.role}) di ${member.companyName}`,
+    metadata: { userId, role: member.role, active },
+  });
+  revalidatePath("/superadmin/users");
+}

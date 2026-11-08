@@ -19,6 +19,7 @@ export default async function Page() {
         .join(";")}
       initialUsers={users}
       currentUserId={context.session.user.id}
+      viewerIsSuperAdmin={context.isSuperAdmin}
     />
   );
 }

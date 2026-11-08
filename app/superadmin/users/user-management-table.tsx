@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { KeyRound, RotateCcw, Search, Shield, ShieldAlert, Trash2, UserCheck, X } from "lucide-react";
-import { deleteUserAccount, resetUserPassword, updateUserPlatformRole } from "./actions";
+import { deleteUserAccount, resetUserPassword, setMemberStatus, updateUserPlatformRole } from "./actions";
 
 export type UserRow = {
   id: string;
@@ -14,6 +14,8 @@ export type UserRow = {
   companyId: string | null;
   companyName: string | null;
   companyRole: string | null;
+  /** company_members.is_active; null when the account has no company. */
+  memberActive: boolean | null;
   employeePosition: string | null;
   employeeCode: string | null;
 };
@@ -196,6 +198,7 @@ export function UserManagementTable({
               <th>Akses Platform</th>
               <th>Ruang Kerja / Tenant</th>
               <th>Role Tenant</th>
+              <th>Status</th>
               <th>Terdaftar</th>
               <th style={{ textAlign: "right" }}>Aksi</th>
             </tr>
@@ -250,6 +253,27 @@ export function UserManagementTable({
                       </span>
                     ) : (
                       <span style={{ color: "var(--muted)" }}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    {u.companyRole === null ? (
+                      <span style={{ color: "var(--muted)" }}>—</span>
+                    ) : (
+                      <form action={setMemberStatus} style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <input type="hidden" name="userId" value={u.id} />
+                        <input type="hidden" name="active" value={u.memberActive ? "false" : "true"} />
+                        <span className={`status-pill ${u.memberActive ? "green" : "red"}`}>{u.memberActive ? "Aktif" : "Nonaktif"}</span>
+                        <button
+                          type="submit"
+                          className="btn btn-sm btn-outline"
+                          title={u.memberActive ? "Nonaktifkan: user langsung keluar dan tidak bisa login" : "Aktifkan kembali"}
+                          onClick={(event) => {
+                            if (u.memberActive && !window.confirm(`Nonaktifkan ${u.email}? User langsung keluar dari semua perangkat dan tidak bisa login.`)) event.preventDefault();
+                          }}
+                        >
+                          {u.memberActive ? "Nonaktifkan" : "Aktifkan"}
+                        </button>
+                      </form>
                     )}
                   </td>
                   <td>

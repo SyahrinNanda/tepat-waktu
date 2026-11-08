@@ -150,3 +150,22 @@ Catatan: `docker-compose.yml` dulu menimpa `MAIL_*`/`SMTP_*` dari `.env.local` d
 - [ ] **Brevo**: domain masih "Your records don't match yet". Setelah *Authenticated*, tambahkan sender `no-reply@tepat-waktu.id` (Senders → Add a sender), kirim ulang email uji, lalu pertimbangkan mengembalikan Brevo ke urutan depan.
 - [ ] Setelah beberapa minggu tanpa masalah, pertimbangkan DMARC `p=quarantine` agar domain lebih sulit dipalsukan.
 - [ ] `MAIL_PROVIDERS` di `.env.local` masih `mailpit` (sengaja, untuk pengembangan lokal). Di Coolify isi `mailjet,mailtrap,brevo`.
+
+## 10. Undangan user lewat email (8 Nov 2026)
+
+- [x] Pengaturan → Users → Tambah: opsi **"Kirim undangan lewat email"** (default aktif). User menerima email berisi tautan `/undangan?token=...` untuk membuat password sendiri (7 hari, sekali pakai). Label "Menunggu undangan"/"Undangan kedaluwarsa" dan menu "Kirim ulang undangan" di daftar user. Detail: `docs/AUTH.md` → "Undangan user lewat email". Migrasi `0040_user_invitations`.
+- [x] Diuji end-to-end di lokal (26 pemeriksaan): email masuk Mailpit, label status, data karyawan tertaut, belum bisa login sebelum membuat password, konfirmasi beda ditolak, password tersimpan + login, tautan sekali pakai, jeda kirim ulang, tautan lama batal setelah kirim ulang, kedaluwarsa, anggota yang dikeluarkan, jalur password manual tetap jalan. Tes isolasi 115/115.
+- [x] Sekalian diperbaiki: pesan sukses/gagal setelah menambah user di halaman Users dulu tidak pernah tampil (komponen dibuat ulang setelah refresh).
+- [ ] Uji di production dengan email sungguhan setelah deploy (pastikan `BETTER_AUTH_URL` = domain production, karena tautan undangan memakai alamat itu).
+- [x] (8 Nov 2026) **Karyawan → Tambah membuat akun + undangan sekaligus** (kotak "Buat akun login & kirim undangan email", default aktif). Kartu "Akun login" di detail karyawan (buat akun / kirim ulang), kolom "Akun Login" di daftar karyawan, sinkron email saat diedit sebelum undangan dipakai. Diuji end-to-end (24 pemeriksaan): akun level Karyawan tertaut, email masuk, status di daftar/detail/Users, perbaikan salah ketik email (tautan lama batal, undangan ke alamat baru), email login tidak diubah setelah aktif, tanpa akun lalu tombol buat akun, jeda kirim ulang, email milik perusahaan lain ditolak tanpa menyentuh akun itu.
+- Rencana fitur lain (belum dikerjakan): impor karyawan dari Excel.
+
+## 11. Status user dan OTP Login (8 Nov 2026)
+
+Sebelumnya kedua sakelar di Pengaturan → Users hanya tersimpan dan tidak berpengaruh.
+
+- [x] **Status berlaku.** User nonaktif: semua sesinya langsung diputus, login ditolak dengan pesan "Akun Anda dinonaktifkan oleh admin perusahaan…" (hook `databaseHooks.session.create.before` di `lib/auth.ts`, juga berlaku untuk langkah OTP), dan cookie lama dianggap keluar di semua halaman/API (`getAppSession` → `lib/member-status.ts`).
+- [x] **Status akun Administrator hanya bisa diubah Superadmin.** Di Pengaturan → Users sakelar admin terkunci (juga akun sendiri) dan server menolaknya. Superadmin: Super Admin → Kelola Seluruh Akun → kolom **Status** (Aktifkan/Nonaktifkan, tercatat di audit `user.activate`/`user.deactivate`).
+- [x] **OTP Login berlaku, default off** (migrasi `0041`: semua anggota lama di-set off, default kolom false). Memakai plugin resmi Better Auth `twoFactor` (email OTP, TOTP dimatikan): setelah password benar, user dengan OTP aktif menerima kode 6 digit lewat email (berlaku 5 menit, disimpan sebagai hash, percobaan dibatasi plugin), opsi "Percayai perangkat ini 30 hari". Sakelar OTP menyinkronkan `user.two_factor_enabled` + baris `two_factor` (`lib/otp-login.ts`; plugin 1.6.23 mensyaratkan baris itu).
+- [x] Diuji end-to-end (27 pemeriksaan) + regresi: undangan 26/26, karyawan+akun 24/24, isolasi 115/115, presensi 23/23.
+- [ ] Uji OTP dengan email sungguhan di production (kode dikirim lewat Mailjet/Mailtrap/Brevo).

@@ -1,4 +1,4 @@
-import { Logo } from "./logo";
+import { Logotype } from "./logo";
 import { ArrowUpRight, CalendarCheck2, Check, Clock3, ShieldCheck, UsersRound } from "lucide-react";
 
 export function AuthShell({ children, variant = "default" }: { children: React.ReactNode; variant?: "default" | "login" }) {
@@ -7,7 +7,7 @@ export function AuthShell({ children, variant = "default" }: { children: React.R
       <main className="login-portal-page">
         <div className="login-portal-shell">
           <aside className="login-portal-story">
-            <div className="login-story-brand"><Logo /><span>WORKSPACE</span></div>
+            <div className="login-story-brand"><Logotype /><span>WORKSPACE</span></div>
             <div className="login-story-copy">
               <span className="login-story-kicker"><i /> OPERATIONS, IN ONE PLACE</span>
               <h2>Kerja hari ini,<br /><em>lebih jelas.</em></h2>
@@ -24,7 +24,7 @@ export function AuthShell({ children, variant = "default" }: { children: React.R
             <div className="login-story-foot"><ShieldCheck size={15} /><span>Ruang kerja privat untuk setiap perusahaan.</span></div>
           </aside>
           <section className="login-portal-form">
-            <div className="login-mobile-brand"><Logo /></div>
+            <div className="login-mobile-brand"><Logotype /></div>
             {children}
             <p className="login-copyright">© 2026 TepatWaktu. Dibuat untuk tim Indonesia.</p>
           </section>
@@ -35,7 +35,7 @@ export function AuthShell({ children, variant = "default" }: { children: React.R
   return (
     <main className="auth-page">
       <section className="auth-panel">
-        <Logo />
+        <Logotype />
         {children}
       </section>
       <aside className="auth-visual" aria-hidden="true">

@@ -57,3 +57,19 @@ export function sendAuthEmail(kind: AuthEmailKind, to: string, url: string) {
     .then((delivery) => console.info(`Email ${kind} untuk ${to} dikirim lewat ${delivery.label}.`))
     .catch((error) => console.error(`Email ${kind} untuk ${to} gagal dikirim:`, error instanceof Error ? error.message : error));
 }
+
+/**
+ * Login code for members with "OTP Login" on (Better Auth twoFactor plugin). Awaited, so the login
+ * screen can tell the user when the code could not be sent.
+ */
+export async function sendLoginOtpEmail(to: string, otp: string) {
+  const email = renderBrandedEmail({
+    subject: `${otp} adalah kode masuk TepatWaktu Anda`,
+    eyebrow: "Kode masuk",
+    title: `Kode masuk Anda: ${otp}`,
+    body: "Masukkan kode ini di halaman login TepatWaktu untuk melanjutkan. Kode berlaku 5 menit dan hanya bisa dipakai sekali.",
+    note: "Jangan berikan kode ini kepada siapa pun, termasuk yang mengaku dari TepatWaktu. Jika Anda tidak sedang masuk, segera ganti password akun Anda.",
+  });
+  const delivery = await sendMail({ to: [to], ...email });
+  console.info(`Email kode masuk untuk ${to} dikirim lewat ${delivery.label}.`);
+}

@@ -5,6 +5,7 @@ import { Ellipsis, Filter, Plus, Search } from "lucide-react";
 import { db } from "@/db";
 import { employeeDocuments, employees } from "@/db/schema";
 import { EmployeeListTable } from "@/features/employees/components/employee-list-table";
+import { employeeAccountStatuses } from "@/features/invitations/server/employee-account";
 import { requireCompanyRole } from "@/lib/current-company";
 
 export const metadata: Metadata = { title: "Daftar Karyawan" };
@@ -20,7 +21,7 @@ export default async function Page({ searchParams }: Props) {
     department: employees.department, position: employees.position, status: employees.status,
     allAttendanceLocations: employees.allAttendanceLocations, contractType: employees.contractType,
     photoAssetId: employeeDocuments.assetId, lockLocation: employees.lockLocation,
-    lockPhoto: employees.lockPhoto, lockVisit: employees.lockVisit,
+    lockPhoto: employees.lockPhoto, lockVisit: employees.lockVisit, userId: employees.userId,
   }).from(employees)
     .leftJoin(employeeDocuments, and(eq(employeeDocuments.employeeId, employees.id), eq(employeeDocuments.kind, "profile_photo")))
     .where(and(
@@ -29,6 +30,8 @@ export default async function Page({ searchParams }: Props) {
       query ? or(ilike(employees.name, `%${query}%`), ilike(employees.email, `%${query}%`), ilike(employees.employeeCode, `%${query}%`), ilike(employees.department, `%${query}%`)) : undefined,
     )).orderBy(asc(employees.name));
   const canManage = ["admin", "general_manager", "hrd"].includes(context.role);
+  const accounts = await employeeAccountStatuses(context.companyId, rows);
+  const tableRows = rows.map(({ userId: _userId, ...row }) => ({ ...row, account: accounts.get(row.id) ?? "none" }));
   return <>
     <div className="master-page-head"><span>Presensi Admin Panel</span><h1>Daftar Karyawan</h1></div>
     <section className="employee-list-card">
@@ -39,7 +42,7 @@ export default async function Page({ searchParams }: Props) {
         {canManage && <Link className="btn btn-primary" href="/dashboard/karyawan/tambah"><Plus size={17}/> Tambah</Link>}
         <button className="master-reset" type="button" aria-label="Menu lainnya"><Ellipsis size={19}/></button>
       </form>
-      <EmployeeListTable rows={rows} canManage={canManage}/>
+      <EmployeeListTable rows={tableRows} canManage={canManage}/>
       <div className="employee-list-footer">menampilkan {rows.length} data.</div>
     </section>
   </>;

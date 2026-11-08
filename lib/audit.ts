@@ -24,6 +24,8 @@ export const AUDIT_ACTIONS = {
   "announcement.delete": "Hapus pengumuman platform",
   "settings.update": "Ubah pengaturan platform",
   "user.role_update": "Ubah peran akun",
+  "user.activate": "Aktifkan akun",
+  "user.deactivate": "Nonaktifkan akun",
   "user.password_reset": "Reset password akun",
   "user.delete": "Hapus akun",
   "deletion_request.process": "Proses permintaan hapus akun",

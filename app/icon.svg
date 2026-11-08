@@ -1,17 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 64">
-  <defs>
-    <linearGradient id="bg" x1="8" y1="5" x2="56" y2="60" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ffb52e"/>
-      <stop offset="1" stop-color="#f08c00"/>
-    </linearGradient>
-  </defs>
-  <rect width="72" height="64" rx="16" fill="url(#bg)"/>
-  <g fill="none" stroke="#1f1d1b" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M35.5 53.5h15V30.2c-6.7-3.7-9.6-9.2-8.9-17.3.5-6.2 7-6.5 7.6-.4.6 6.5-.5 10.8 5.6 17.4l9.2 1.3v24.2H50.5"/>
-    <circle cx="27" cy="39" r="18.5" fill="#ffd27a"/>
-    <path d="M21.5 17.7h11M24 17.7v4.1m6-4.1v4.1"/>
-    <path d="M7 24.5h13.2a5 5 0 0 1 0 10H7a5 5 0 0 1 0-10Zm-1.2 10h11.9a5 5 0 0 1 0 10H5.8a5 5 0 0 1 0-10Zm2.2 10h11a5 5 0 0 1 0 10H8a5 5 0 0 1 0-10Z" fill="#fff4dc"/>
-    <path d="M27 29.2V39h8.6" stroke="#1f1d1b" stroke-width="4"/>
-    <path d="M40 5.5V1.8m8.1 5.8 2.2-3M32 7.6l-2.2-3" stroke="#fff" stroke-width="3.3"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- TepatWaktu monogram: "T" black + "W" white on the brand yellow (same colours as the logotype). -->
+  <rect width="64" height="64" rx="14" fill="#faa30e"/>
+  <text x="32" y="44" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Segoe UI', Arial, Helvetica, sans-serif" font-size="31" font-weight="800" letter-spacing="-2"><tspan fill="#1f1d1b">T</tspan><tspan fill="#ffffff">W</tspan></text>
 </svg>

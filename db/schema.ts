@@ -29,6 +29,8 @@ export const user = pgTable("user", {
   image: text("image"),
   timezone: text("timezone").default("Asia/Makassar").notNull(),
   platformRole: platformRole("platform_role").default("user").notNull(),
+  /** Better Auth twoFactor plugin: email OTP at login. Mirrors company_members.is_otp_login. */
+  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
@@ -97,6 +99,21 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
+/** Better Auth twoFactor plugin table (TOTP secrets/backup codes). TOTP is disabled; email OTP needs no row here. */
+export const twoFactor = pgTable(
+  "two_factor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true),
+    failedVerificationCount: integer("failed_verification_count").default(0),
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  },
+  (table) => [index("two_factor_secret_idx").on(table.secret), index("two_factor_user_id_idx").on(table.userId)],
+);
+
 export const emailSendCooldowns = pgTable("email_send_cooldowns", {
   emailHash: text("email_hash").primaryKey(),
   nextAllowedAt: timestamp("next_allowed_at", { withTimezone: true }).notNull(),
@@ -152,7 +169,8 @@ export const companyMembers = pgTable(
     role: memberRole("role").notNull(),
     phone: text("phone"),
     isActive: boolean("is_active").default(true).notNull(),
-    isOtpLogin: boolean("is_otp_login").default(true).notNull(),
+    /** Email OTP at login (off by default). Kept in sync with user.two_factor_enabled. */
+    isOtpLogin: boolean("is_otp_login").default(false).notNull(),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -632,6 +650,31 @@ export const deletionRequests = pgTable(
   (table) => [
     uniqueIndex("deletion_requests_token_idx").on(table.tokenHash),
     index("deletion_requests_status_idx").on(table.status, table.createdAt),
+  ],
+);
+
+/**
+ * Invitations sent when a company admin adds a user without typing a password: the emailed link
+ * lets the user set their own password. Single use (acceptedAt), expires after 7 days, and a new
+ * invitation replaces the pending one. The token is stored as a SHA-256 hash.
+ */
+export const userInvitations = pgTable(
+  "user_invitations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    invitedBy: text("invited_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("user_invitations_token_unique").on(table.tokenHash),
+    index("user_invitations_user_idx").on(table.userId, table.createdAt),
+    index("user_invitations_company_idx").on(table.companyId),
   ],
 );
 

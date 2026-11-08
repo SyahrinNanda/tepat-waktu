@@ -9,9 +9,12 @@ import { Check, ChevronDown, Ellipsis, UserRound, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { deleteEmployee, updateEmployeeLocks } from "@/features/workforce/server/actions";
 
+const accountLabel = { active: "Aktif", pending: "Menunggu undangan", expired: "Undangan kedaluwarsa", none: "Belum ada" } as const;
+const accountTitle = { active: "Sudah bisa login", pending: "Undangan terkirim, belum membuat password", expired: "Tautan undangan kedaluwarsa; kirim ulang dari detail karyawan", none: "Belum punya akun login; buat dari detail karyawan" } as const;
+
 export type EmployeeListRow = {
   id: string; employeeCode: string; name: string; email: string; department: string; position: string;
-  status: "active" | "inactive"; allAttendanceLocations: boolean; contractType: string | null; photoAssetId: string | null;
+  status: "active" | "inactive"; account: "active" | "pending" | "expired" | "none"; allAttendanceLocations: boolean; contractType: string | null; photoAssetId: string | null;
   lockLocation: boolean; lockPhoto: boolean; lockVisit: boolean;
 };
 
@@ -29,12 +32,13 @@ export function EmployeeListTable({ rows, canManage }: { rows: EmployeeListRow[]
   };
   if (!rows.length) return <div className="location-empty"><Users size={46}/><strong>Data Kosong</strong><span>Karyawan tidak ditemukan.</span></div>;
   return <>
-    <div className="table-scroll"><table className="employee-list-table"><thead><tr><th>#</th><th>Foto</th><th>Nama Karyawan</th><th>Jabatan–Divisi</th><th>Lokasi Kerja</th><th>Kunci Pengaturan</th><th>Tipe Kontrak</th><th>Aksi</th></tr></thead><tbody>
+    <div className="table-scroll"><table className="employee-list-table"><thead><tr><th>#</th><th>Foto</th><th>Nama Karyawan</th><th>Jabatan–Divisi</th><th>Akun Login</th><th>Lokasi Kerja</th><th>Kunci Pengaturan</th><th>Tipe Kontrak</th><th>Aksi</th></tr></thead><tbody>
       {rows.map((row, index) => <tr key={row.id} className={row.status === "inactive" ? "employee-inactive-row" : undefined}>
         <td>{index + 1}</td>
         <td>{row.photoAssetId ? <Image className="employee-photo" src={`/api/files/${row.photoAssetId}`} alt={row.name} width={56} height={56} unoptimized/> : <span className="employee-photo-placeholder"><UserRound size={38}/></span>}</td>
         <td><span className="employee-code">NI: {row.employeeCode}</span><Link href={`/dashboard/karyawan/${row.id}`}>{row.name}</Link><small>{row.email}</small></td>
         <td><strong>{row.position}</strong><small>{row.department}</small></td>
+        <td><span className={`account-pill ${row.account}`} title={accountTitle[row.account]}>{accountLabel[row.account]}</span></td>
         <td>{row.allAttendanceLocations ? "Semua Lokasi" : "Lokasi Tertentu"}</td>
         <td><LockMenu row={row} disabled={!canManage}/></td>
         <td>{row.contractType || "–"}</td>

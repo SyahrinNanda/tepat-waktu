@@ -15,6 +15,10 @@ export function EmployeeCreateForm({ divisions, positions, today, disabled = fal
       <Field label="Nama Karyawan"><input name="name" placeholder="Nama Karyawan..." required/></Field>
       <Field label="Nomor Induk Karyawan (Opsional)"><input name="employeeCode" placeholder="Nomor Induk Karyawan..."/></Field>
       <Field label="Email"><input name="email" type="email" placeholder="Email Karyawan..." required/></Field>
+      <label className="employee-account-choice">
+        <input name="createAccount" type="checkbox" defaultChecked/>
+        <span><strong>Buat akun login &amp; kirim undangan email</strong><small>Karyawan menerima email untuk membuat password sendiri (berlaku 7 hari), lalu bisa presensi dari HP. Matikan jika karyawan tidak perlu login.</small></span>
+      </label>
       <Field label="No. Handphone"><input name="phone" type="tel" placeholder="No. HP Karyawan..."/></Field>
       <Field label="Alamat"><textarea name="address" placeholder="Alamat Karyawan..."/></Field>
       <Field label="Nomor Pokok Wajib Pajak (Opsional)"><input name="taxNumber" placeholder="Nomor Pokok Wajib Pajak..."/></Field>

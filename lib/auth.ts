@@ -1,7 +1,10 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { twoFactor } from "better-auth/plugins";
 import { db } from "@/db";
-import { sendAuthEmail } from "@/lib/registration/auth-emails";
+import { INACTIVE_MEMBER_MESSAGE, isMemberInactive } from "@/lib/member-status";
+import { sendAuthEmail, sendLoginOtpEmail } from "@/lib/registration/auth-emails";
 import { provisionRegistration } from "@/lib/registration/provision";
 
 const configuredOrigins = [process.env.BETTER_AUTH_URL, process.env.NEXT_PUBLIC_APP_URL].filter(
@@ -45,6 +48,30 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
+  databaseHooks: {
+    session: {
+      create: {
+        // Members switched off by their company (Pengaturan → Users → Status) cannot start a session:
+        // covers password login, the OTP step and auto sign-in after email verification.
+        before: async (newSession) => {
+          if (await isMemberInactive(newSession.userId)) throw new APIError("FORBIDDEN", { message: INACTIVE_MEMBER_MESSAGE, code: "ACCOUNT_DISABLED" });
+        },
+      },
+    },
+  },
+  plugins: [
+    // "OTP Login" (Pengaturan → Users): users with user.twoFactorEnabled get a 6-digit code by email
+    // after the password step. TOTP apps are not offered.
+    twoFactor({
+      issuer: "TepatWaktu",
+      totpOptions: { disable: true },
+      otpOptions: {
+        period: 5,
+        storeOTP: "hashed",
+        sendOTP: async ({ user, otp }) => sendLoginOtpEmail(user.email, otp),
+      },
+    }),
+  ],
   trustedOrigins: [...new Set([...configuredOrigins, ...developmentOrigins])],
   // Login rate limiting keys on the client IP. Read it from the header our proxy sets (see
   // lib/client-ip.ts), not the client-controlled left-most X-Forwarded-For entry.

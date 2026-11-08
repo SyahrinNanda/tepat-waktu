@@ -12,6 +12,9 @@ import { ensureEmployeeRecord } from "@/features/attendance/server/employee-link
 import { employeeCapacity, employeeLimitMessage } from "@/features/subscriptions/server/employee-capacity";
 import { auth } from "@/lib/auth";
 import { requireCompanyRole } from "@/lib/current-company";
+import { revokeUserSessions } from "@/lib/member-status";
+import { setOtpLogin } from "@/lib/otp-login";
+import { createAndSendInvitation, InvitationError, invitationStatuses, unusablePassword } from "@/features/invitations/server/invitations";
 
 export type RoleValue = "admin" | "general_manager" | "hrd" | "manager" | "employee";
 
@@ -30,6 +33,8 @@ export type CompanyUserData = {
   lastLoginTime: string;
   lastLoginDate: string;
   createdAt: Date;
+  /** Emailed invitation not used yet: "pending" (link valid) or "expired". */
+  invitation: "pending" | "expired" | null;
 };
 
 function getRoleDisplay(role: string): string {
@@ -94,6 +99,8 @@ export async function fetchCompanyUsers(): Promise<CompanyUserData[]> {
     }
   }
 
+  const invitations = await invitationStatuses(context.companyId, userIds);
+
   // Also query employee phones if member phone is null
   const employeePhones = await db
     .select({
@@ -145,6 +152,7 @@ export async function fetchCompanyUsers(): Promise<CompanyUserData[]> {
       lastLoginTime: timeFormatter.format(lastLogin),
       lastLoginDate: dateFormatter.format(lastLogin),
       createdAt: row.createdAt,
+      invitation: invitations.get(row.userId) ?? null,
     };
   });
 }
@@ -218,7 +226,7 @@ export async function createCompanyUser(form: FormData) {
     role: parsed.role,
     phone: parsed.phone ? parsed.phone.trim() : null,
     isActive: true,
-    isOtpLogin: true,
+    isOtpLogin: false,
     lastLoginAt: new Date(),
   });
 
@@ -233,8 +241,10 @@ export async function createCompanyUserAction(input: {
   name: string;
   email: string;
   phone?: string;
-  password: string;
+  /** Required unless sendInvite: then the user sets their own password from the emailed link. */
+  password?: string;
   role: RoleValue;
+  sendInvite?: boolean;
 }): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
     const context = await requireCompanyRole(["admin"]);
@@ -242,11 +252,14 @@ export async function createCompanyUserAction(input: {
       .object({
         name: z.string().trim().min(2, "Nama minimal 2 karakter.").max(120),
         email: z.string().email("Format email tidak valid."),
-        password: z.string().min(8, "Password minimal 8 karakter.").max(128),
+        password: z.string().max(128).optional(),
         phone: z.string().trim().max(30).optional(),
         role: roleSchema,
+        sendInvite: z.boolean().optional(),
       })
       .parse(input);
+    const sendInvite = parsed.sendInvite === true;
+    if (!sendInvite && (parsed.password ?? "").length < 8) return { ok: false, error: "Password minimal 8 karakter." };
 
     const email = parsed.email.toLowerCase();
     const limitError = await newEmployeeLimitError(context.companyId, email, parsed.role);
@@ -273,7 +286,8 @@ export async function createCompanyUserAction(input: {
         body: {
           name: parsed.name,
           email,
-          password: parsed.password,
+          // Invited users get a random password nobody knows; they set their own from the link.
+          password: sendInvite ? unusablePassword() : parsed.password!,
         },
       });
       await db.update(user).set({ emailVerified: true }).where(eq(user.id, created.user.id));
@@ -286,7 +300,7 @@ export async function createCompanyUserAction(input: {
       role: parsed.role,
       phone: parsed.phone ? parsed.phone.trim() : null,
       isActive: true,
-      isOtpLogin: true,
+      isOtpLogin: false,
       lastLoginAt: new Date(),
     });
 
@@ -294,6 +308,15 @@ export async function createCompanyUserAction(input: {
     await ensureEmployeeRecord({ companyId: context.companyId, userId: targetUser.id, name: parsed.name, email, role: parsed.role });
 
     revalidatePath("/dashboard/pengaturan/users");
+    if (sendInvite) {
+      const sent = await createAndSendInvitation({
+        companyId: context.companyId, userId: targetUser.id, email, name: parsed.name, roleLabel: getRoleDisplay(parsed.role),
+        invitedBy: context.session.user.id, inviterName: context.session.user.name,
+      }).catch(() => false);
+      return sent
+        ? { ok: true, message: `User ditambahkan. Email undangan dikirim ke ${email}; tautannya berlaku 7 hari.` }
+        : { ok: true, message: "User ditambahkan, tetapi email undangan gagal dikirim. Coba lagi lewat menu ⋮ → Kirim ulang undangan." };
+    }
     return { ok: true, message: "User berhasil ditambahkan." };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Gagal menambahkan user.";
@@ -422,7 +445,7 @@ export async function toggleUserStatusAction(input: {
       .parse(input);
 
     const [member] = await db
-      .select({ id: companyMembers.id, userId: companyMembers.userId })
+      .select({ id: companyMembers.id, userId: companyMembers.userId, role: companyMembers.role })
       .from(companyMembers)
       .where(
         and(
@@ -441,13 +464,19 @@ export async function toggleUserStatusAction(input: {
       };
     }
 
+    if ((member.role === "admin" || member.role === "owner") && !context.isSuperAdmin) {
+      return { ok: false, error: "Status akun Administrator hanya bisa diubah oleh Superadmin TepatWaktu." };
+    }
+
     await db
       .update(companyMembers)
       .set({ isActive: parsed.isActive })
       .where(eq(companyMembers.id, member.id));
+    // Deactivated: sign out of every device right away (new logins are refused in lib/auth.ts).
+    if (!parsed.isActive) await revokeUserSessions(member.userId);
 
     revalidatePath("/dashboard/pengaturan/users");
-    return { ok: true, message: "Status pengguna berhasil diperbarui." };
+    return { ok: true, message: parsed.isActive ? "Pengguna diaktifkan dan bisa login kembali." : "Pengguna dinonaktifkan: langsung keluar dari semua perangkat dan tidak bisa login." };
   } catch (err) {
     const msg =
       err instanceof Error ? err.message : "Gagal mengubah status pengguna.";
@@ -469,7 +498,7 @@ export async function toggleUserOtpAction(input: {
       .parse(input);
 
     const [member] = await db
-      .select({ id: companyMembers.id })
+      .select({ id: companyMembers.id, userId: companyMembers.userId })
       .from(companyMembers)
       .where(
         and(
@@ -481,13 +510,11 @@ export async function toggleUserOtpAction(input: {
 
     if (!member) return { ok: false, error: "Pengguna tidak ditemukan." };
 
-    await db
-      .update(companyMembers)
-      .set({ isOtpLogin: parsed.isOtpLogin })
-      .where(eq(companyMembers.id, member.id));
+    // Syncs Better Auth's two-factor state (user flag + two_factor row) with the switch.
+    await setOtpLogin(member.id, member.userId, parsed.isOtpLogin);
 
     revalidatePath("/dashboard/pengaturan/users");
-    return { ok: true, message: "Pengaturan OTP pengguna berhasil diperbarui." };
+    return { ok: true, message: parsed.isOtpLogin ? "OTP Login aktif: user akan diminta kode yang dikirim ke email setiap kali login." : "OTP Login dimatikan untuk user ini." };
   } catch (err) {
     const msg =
       err instanceof Error ? err.message : "Gagal mengubah pengaturan OTP.";
@@ -682,4 +709,26 @@ export async function removeCompanyUser(form: FormData) {
   });
   revalidatePath("/dashboard/pengaturan/users");
   redirect("/dashboard/pengaturan/users");
+}
+
+/** Sends a fresh invitation link (the previous one stops working). Only for users who have not used an invitation yet. */
+export async function resendInvitationAction(input: { memberId: string }): Promise<{ ok: boolean; message?: string; error?: string }> {
+  try {
+    const context = await requireCompanyRole(["admin"]);
+    const memberId = z.string().uuid().parse(input.memberId);
+    const [member] = await db.select({ userId: companyMembers.userId, role: companyMembers.role, name: user.name, email: user.email })
+      .from(companyMembers).innerJoin(user, eq(user.id, companyMembers.userId))
+      .where(and(eq(companyMembers.id, memberId), eq(companyMembers.companyId, context.companyId))).limit(1);
+    if (!member) return { ok: false, error: "User tidak ditemukan." };
+    const status = (await invitationStatuses(context.companyId, [member.userId])).get(member.userId);
+    if (!status) return { ok: false, error: "User ini sudah membuat password atau tidak diundang lewat email. Gunakan Ubah Password bila perlu." };
+    const sent = await createAndSendInvitation({
+      companyId: context.companyId, userId: member.userId, email: member.email, name: member.name, roleLabel: getRoleDisplay(member.role),
+      invitedBy: context.session.user.id, inviterName: context.session.user.name,
+    });
+    revalidatePath("/dashboard/pengaturan/users");
+    return sent ? { ok: true, message: `Undangan baru dikirim ke ${member.email}. Tautan lama tidak berlaku lagi.` } : { ok: false, error: "Email undangan gagal dikirim. Coba lagi beberapa saat lagi." };
+  } catch (err) {
+    return { ok: false, error: err instanceof InvitationError ? err.message : "Gagal mengirim ulang undangan." };
+  }
 }

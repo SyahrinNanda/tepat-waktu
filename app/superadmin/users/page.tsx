@@ -22,6 +22,7 @@ export default async function Page() {
       companyId: companies.id,
       companyName: companies.name,
       companyRole: companyMembers.role,
+      memberActive: companyMembers.isActive,
       employeeCode: employees.employeeCode,
       employeePosition: employees.position,
     })

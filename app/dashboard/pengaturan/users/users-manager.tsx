@@ -15,6 +15,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
   createCompanyUserAction,
   deleteCompanyUserAction,
+  resendInvitationAction,
   toggleUserOtpAction,
   toggleUserStatusAction,
   updateCompanyUserAction,
@@ -26,9 +27,29 @@ import {
 type Props = {
   initialUsers: CompanyUserData[];
   currentUserId: string;
+  /** Only a superadmin may change the status of Administrator accounts. */
+  viewerIsSuperAdmin?: boolean;
 };
 
-export function UsersManager({ initialUsers, currentUserId }: Props) {
+type Notice = { type: "success" | "error"; text: string };
+
+/**
+ * The page keys this component by the user list, so router.refresh() after adding or deleting a
+ * user remounts it and would drop the feedback message. The last message is carried over the
+ * remount for a few seconds (and only once).
+ */
+let carriedNotice: { notice: Notice; at: number } | null = null;
+function takeCarriedNotice() {
+  const carried = carriedNotice;
+  carriedNotice = null;
+  return carried && Date.now() - carried.at < 10_000 ? carried.notice : null;
+}
+/** Called from event handlers only (never during render). */
+function carryNotice(notice: Notice | null) {
+  carriedNotice = notice ? { notice, at: Date.now() } : null;
+}
+
+export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin = false }: Props) {
   const router = useRouter();
   const [users, setUsers] = useState<CompanyUserData[]>(initialUsers);
   const [searchName, setSearchName] = useState("");
@@ -48,10 +69,11 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Notice / Feedback toast
-  const [notice, setNotice] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [notice, setNoticeState] = useState<Notice | null>(takeCarriedNotice);
+  const setNotice = (next: Notice | null) => {
+    carryNotice(next);
+    setNoticeState(next);
+  };
 
   // Form states for Add
   const [addForm, setAddForm] = useState({
@@ -60,8 +82,22 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
     phone: "",
     password: "",
     role: "" as RoleValue | "",
+    // On by default: the user sets their own password from an emailed link.
+    sendInvite: true,
   });
   const [showAddPassword, setShowAddPassword] = useState(false);
+
+  const handleResendInvite = (user: CompanyUserData) => {
+    setOpenMenuId(null);
+    setNotice(null);
+    startTransition(async () => {
+      const res = await resendInvitationAction({ memberId: user.id });
+      if (res.ok) router.refresh();
+      setNotice(res.ok
+        ? { type: "success", text: res.message || "Undangan dikirim ulang." }
+        : { type: "error", text: res.error || "Gagal mengirim ulang undangan." });
+    });
+  };
 
   // Form states for Edit
   const [editForm, setEditForm] = useState({
@@ -217,8 +253,9 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
         name: addForm.name,
         email: addForm.email,
         phone: addForm.phone,
-        password: addForm.password,
+        password: addForm.sendInvite ? undefined : addForm.password,
         role: addForm.role as RoleValue,
+        sendInvite: addForm.sendInvite,
       });
       if (res.ok) {
         setIsAddOpen(false);
@@ -228,6 +265,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
           phone: "",
           password: "",
           role: "",
+          sendInvite: true,
         });
         router.refresh();
         setNotice({
@@ -551,6 +589,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                 phone: "",
                 password: "",
                 role: "",
+                sendInvite: true,
               });
               setIsAddOpen(true);
             }}
@@ -756,6 +795,23 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                       >
                         {user.email}
                       </div>
+                      {user.invitation && (
+                        <span
+                          title={user.invitation === "pending" ? "Belum membuat password dari email undangan" : "Tautan undangan sudah kedaluwarsa; kirim ulang lewat menu ⋮"}
+                          style={{
+                            display: "inline-block",
+                            marginTop: "6px",
+                            padding: "2px 8px",
+                            borderRadius: "999px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: user.invitation === "pending" ? "#8a5300" : "#b42318",
+                            backgroundColor: user.invitation === "pending" ? "#fff4dc" : "#fee4e2",
+                          }}
+                        >
+                          {user.invitation === "pending" ? "Menunggu undangan" : "Undangan kedaluwarsa"}
+                        </span>
+                      )}
                     </td>
 
                     {/* User WA */}
@@ -809,14 +865,22 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                         textAlign: "center",
                       }}
                     >
+                      {(() => {
+                        const statusLocked = (user.role === "admin" && !viewerIsSuperAdmin) || user.userId === currentUserId;
+                        return (
                       <button
                         type="button"
                         role="switch"
                         aria-checked={user.isActive}
+                        aria-disabled={statusLocked}
                         onClick={() => handleToggleStatus(user)}
-                        disabled={isPending}
+                        disabled={isPending || statusLocked}
                         title={
-                          user.isActive ? "Status Aktif" : "Status Nonaktif"
+                          user.userId === currentUserId
+                            ? "Status akun sendiri tidak bisa diubah"
+                            : statusLocked
+                              ? "Status akun Administrator hanya bisa diubah oleh Superadmin TepatWaktu"
+                              : user.isActive ? "Aktif: klik untuk menonaktifkan (user langsung keluar dan tidak bisa login)" : "Nonaktif: klik untuk mengaktifkan kembali"
                         }
                         style={{
                           position: "relative",
@@ -826,9 +890,10 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                           backgroundColor: user.isActive
                             ? "#faa005"
                             : "#ef4444",
+                          opacity: statusLocked ? 0.5 : 1,
                           transition: "background-color 0.2s ease",
                           border: "none",
-                          cursor: isPending ? "not-allowed" : "pointer",
+                          cursor: isPending || statusLocked ? "not-allowed" : "pointer",
                           padding: "2px",
                           display: "inline-flex",
                           alignItems: "center",
@@ -869,6 +934,8 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                           }}
                         />
                       </button>
+                        );
+                      })()}
                     </td>
 
                     {/* OTP Login Toggle */}
@@ -1028,6 +1095,29 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                             >
                               Edit
                             </button>
+                            {user.invitation && (
+                              <button
+                                type="button"
+                                onClick={() => handleResendInvite(user)}
+                                disabled={isPending}
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 16px",
+                                  background: "none",
+                                  border: "none",
+                                  textAlign: "left",
+                                  fontSize: "13px",
+                                  color: "#8a5300",
+                                  cursor: "pointer",
+                                  display: "block",
+                                  whiteSpace: "nowrap",
+                                }}
+                                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#fff4dc")}
+                                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                              >
+                                Kirim ulang undangan
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => openPasswordModal(user)}
@@ -1261,7 +1351,41 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                   />
                 </div>
 
+                {/* Invite by email (default) or set a password now */}
+                <label
+                  htmlFor="add-send-invite"
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "flex-start",
+                    padding: "12px",
+                    border: "1px solid #f3d9a4",
+                    borderRadius: "8px",
+                    backgroundColor: "#fffaf0",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    id="add-send-invite"
+                    type="checkbox"
+                    checked={addForm.sendInvite}
+                    onChange={(e) => setAddForm((prev) => ({ ...prev, sendInvite: e.target.checked }))}
+                    style={{ marginTop: "3px", width: "16px", height: "16px", accentColor: "#f59e0b" }}
+                  />
+                  <span>
+                    <span style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#2b2926" }}>
+                      Kirim undangan lewat email
+                    </span>
+                    <span style={{ display: "block", marginTop: "2px", fontSize: "12px", color: "#787673", lineHeight: 1.5 }}>
+                      {addForm.sendInvite
+                        ? "User menerima email berisi tautan untuk membuat password sendiri (berlaku 7 hari). Anda tidak perlu membuat atau membagikan password."
+                        : "Anda membuat password sekarang dan menyampaikannya sendiri kepada user."}
+                    </span>
+                  </span>
+                </label>
+
                 {/* Password User */}
+                {!addForm.sendInvite && (
                 <div>
                   <label
                     htmlFor="add-password"
@@ -1318,6 +1442,7 @@ export function UsersManager({ initialUsers, currentUserId }: Props) {
                     </button>
                   </div>
                 </div>
+                )}
 
                 {/* Level User */}
                 <div>

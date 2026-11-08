@@ -2,6 +2,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
+import type { Route } from "next";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -11,6 +12,7 @@ import { requireCompany, requireCompanyRole } from "@/lib/current-company";
 import { deletePrivateObject, putPrivateObject } from "@/lib/object-storage";
 import { compressUpload, storedFileName, type ImageProfile } from "@/lib/file-compression";
 import { assertEmployeeCapacity, employeeCapacity } from "@/features/subscriptions/server/employee-capacity";
+import { provisionEmployeeAccount, syncEmployeeEmailChange } from "@/features/invitations/server/employee-account";
 
 const requiredText = z.string().trim().min(1);
 
@@ -48,7 +50,25 @@ export async function createEmployee(form: FormData) {
   }
   revalidatePath("/dashboard/karyawan");
   revalidatePath("/dashboard");
+  if (form.get("createAccount") === "on") {
+    // Login account with the same email + invitation email to set a password. Never blocks saving the employee.
+    const outcome = await provisionEmployeeAccount({ companyId: context.companyId, employeeId: employee.id, actor: { id: context.session.user.id, name: context.session.user.name } })
+      .catch((error) => { console.error("Akun karyawan belum dibuat:", error); return "email_failed" as const; });
+    revalidatePath("/dashboard/pengaturan/users");
+    redirect(`/dashboard/karyawan/${employee.id}?akun=${outcome}` as Route);
+  }
   redirect("/dashboard/karyawan");
+}
+
+/** "Kirim undangan" / "Kirim ulang undangan" on the employee detail page. */
+export async function sendEmployeeInviteAction(employeeId: string): Promise<{ outcome: string }> {
+  const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
+  const id = z.uuid().parse(employeeId);
+  const outcome = await provisionEmployeeAccount({ companyId: context.companyId, employeeId: id, actor: { id: context.session.user.id, name: context.session.user.name } });
+  revalidatePath(`/dashboard/karyawan/${id}`);
+  revalidatePath("/dashboard/karyawan");
+  revalidatePath("/dashboard/pengaturan/users");
+  return { outcome };
 }
 
 function employeeFileFormat(bytes: Uint8Array) {
@@ -124,6 +144,7 @@ export async function updateEmployee(form: FormData) {
     status: z.enum(["active", "inactive"]),
   }).parse(Object.fromEntries([...form.entries()].filter(([, value]) => typeof value === "string")));
   if (parsed.status === "active" && !(await reactivationAllowed(context.companyId, parsed.id))) redirect(`/dashboard/karyawan/${parsed.id}/edit?limit=1`);
+  const [previous] = await db.select({ email: employees.email }).from(employees).where(and(eq(employees.id, parsed.id), eq(employees.companyId, context.companyId))).limit(1);
   await db.update(employees).set({
     employeeCode: parsed.employeeCode,
     name: parsed.name,
@@ -162,7 +183,9 @@ export async function updateEmployee(form: FormData) {
   }
   revalidatePath("/dashboard/karyawan");
   revalidatePath(`/dashboard/karyawan/${parsed.id}`);
-  redirect(`/dashboard/karyawan/${parsed.id}`);
+  const emailOutcome = previous ? await syncEmployeeEmailChange({ companyId: context.companyId, employeeId: parsed.id, previousEmail: previous.email, actor: { id: context.session.user.id, name: context.session.user.name } })
+    .catch((error) => { console.error("Email akun karyawan belum disinkronkan:", error); return null; }) : null;
+  redirect((emailOutcome ? `/dashboard/karyawan/${parsed.id}?akun=${emailOutcome}` : `/dashboard/karyawan/${parsed.id}`) as Route);
 }
 
 export async function createSchedule(form: FormData) {

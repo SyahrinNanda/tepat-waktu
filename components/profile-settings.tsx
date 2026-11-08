@@ -1,5 +1,6 @@
 "use client";
 
+import { LogotypeMark } from "@/components/logo";
 import {
   CircleAlert,
   Eye,
@@ -174,8 +175,8 @@ export function ProfileSettings({
 
       <div className="profile-reference-layout">
         <aside className="profile-company-summary">
-          <div className="profile-company-logo" aria-label="Logo TepatWaktu">
-            <span className="profile-brand-mark" aria-hidden="true" />
+          <div className="profile-company-logo">
+            <LogotypeMark />
           </div>
           <h2>{company.name}</h2>
           <p>{company.email}</p>
