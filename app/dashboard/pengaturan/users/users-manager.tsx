@@ -1055,6 +1055,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
                         {/* Dropdown Popover */}
                         {openMenuId === user.id && (
                           <div
+                            data-float-menu
                             style={{
                               position: "absolute",
                               right: 0,

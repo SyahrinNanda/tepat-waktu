@@ -99,11 +99,12 @@ export async function toggleEmployee(form: FormData) {
   revalidatePath(`/dashboard/karyawan/${parsed.id}`);
 }
 
-export async function updateEmployeeLocks(employeeId: string, locks: { location: boolean; photo: boolean; visit: boolean }) {
+/** Kunci Lokasi (must check in inside the radius) and Kunci Foto (must send a photo); enforced in attendance-service. */
+export async function updateEmployeeLocks(employeeId: string, locks: { location: boolean; photo: boolean }) {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
   const id = z.uuid().parse(employeeId);
-  const parsed = z.object({ location: z.boolean(), photo: z.boolean(), visit: z.boolean() }).parse(locks);
-  await db.update(employees).set({ lockLocation: parsed.location, lockPhoto: parsed.photo, lockVisit: parsed.visit })
+  const parsed = z.object({ location: z.boolean(), photo: z.boolean() }).parse(locks);
+  await db.update(employees).set({ lockLocation: parsed.location, lockPhoto: parsed.photo })
     .where(and(eq(employees.id, id), eq(employees.companyId, context.companyId)));
   revalidatePath("/dashboard/karyawan");
   revalidatePath(`/dashboard/karyawan/${id}`);

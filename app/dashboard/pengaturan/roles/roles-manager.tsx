@@ -670,6 +670,7 @@ export function RolesManager({ initialRoles }: Props) {
                           {/* Popover Dropdown matching Screenshot 2 */}
                           {openMenuId === role.id && (
                             <div
+                            data-float-menu
                               style={{
                                 position: "absolute",
                                 top: "calc(100% + 18px)",

@@ -7,6 +7,7 @@ import { Megaphone, ScrollText, TicketPercent, AlarmClock, BarChart3, Filter, Be
 import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
 import { Logo } from "./logo";
+import { FloatingMenuLayer } from "./floating-menu-layer";
 
 type NavItem = {
   href: string;
@@ -66,6 +67,7 @@ export function SuperAdminShell({
   return (
     <div className="app-shell">
       {open ? <button className="sidebar-scrim" onClick={() => setOpen(false)} aria-label="Tutup navigasi" /> : null}
+      <FloatingMenuLayer />
       <aside className={`sidebar ${open ? "open" : ""}`}>
         <div className="sidebar-brand-row">
           <Logo href={"/superadmin" as Route} />

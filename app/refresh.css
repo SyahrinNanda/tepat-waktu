@@ -1018,3 +1018,11 @@ td.retention-actions form { gap: 0; }
 .login-otp-input { height: 56px; text-align: center; font-size: 26px; font-weight: 800; letter-spacing: .5em; padding-left: .5em; border-radius: 14px; }
 .login-link-button { display: inline-flex; align-items: center; gap: 4px; padding: 0; background: none; border: 0; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
 .login-link-button:disabled { color: var(--muted); cursor: default; }
+
+/* Employee list: lock options with an explanation line (8 Nov 2026) */
+.employee-lock-options { min-width: 250px; }
+.employee-lock-options > button { display: flex !important; align-items: center; justify-content: space-between; gap: 12px; text-align: left; white-space: normal !important; }
+.employee-lock-options > button > span { display: grid; gap: 2px; }
+.employee-lock-options strong { color: var(--ink); font-size: 12.5px; font-weight: 700; }
+.employee-lock-options small { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.employee-lock-options > button > svg { flex: none; color: var(--primary-ink, #b05c07); }

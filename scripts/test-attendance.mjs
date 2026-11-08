@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import sharp from "sharp";
 import { hashPassword } from "better-auth/crypto";
+import { HeadObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BASE_URL = (process.env.BASE_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -78,12 +79,12 @@ async function login(email) {
 }
 
 let photo;
-async function attend(cookie, action, location) {
+async function attend(cookie, action, location, { withPhoto = true } = {}) {
   const form = new FormData();
   form.set("action", action);
   form.set("clientCapturedAt", new Date().toISOString());
   if (location) { form.set("latitude", String(location.lat)); form.set("longitude", String(location.lng)); form.set("accuracyMeters", String(location.accuracy ?? 5)); }
-  form.set("photo", new Blob([photo], { type: "image/jpeg" }), "kamera.jpg");
+  if (withPhoto) form.set("photo", new Blob([photo], { type: "image/jpeg" }), "kamera.jpg");
   const res = await fetch(`${BASE_URL}/api/attendance/me`, { method: "POST", headers: { origin: BASE_URL, cookie }, body: form });
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
@@ -131,6 +132,27 @@ async function createSchedule(companyId, name, { start, grace = 15, active = tru
 }
 async function createDivision(companyId, name, scheduleId) {
   await db.query(`insert into divisions (company_id, name, schedule_id, active) values ($1, $2, $3, true)`, [companyId, name, scheduleId]);
+}
+/** Company admin account (for the admin attendance API). Returns the session cookie. */
+async function createAdmin(companyId, key) {
+  const userId = randomUUID();
+  const email = `${EMAIL_PREFIX}${key}-${randomBytes(3).toString("hex")}@example.com`;
+  await db.query(`insert into "user" (id, name, email, email_verified) values ($1, $2, $3, true)`, [userId, `ZZ ${key}`, email]);
+  await db.query(`insert into account (id, account_id, provider_id, user_id, password) values ($1, $2, 'credential', $2, $3)`, [randomUUID(), userId, hash]);
+  await db.query(`insert into company_members (company_id, user_id, role) values ($1, $2, 'admin')`, [companyId, userId]);
+  return login(email);
+}
+/** Object storage of the local Docker stack (docker-compose.yml defaults); null when unreachable. */
+async function storageClient() {
+  const client = new S3Client({
+    endpoint: process.env.TEST_S3_ENDPOINT || `http://127.0.0.1:${readEnv("OBJECT_STORAGE_PORT") || 9000}`, region: "us-east-1", forcePathStyle: true,
+    credentials: { accessKeyId: process.env.TEST_S3_ACCESS_KEY || "tepatwaktu-local", secretAccessKey: process.env.TEST_S3_SECRET_KEY || "tepatwaktu-local-storage-secret" },
+  });
+  try { await client.send(new HeadObjectCommand({ Bucket: "tepatwaktu-private", Key: "__probe__" })); } catch (error) { if (error?.$metadata?.httpStatusCode !== 404 && error?.name !== "NotFound") return null; }
+  return client;
+}
+async function objectExists(client, bucket, key) {
+  try { await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key })); return true; } catch (error) { if (error?.$metadata?.httpStatusCode === 404 || error?.name === "NotFound") return false; throw error; }
 }
 const dbStatus = async (employeeId, date) => (await db.query(`select status, check_in, check_out from attendances where employee_id = $1 and attendance_date = $2`, [employeeId, date])).rows[0];
 
@@ -232,6 +254,63 @@ try {
     const { cookie } = await createEmployee(companyB, "geo-cap", null);
     const res = await attend(cookie, "check_in", { ...north(200), accuracy: 5000 });
     record(res.status === 422, "Geofence: akurasi buruk tidak memperluas radius lebih dari 50 m (200 m ditolak)", `HTTP ${res.status} ${res.body.message ?? ""}`);
+  }
+
+  // ---- Kunci Lokasi / Kunci Foto (employee list switches) ----------------------------------
+  const setLocks = (employeeId, { location, photo: lockPhoto }) => db.query(`update employees set lock_location = $2, lock_photo = $3 where id = $1`, [employeeId, location, lockPhoto]);
+  {
+    const { employeeId, cookie } = await createEmployee(companyB, "lock-on", null);
+    const st = await status(cookie);
+    record(st.body.rules?.requireLocation === true && st.body.rules?.requirePhoto === true, "Kunci: default lokasi & foto wajib (layar check-in menerima aturannya)", JSON.stringify(st.body.rules));
+    void employeeId;
+  }
+  {
+    const { employeeId, cookie } = await createEmployee(companyB, "loc-off", null);
+    await setLocks(employeeId, { location: false, photo: true });
+    const st = await status(cookie);
+    record(st.body.rules?.requireLocation === false, "Kunci Lokasi mati: layar check-in tahu lokasi tidak wajib", JSON.stringify(st.body.rules));
+    const far = await attend(cookie, "check_in", north(1000));
+    const event = (await db.query(`select latitude from attendance_events where employee_id = $1`, [employeeId])).rows[0];
+    record(far.status === 201 && event?.latitude != null, "Kunci Lokasi mati: 1 km dari kantor diterima, koordinat tetap dicatat", `HTTP ${far.status} ${far.body.message ?? ""}`);
+  }
+  {
+    const { employeeId, cookie } = await createEmployee(companyB, "loc-off-nogps", null);
+    await setLocks(employeeId, { location: false, photo: true });
+    const res = await attend(cookie, "check_in");
+    record(res.status === 201, "Kunci Lokasi mati: tanpa koordinat GPS diterima", `HTTP ${res.status} ${res.body.message ?? ""}`);
+  }
+  {
+    const { employeeId, cookie } = await createEmployee(companyB, "photo-off", null);
+    await setLocks(employeeId, { location: false, photo: false });
+    const st = await status(cookie);
+    const res = await attend(cookie, "check_in", undefined, { withPhoto: false });
+    const event = (await db.query(`select photo_asset_id from attendance_events where employee_id = $1`, [employeeId])).rows[0];
+    record(st.body.rules?.requirePhoto === false && res.status === 201 && event && event.photo_asset_id === null, "Kunci Foto mati: presensi tanpa foto diterima", `HTTP ${res.status} ${res.body.message ?? ""}`);
+  }
+  {
+    const { employeeId, cookie } = await createEmployee(companyB, "photo-on", null);
+    await setLocks(employeeId, { location: false, photo: true });
+    const res = await attend(cookie, "check_in", undefined, { withPhoto: false });
+    record(res.status === 400 && /Foto/.test(res.body.message ?? "") && !(await dbStatus(employeeId, now.date)), "Kunci Foto aktif: tanpa foto ditolak tanpa membuat data", `HTTP ${res.status} ${res.body.message ?? ""}`);
+  }
+
+  // ---- Deleting an attendance removes its photos (database + object storage) ------------------
+  {
+    const { employeeId, cookie } = await createEmployee(companyB, "hapus", null);
+    await setLocks(employeeId, { location: false, photo: true });
+    const inRes = await attend(cookie, "check_in");
+    const outRes = await attend(cookie, "check_out");
+    const assets = (await db.query(`select f.id, f.bucket, f.object_key from attendance_events e join file_assets f on f.id = e.photo_asset_id where e.employee_id = $1`, [employeeId])).rows;
+    const storage = await storageClient();
+    const existsBefore = storage ? (await Promise.all(assets.map((a) => objectExists(storage, a.bucket, a.object_key)))).every(Boolean) : null;
+    const adminCookie = await createAdmin(companyB, "hapus-admin");
+    const del = await fetch(`${BASE_URL}/api/attendance/admin?id=${inRes.body.attendanceId}`, { method: "DELETE", headers: { origin: BASE_URL, cookie: adminCookie } });
+    const assetsAfter = (await db.query(`select count(*)::int as n from file_assets where id = any($1)`, [assets.map((a) => a.id)])).rows[0].n;
+    const existsAfter = storage ? (await Promise.all(assets.map((a) => objectExists(storage, a.bucket, a.object_key)))).some(Boolean) : null;
+    record(inRes.status === 201 && outRes.status === 201 && assets.length === 2 && del.status === 200 && assetsAfter === 0 && !(await dbStatus(employeeId, now.date)),
+      "Hapus presensi: presensi dan data foto check-in/out ikut terhapus", `HTTP ${del.status}, foto ${assets.length} -> sisa ${assetsAfter}`);
+    if (storage) record(existsBefore === true && existsAfter === false, "Hapus presensi: file foto di object storage ikut terhapus", `sebelum ${existsBefore}, sesudah ${existsAfter}`);
+    else console.log("NOTE  object storage tidak bisa dijangkau dari tes (atur TEST_S3_ENDPOINT); pemeriksaan file dilewati.");
   }
 } catch (error) {
   record(false, "Unexpected error", error instanceof Error ? error.stack ?? error.message : String(error));

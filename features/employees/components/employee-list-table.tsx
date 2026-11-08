@@ -15,7 +15,7 @@ const accountTitle = { active: "Sudah bisa login", pending: "Undangan terkirim, 
 export type EmployeeListRow = {
   id: string; employeeCode: string; name: string; email: string; department: string; position: string;
   status: "active" | "inactive"; account: "active" | "pending" | "expired" | "none"; allAttendanceLocations: boolean; contractType: string | null; photoAssetId: string | null;
-  lockLocation: boolean; lockPhoto: boolean; lockVisit: boolean;
+  lockLocation: boolean; lockPhoto: boolean;
 };
 
 export function EmployeeListTable({ rows, canManage }: { rows: EmployeeListRow[]; canManage: boolean }) {
@@ -42,7 +42,7 @@ export function EmployeeListTable({ rows, canManage }: { rows: EmployeeListRow[]
         <td>{row.allAttendanceLocations ? "Semua Lokasi" : "Lokasi Tertentu"}</td>
         <td><LockMenu row={row} disabled={!canManage}/></td>
         <td>{row.contractType || "–"}</td>
-        <td><details className="employee-action-menu"><summary aria-label={`Aksi ${row.name}`}><Ellipsis size={19}/></summary><div><Link href={`/dashboard/karyawan/${row.id}` as Route}>Detail</Link>{canManage && <Link href={`/dashboard/karyawan/${row.id}/edit` as Route}>Edit</Link>}{canManage && <button type="button" onClick={() => setDeleteTarget(row)}>Hapus</button>}</div></details></td>
+        <td><details className="employee-action-menu"><summary aria-label={`Aksi ${row.name}`}><Ellipsis size={19}/></summary><div data-float-menu><Link href={`/dashboard/karyawan/${row.id}` as Route}>Detail</Link>{canManage && <Link href={`/dashboard/karyawan/${row.id}/edit` as Route}>Edit</Link>}{canManage && <button type="button" onClick={() => setDeleteTarget(row)}>Hapus</button>}</div></details></td>
       </tr>)}
     </tbody></table></div>
     <ConfirmDialog open={Boolean(deleteTarget)} title="Hapus Karyawan?" message={`Data ${deleteTarget?.name ?? "karyawan"} beserta riwayat terkait akan dihapus permanen.`} busy={busy} onCancel={() => setDeleteTarget(null)} onConfirm={remove}/>
@@ -50,7 +50,7 @@ export function EmployeeListTable({ rows, canManage }: { rows: EmployeeListRow[]
 }
 
 function LockMenu({ row, disabled }: { row: EmployeeListRow; disabled: boolean }) {
-  const [locks, setLocks] = useState({ location: row.lockLocation, photo: row.lockPhoto, visit: row.lockVisit });
+  const [locks, setLocks] = useState({ location: row.lockLocation, photo: row.lockPhoto });
   const [pending, startTransition] = useTransition();
   const toggle = (key: keyof typeof locks) => {
     if (disabled || pending) return;
@@ -59,10 +59,9 @@ function LockMenu({ row, disabled }: { row: EmployeeListRow; disabled: boolean }
     setLocks(next);
     startTransition(async () => { try { await updateEmployeeLocks(row.id, next); } catch { setLocks(previous); } });
   };
-  const active = Object.values(locks).filter(Boolean).length;
-  return <details className="employee-lock-menu"><summary>{pending ? "Menyimpan..." : active === 3 ? "Kunci Lokasi..." : `${active} Kunci Aktif`}<ChevronDown size={13}/></summary><div>
-    <button type="button" disabled={disabled} onClick={() => toggle("location")}>Kunci Lokasi {locks.location && <Check size={14}/>}</button>
-    <button type="button" disabled={disabled} onClick={() => toggle("photo")}>Kunci Foto {locks.photo && <Check size={14}/>}</button>
-    <button type="button" disabled={disabled} onClick={() => toggle("visit")}>Kunci Kunjungan {locks.visit && <Check size={14}/>}</button>
+  const label = locks.location && locks.photo ? "Lokasi & Foto" : locks.location ? "Kunci Lokasi" : locks.photo ? "Kunci Foto" : "Tanpa kunci";
+  return <details className="employee-lock-menu"><summary>{pending ? "Menyimpan..." : label}<ChevronDown size={13}/></summary><div data-float-menu className="employee-lock-options">
+    <button type="button" disabled={disabled} onClick={() => toggle("location")}><span><strong>Kunci Lokasi</strong><small>{locks.location ? "Wajib presensi di dalam radius lokasi kerja" : "Boleh presensi di luar radius lokasi kerja"}</small></span>{locks.location && <Check size={14}/>}</button>
+    <button type="button" disabled={disabled} onClick={() => toggle("photo")}><span><strong>Kunci Foto</strong><small>{locks.photo ? "Wajib mengirim foto saat presensi" : "Foto boleh tidak dikirim"}</small></span>{locks.photo && <Check size={14}/>}</button>
   </div></details>;
 }

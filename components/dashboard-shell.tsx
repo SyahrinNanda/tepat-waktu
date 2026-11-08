@@ -31,6 +31,7 @@ import type { TenantAnnouncement } from "@/features/platform-admin/server/announ
 import { SubscriptionBanner, SubscriptionBell, SubscriptionWarningDialog, type SubscriptionAlertInput } from "@/features/subscriptions/components/subscription-alerts";
 import { leaveCompany } from "@/app/superadmin/actions";
 import { Logo } from "./logo";
+import { FloatingMenuLayer } from "./floating-menu-layer";
 
 type NavItem = {
   href: string;
@@ -181,6 +182,7 @@ export function DashboardShell({
   return (
     <div className="app-shell">
       {open ? <button className="sidebar-scrim" onClick={() => setOpen(false)} aria-label="Tutup navigasi" /> : null}
+      <FloatingMenuLayer />
       <aside className={`sidebar ${open ? "open" : ""}`}>
         <div className="sidebar-brand-row">
           <Logo href="/dashboard" />

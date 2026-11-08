@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { clientIp } from "@/lib/client-ip";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   attendanceEvents,
@@ -245,18 +245,33 @@ export function isLateCheckIn(schedule: ResolvedSchedule, time: string) {
   return schedule.isWorkday && schedule.source !== "default" && isLate(time, schedule.startTime, schedule.graceMinutes);
 }
 
+/**
+ * Rules for an employee's own check-in, from the employee list's lock switches:
+ * - requireLocation: "Kunci Lokasi" on and the company has an active attendance location -> must be inside a radius;
+ * - requirePhoto: "Kunci Foto" on -> a camera photo must be sent.
+ */
+export async function selfAttendanceRules(companyId: string, employeeId: string, executor: Executor = db) {
+  const [[employee], [location]] = await Promise.all([
+    executor.select({ lockLocation: employees.lockLocation, lockPhoto: employees.lockPhoto }).from(employees).where(and(eq(employees.id, employeeId), eq(employees.companyId, companyId))).limit(1),
+    executor.select({ id: attendanceLocations.id }).from(attendanceLocations).where(and(eq(attendanceLocations.companyId, companyId), eq(attendanceLocations.active, true))).limit(1),
+  ]);
+  return { requireLocation: Boolean(employee?.lockLocation && location), requirePhoto: employee?.lockPhoto ?? true };
+}
+
 export async function getSelfAttendanceStatus(context: SelfAttendanceContext) {
   const now = new Date();
   const zoned = zonedParts(now, context.timezone);
-  const [[employee], [attendance]] = await Promise.all([
+  const [[employee], [attendance], rules] = await Promise.all([
     db.select({ department: employees.department }).from(employees).where(and(eq(employees.id, context.employeeId), eq(employees.companyId, context.companyId))).limit(1),
     db.select({ id: attendances.id, checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.employeeId, context.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1),
+    selfAttendanceRules(context.companyId, context.employeeId),
   ]);
   const schedule = await resolveSchedule(db, { companyId: context.companyId, department: employee?.department ?? null, date: zoned.date });
   return {
     employee: { id: context.employeeId, name: context.employeeName },
     company: { id: context.companyId, name: context.companyName, timezone: context.timezone },
     schedule,
+    rules,
     attendance: attendance ?? null,
     nextAction: !attendance?.checkIn ? "check_in" : !attendance.checkOut ? "check_out" : null,
     serverTime: now.toISOString(),
@@ -284,9 +299,10 @@ export async function recordAttendanceEvent(input: {
   const zoned = zonedParts(occurredAt, input.timezone);
   try {
     return await withTransactionRetry(() => db.transaction(async (tx) => {
-      const [employee] = await tx.select({ id: employees.id, userId: employees.userId, department: employees.department }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, input.companyId), eq(employees.status, "active"))).limit(1);
+      const [employee] = await tx.select({ id: employees.id, userId: employees.userId, department: employees.department, lockLocation: employees.lockLocation }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, input.companyId), eq(employees.status, "active"))).limit(1);
       if (!employee) throw new AttendanceError("Karyawan aktif tidak ditemukan.", 404);
-      if (input.source === "self") {
+      // Kunci Lokasi off: the employee may check in outside the radius (coordinates are still recorded).
+      if (input.source === "self" && employee.lockLocation) {
         const locations = await tx.select({ name: attendanceLocations.name, latitude: attendanceLocations.latitude, longitude: attendanceLocations.longitude, radiusMeters: attendanceLocations.radiusMeters }).from(attendanceLocations).where(and(eq(attendanceLocations.companyId, input.companyId), eq(attendanceLocations.active, true)));
         if (locations.length) {
           if (input.latitude == null || input.longitude == null) throw new AttendanceError("Aktifkan izin lokasi untuk melakukan presensi.", 422);
@@ -405,3 +421,26 @@ export function requestMetadata(request: Request) {
 }
 
 export { objectStorageBucket };
+
+/**
+ * Deletes one attendance day with its check-in/out events AND their photos: the file_assets rows
+ * and the objects in storage (deleting the attendance alone left both behind).
+ * Returns false when the attendance does not exist in this company.
+ */
+export async function deleteAttendanceWithPhotos(companyId: string, attendanceId: string) {
+  const photos = await db.transaction(async (tx) => {
+    const rows = await tx.select({ id: fileAssets.id, bucket: fileAssets.bucket, key: fileAssets.objectKey })
+      .from(attendanceEvents).innerJoin(fileAssets, eq(fileAssets.id, attendanceEvents.photoAssetId))
+      .where(and(eq(attendanceEvents.attendanceId, attendanceId), eq(attendanceEvents.companyId, companyId)));
+    // Events cascade with the attendance; their photo assets are removed right after (FK is restrict).
+    const deleted = await tx.delete(attendances).where(and(eq(attendances.id, attendanceId), eq(attendances.companyId, companyId))).returning({ id: attendances.id });
+    if (!deleted.length) return null;
+    if (rows.length) await tx.delete(fileAssets).where(and(eq(fileAssets.companyId, companyId), inArray(fileAssets.id, rows.map((row) => row.id))));
+    return rows;
+  });
+  if (!photos) return false;
+  // Storage is not transactional: remove objects only after the database commit.
+  const results = await Promise.allSettled(photos.map((photo) => deletePrivateObject(photo.bucket, photo.key)));
+  results.forEach((result, index) => { if (result.status === "rejected") console.error(`Foto presensi ${photos[index].key} gagal dihapus dari storage:`, result.reason); });
+  return true;
+}

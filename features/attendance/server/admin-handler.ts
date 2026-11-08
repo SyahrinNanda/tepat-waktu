@@ -6,6 +6,7 @@ import { attendanceEvents, attendanceLocations, attendances, employees, fileAsse
 import {
   AttendanceError,
   attendanceManagerContext,
+  deleteAttendanceWithPhotos,
   requestMetadata,
   uploadAttendancePhoto,
 } from "@/features/attendance/server/attendance-service";
@@ -246,12 +247,9 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ message: "ID presensi wajib diberikan." }, { status: 400 });
 
-    const [deleted] = await db
-      .delete(attendances)
-      .where(and(eq(attendances.id, id), eq(attendances.companyId, context.companyId)))
-      .returning();
-
-    if (!deleted) return NextResponse.json({ message: "Presensi tidak ditemukan." }, { status: 404 });
+    if (!z.uuid().safeParse(id).success) return NextResponse.json({ message: "Presensi tidak ditemukan." }, { status: 404 });
+    // Also removes the check-in/out photos from the database and object storage.
+    if (!await deleteAttendanceWithPhotos(context.companyId, id)) return NextResponse.json({ message: "Presensi tidak ditemukan." }, { status: 404 });
     return NextResponse.json({ ok: true, message: "Presensi berhasil dihapus." });
   } catch (error) {
     if (error instanceof AttendanceError) return NextResponse.json({ message: error.message }, { status: error.status });

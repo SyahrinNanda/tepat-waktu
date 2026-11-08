@@ -200,9 +200,10 @@ export const employees = pgTable(
     taxNumber: text("tax_number"),
     socialSecurityNumber: text("social_security_number"),
     allAttendanceLocations: boolean("all_attendance_locations").default(true).notNull(),
+    /** Self check-in must be inside an active attendance location's radius. Off: outside is allowed (coordinates still recorded). */
     lockLocation: boolean("lock_location").default(true).notNull(),
+    /** Self check-in must include a camera photo. Off: the photo is optional. */
     lockPhoto: boolean("lock_photo").default(true).notNull(),
-    lockVisit: boolean("lock_visit").default(true).notNull(),
     contractType: text("contract_type"),
     status: employeeStatus("status").default("active").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

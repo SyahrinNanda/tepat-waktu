@@ -21,7 +21,7 @@ export default async function Page({ searchParams }: Props) {
     department: employees.department, position: employees.position, status: employees.status,
     allAttendanceLocations: employees.allAttendanceLocations, contractType: employees.contractType,
     photoAssetId: employeeDocuments.assetId, lockLocation: employees.lockLocation,
-    lockPhoto: employees.lockPhoto, lockVisit: employees.lockVisit, userId: employees.userId,
+    lockPhoto: employees.lockPhoto, userId: employees.userId,
   }).from(employees)
     .leftJoin(employeeDocuments, and(eq(employeeDocuments.employeeId, employees.id), eq(employeeDocuments.kind, "profile_photo")))
     .where(and(
@@ -31,7 +31,12 @@ export default async function Page({ searchParams }: Props) {
     )).orderBy(asc(employees.name));
   const canManage = ["admin", "general_manager", "hrd"].includes(context.role);
   const accounts = await employeeAccountStatuses(context.companyId, rows);
-  const tableRows = rows.map(({ userId: _userId, ...row }) => ({ ...row, account: accounts.get(row.id) ?? "none" }));
+  // userId is only needed for the account status; it is not sent to the browser.
+  const tableRows = rows.map((row) => {
+    const rest: Omit<typeof row, "userId"> & { userId?: string | null } = { ...row };
+    delete rest.userId;
+    return { ...rest, account: accounts.get(row.id) ?? "none" };
+  });
   return <>
     <div className="master-page-head"><span>Presensi Admin Panel</span><h1>Daftar Karyawan</h1></div>
     <section className="employee-list-card">

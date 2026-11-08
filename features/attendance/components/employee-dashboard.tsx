@@ -19,6 +19,8 @@ type StatusResponse = {
   company: { name: string; timezone: string };
   attendance: AttendanceState;
   nextAction: AttendanceAction | null;
+  /** From the employee list locks: Kunci Lokasi / Kunci Foto. */
+  rules?: { requireLocation: boolean; requirePhoto: boolean };
 };
 
 export function EmployeeDashboard({ name, date, timezone, initialAttendance, display = "full" }: {
@@ -30,6 +32,8 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
 }) {
   const router = useRouter();
   const [attendance, setAttendance] = useState<AttendanceState>(initialAttendance);
+  // "Kunci Foto" off -> the employee may check in without a photo. Loaded when the camera opens.
+  const [requirePhoto, setRequirePhoto] = useState(true);
   const [phase, setPhase] = useState<CameraPhase>("ready");
   const [action, setAction] = useState<AttendanceAction>("check_in");
   const [photo, setPhoto] = useState("");
@@ -118,11 +122,14 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
     if (!response.ok) throw new Error(body.message || "Status presensi belum dapat dimuat.");
     setAttendance(body.attendance);
     setCompanyName(body.company.name);
+    setRequirePhoto(body.rules?.requirePhoto !== false);
     window.dispatchEvent(new Event("tepatwaktu:attendance-updated"));
     router.refresh();
   }, [router]);
 
   const openCamera = useCallback(async (nextAction: AttendanceAction) => {
+    void fetch("/api/attendance/me", { cache: "no-store" }).then((response) => response.json() as Promise<StatusResponse>)
+      .then((body) => setRequirePhoto(body.rules?.requirePhoto !== false)).catch(() => undefined);
     setError("");
     setPhoto("");
     setAction(nextAction);
@@ -189,16 +196,16 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
     setPhase("preview");
   }
 
-  async function confirmAttendance() {
-    if (!photo) return;
+  /** withoutPhoto: only offered when "Kunci Foto" is off for this employee. */
+  async function confirmAttendance(withoutPhoto = false) {
+    if (!photo && !withoutPhoto) return;
     setSubmitting(true);
     setError("");
     try {
-      const blob = await (await fetch(photo)).blob();
       const form = new FormData();
       form.set("action", action);
       form.set("clientCapturedAt", new Date().toISOString());
-      form.set("photo", new File([blob], `${action}-${Date.now()}.jpg`, { type: "image/jpeg" }));
+      if (photo && !withoutPhoto) form.set("photo", new File([await (await fetch(photo)).blob()], `${action}-${Date.now()}.jpg`, { type: "image/jpeg" }));
       if (coordinates) {
         form.set("latitude", String(coordinates.latitude));
         form.set("longitude", String(coordinates.longitude));
@@ -261,10 +268,10 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
       <header><div><span className="eyebrow">{actionLabel(action).toUpperCase()}</span><h2>{phase === "success" ? "Presensi berhasil dicatat" : "Foto langsung dari kamera"}</h2></div><button onClick={closeCamera} aria-label="Tutup"><X size={20} /></button></header>
       {phase === "camera" ? <div className="camera-viewport"><video ref={videoRef} autoPlay playsInline muted /><span className="face-guide" /><span className="live-badge">● LIVE</span>{!cameraReady ? <div className="camera-loading"><LoaderCircle className="spin" size={28} /><strong>{cameraStarting ? "Meminta akses kamera…" : "Menyiapkan pratinjau…"}</strong><small>Pastikan izin kamera pada browser sudah aktif.</small></div> : null}</div> : null}
       {phase === "preview" ? <div className="camera-viewport preview"><img src={photo} alt="Pratinjau foto presensi" /></div> : null}
-      {phase === "success" ? <div className="attendance-success"><span><Check size={34} /></span><h3>{actionLabel(action)} tercatat</h3><p>{time}{companyName ? ` · ${companyName}` : ""}</p><small>Foto dan metadata telah disimpan dengan aman.</small></div> : null}
+      {phase === "success" ? <div className="attendance-success"><span><Check size={34} /></span><h3>{actionLabel(action)} tercatat</h3><p>{time}{companyName ? ` · ${companyName}` : ""}</p><small>Data presensi telah disimpan dengan aman.</small></div> : null}
       {phase !== "success" ? <div className="camera-meta"><span><Clock3 size={15} /> {time}</span><span><LocateFixed size={15} /> {location}</span></div> : null}
       {error && phase !== "success" ? <div className="camera-error dialog-error" role="alert">{error}</div> : null}
-      <footer>{phase === "camera" ? cameraFailed ? <button className="btn btn-primary btn-block" onClick={() => void openCamera(action)}><RefreshCw size={17} /> Coba Akses Kamera Lagi</button> : <button className="btn btn-primary btn-block" disabled={!cameraReady} onClick={capturePhoto}>{cameraReady ? <Camera size={18} /> : <LoaderCircle className="spin" size={18} />} {cameraReady ? "Ambil Foto Sekarang" : "Menyiapkan Kamera"}</button> : null}{phase === "preview" ? <><button className="btn btn-outline" disabled={submitting} onClick={() => void openCamera(action)}><RefreshCw size={16} /> Foto Ulang</button><button className="btn btn-primary" disabled={submitting} onClick={confirmAttendance}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `Konfirmasi ${actionLabel(action)}`}</button></> : null}{phase === "success" ? <button className="btn btn-primary btn-block" onClick={closeCamera}>Selesai</button> : null}</footer>
+      <footer>{phase === "camera" ? cameraFailed ? <button className="btn btn-primary btn-block" onClick={() => void openCamera(action)}><RefreshCw size={17} /> Coba Akses Kamera Lagi</button> : <button className="btn btn-primary btn-block" disabled={!cameraReady} onClick={capturePhoto}>{cameraReady ? <Camera size={18} /> : <LoaderCircle className="spin" size={18} />} {cameraReady ? "Ambil Foto Sekarang" : "Menyiapkan Kamera"}</button> : null}{phase === "preview" ? <><button className="btn btn-outline" disabled={submitting} onClick={() => void openCamera(action)}><RefreshCw size={16} /> Foto Ulang</button><button className="btn btn-primary" disabled={submitting} onClick={() => void confirmAttendance()}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `Konfirmasi ${actionLabel(action)}`}</button></> : null}{phase === "success" ? <button className="btn btn-primary btn-block" onClick={closeCamera}>Selesai</button> : null}{phase === "camera" && !requirePhoto ? <button className="btn btn-outline btn-block" disabled={submitting} onClick={() => { stopCamera(); void confirmAttendance(true); }}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `${actionLabel(action)} tanpa foto`}</button> : null}</footer>
     </section></div> : null}
   </div>;
 }

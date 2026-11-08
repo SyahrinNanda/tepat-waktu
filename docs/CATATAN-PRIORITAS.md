@@ -169,3 +169,13 @@ Sebelumnya kedua sakelar di Pengaturan → Users hanya tersimpan dan tidak berpe
 - [x] **OTP Login berlaku, default off** (migrasi `0041`: semua anggota lama di-set off, default kolom false). Memakai plugin resmi Better Auth `twoFactor` (email OTP, TOTP dimatikan): setelah password benar, user dengan OTP aktif menerima kode 6 digit lewat email (berlaku 5 menit, disimpan sebagai hash, percobaan dibatasi plugin), opsi "Percayai perangkat ini 30 hari". Sakelar OTP menyinkronkan `user.two_factor_enabled` + baris `two_factor` (`lib/otp-login.ts`; plugin 1.6.23 mensyaratkan baris itu).
 - [x] Diuji end-to-end (27 pemeriksaan) + regresi: undangan 26/26, karyawan+akun 24/24, isolasi 115/115, presensi 23/23.
 - [ ] Uji OTP dengan email sungguhan di production (kode dikirim lewat Mailjet/Mailtrap/Brevo).
+
+## 12. Kunci presensi per karyawan & hapus foto presensi (8 Nov 2026)
+
+Sebelumnya kunci di Daftar Karyawan hanya tersimpan: check-in mandiri selalu wajib foto dan selalu dicek radius.
+
+- [x] **Kunci Lokasi**: dicentang = wajib di dalam radius lokasi kerja aktif; tidak dicentang = boleh di luar radius / tanpa GPS (koordinat tetap dicatat bila ada). `selfAttendanceRules` + `recordAttendanceEvent` di `features/attendance/server/attendance-service.ts`.
+- [x] **Kunci Foto**: dicentang = foto wajib; tidak dicentang = foto opsional, layar check-in (halaman Presensi dan beranda karyawan) menampilkan tombol "Check-in/Check-out tanpa foto".
+- [x] **Kunci Kunjungan dihapus** (tidak pernah dipakai): dari menu dan kolom `employees.lock_visit` (migrasi `0042`). Menu kunci kini memberi penjelasan singkat tiap opsi.
+- [x] **Hapus presensi menghapus fotonya**: `deleteAttendanceWithPhotos` menghapus presensi, event, baris `file_assets` foto, lalu objek di storage (dulu foto tertinggal). Hapus karyawan dan reset data perusahaan sudah menghapus foto sebelumnya.
+- [x] Tes: `npm run test:attendance` 31/31 (8 skenario baru, termasuk cek objek benar-benar hilang dari object storage), UI tanpa foto 10/10, isolasi 115/115.

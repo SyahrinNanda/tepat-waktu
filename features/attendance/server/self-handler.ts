@@ -6,6 +6,7 @@ import {
   recordAttendanceEvent,
   requestMetadata,
   selfAttendanceContext,
+  selfAttendanceRules,
   uploadAttendancePhoto,
 } from "@/features/attendance/server/attendance-service";
 
@@ -37,8 +38,10 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const parsed = payloadSchema.parse(Object.fromEntries(form));
     const photo = form.get("photo");
-    if (!(photo instanceof File)) throw new AttendanceError("Foto langsung dari kamera wajib disertakan.");
-    uploaded = await uploadAttendancePhoto(photo, { companyId: context.companyId, employeeId: context.employeeId, action: parsed.action, actorId: context.userId });
+    const hasPhoto = photo instanceof File && photo.size > 0;
+    // Kunci Foto (employee list): when off, the photo is optional.
+    if (!hasPhoto && (await selfAttendanceRules(context.companyId, context.employeeId)).requirePhoto) throw new AttendanceError("Foto langsung dari kamera wajib disertakan.");
+    if (hasPhoto) uploaded = await uploadAttendancePhoto(photo, { companyId: context.companyId, employeeId: context.employeeId, action: parsed.action, actorId: context.userId });
     const result = await recordAttendanceEvent({
       actorId: context.userId,
       companyId: context.companyId,
