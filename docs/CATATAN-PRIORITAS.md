@@ -73,19 +73,24 @@ Kerjakan berurutan.
 - [x] 4. (8 Nov 2026) DNS email `tepat-waktu.id` lengkap; Mailjet dan Mailtrap terbukti sampai inbox; urutan `mailjet,mailtrap,brevo` + fallback diuji (bagian 9).
 - [x] 5. (8 Nov 2026) Commit dan push perubahan terakhir (perbaikan jadwal presensi, `test:attendance`, urutan email, perbaikan tampilan HP, dokumen), lalu **merge `dev` → `main`** (Coolify production men-deploy dari `main`).
 - [x] 6. (8 Nov 2026) Brevo: domain Authenticated, sender `no-reply@tepat-waktu.id` **Verified** (DKIM + DMARC hijau). Email uji #4 langsung dan reset password lewat aplikasi (`MAIL_PROVIDERS=brevo`) diterima Brevo (`250 queued`); tinggal konfirmasi sampai inbox. Setelah terbukti sampai, Brevo boleh dipindah ke depan urutan (keputusan pemilik).
-- [ ] 7. (Disarankan, di lokal) **Uji R2 dari lokal**: isi `OBJECT_STORAGE_*` di `.env.local` dengan bucket R2, upload foto presensi/kunjungan, pastikan foto tampil; lalu kembalikan ke SeaweedFS lokal.
+- [x] 7. (Disarankan, di lokal) (Diganti uji langsung di production, lihat langkah 11.) **Uji R2 dari lokal**: isi `OBJECT_STORAGE_*` di `.env.local` dengan bucket R2, upload foto presensi/kunjungan, pastikan foto tampil; lalu kembalikan ke SeaweedFS lokal.
 - [x] 8. (8 Nov 2026) **Cek tampilan HP (375 × 812, mode mobile)** di lokal: `/superadmin/retensi` + popup Perpanjang manual, `/superadmin/pendapatan`, `/superadmin/konversi`, `/superadmin/langganan`, dashboard admin (popup peringatan, banner, lonceng), `/dashboard/langganan`, `/langganan-berakhir` (karyawan), beranda karyawan. Semua 12 tampilan tanpa scroll horizontal. Diperbaiki (`app/refresh.css`, blok "Mobile fixes"): panel notifikasi lonceng terpotong di kiri; grafik bulanan Pendapatan/Konversi tampak kosong karena membuka bulan terlama (kini mulai dari bulan terbaru); kartu Retensi dipaksa 3 kolom (kini 2); teks banner masa aktif terjepit tombol (tombol pindah ke bawah). Kamera dan GPS check-in tetap perlu dicoba di HP sungguhan setelah deploy (langkah 11).
 
 **B. Deploy production** (domain utama)
-- [ ] 9. Isi environment di Coolify (daftar lengkap di `docs/DEPLOY-VPS-COOLIFY.md`): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL` (Build Variable), R2 (`OBJECT_STORAGE_*`), `CLIENT_IP_HEADER`, pencarian lokasi (`GEOAPIFY_API_KEY`, `TOMTOM_API_KEY`, `GEOCODING_USER_AGENT` dengan domain/kontak), email (`MAIL_FROM=TepatWaktu <no-reply@tepat-waktu.id>`, `MAIL_PROVIDERS=mailjet,mailtrap,brevo`, kredensial ketiga layanan), `REMINDER_SCHEDULER=on`, Midtrans **sandbox dulu** (`MIDTRANS_IS_PRODUCTION=false`), `SUPERADMIN_EMAIL`/`SUPERADMIN_PASSWORD`.
-- [ ] 10. Deploy, login superadmin, lalu **hapus `SUPERADMIN_PASSWORD`** dari Coolify.
-- [ ] 11. Uji di production (dengan perusahaan uji):
+- [x] 9. (Selesai, production berjalan di https://tepat-waktu.id, build pack Dockerfile.) Isi environment di Coolify (daftar lengkap di `docs/DEPLOY-VPS-COOLIFY.md`): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL` (Build Variable), R2 (`OBJECT_STORAGE_*`), `CLIENT_IP_HEADER`, pencarian lokasi (`GEOAPIFY_API_KEY`, `TOMTOM_API_KEY`, `GEOCODING_USER_AGENT` dengan domain/kontak), email (`MAIL_FROM=TepatWaktu <no-reply@tepat-waktu.id>`, `MAIL_PROVIDERS=mailjet,mailtrap,brevo`, kredensial ketiga layanan), `REMINDER_SCHEDULER=on`, Midtrans **sandbox dulu** (`MIDTRANS_IS_PRODUCTION=false`), `SUPERADMIN_EMAIL`/`SUPERADMIN_PASSWORD`.
+- [x] 10. (Deploy berhasil 9 Nov 2026 setelah perbaikan langkah superadmin `816fd70`; HTTPS Let's Encrypt aktif.) Deploy, login superadmin, lalu **hapus `SUPERADMIN_PASSWORD`** dari Coolify.
+- [x] 11. (9 Nov 2026: **semua lolos menurut pemilik** — email dari server, undangan karyawan, presensi dari HP (kamera, lokasi, kunci), foto tersimpan di R2, IP pengunjung benar, webhook Midtrans sandbox mengaktifkan paket tanpa membuka halaman hasil, OTP Login.) Uji di production (dengan perusahaan uji):
   - email dari server (daftar akun, lupa password);
   - webhook Midtrans sandbox: isi Notification URL, bayar VA di simulator tanpa membuka halaman hasil, paket harus aktif (bagian 8);
   - upload foto presensi/kunjungan ke R2;
   - tampilan dan check-in dari HP sungguhan (kamera + lokasi);
   - IP pengunjung tercatat benar (bukan IP proxy).
 - [ ] 12. Ganti ke **Midtrans production** setelah aktivasi selesai: cocokkan tarif `paymentAdminFee` dengan kontrak, isi key production + `MIDTRANS_IS_PRODUCTION=true`, ubah Notification URL di dashboard Midtrans live, uji satu transaksi kecil sungguhan.
+  - Status 9 Nov 2026: dashboard Midtrans **Business review: In progress** (langkah 3 dari 4). Key production sudah bisa dibuat dan sudah dipasang di Coolify, tetapi transaksi production belum tentu jalan sebelum langkah 4 (Result) disetujui.
+  - Pastikan `MIDTRANS_IS_PRODUCTION=true` + Redeploy (key production dengan nilai `false` = error 401 ke sandbox).
+  - Uji tanpa bayar: Langganan → paket → QRIS → Bayar. Popup tanpa label Sandbox + QR asli = siap; error akses ditolak/merchant belum aktif = tunggu review (sementara kembalikan key sandbox, atau kosongkan key agar memakai pembayaran manual).
+  - Jika popup berhasil: isi Notification URL di dashboard **Production** (`https://tepat-waktu.id/api/payments/midtrans/notification`), cek metode aktif di Settings → Payment (sembunyikan yang belum aktif), uji satu transaksi kecil QRIS.
+  - Selama review, Midtrans berhak menahan pencairan dana (PKS Pasal 4 ayat 1b): buka pembayaran online untuk pelanggan setelah email persetujuan.
 - [ ] 13. **Bersihkan data uji** di production (perusahaan/akun/invoice uji) sebelum pelanggan masuk.
 - [ ] 14. Buka untuk beberapa pelanggan awal.
 
@@ -107,7 +112,8 @@ Pembayaran paket lewat Midtrans Snap sudah terpasang: `lib/midtrans.ts`, `featur
 Belum:
 - [ ] Webhook dari Midtrans sendiri belum diuji (tidak bisa mencapai localhost). Setelah staging online: isi Notification URL di dashboard sandbox `https://<domain>/api/payments/midtrans/notification`, bayar VA lewat simulator **tanpa** membuka halaman hasil, pastikan paket aktif dan baris muncul di tabel `payment_gateway_events`.
 - [ ] Ganti ke key **production** setelah aktivasi Midtrans selesai (email aktivasi 7 Nov 2026: VA, GoPay, QRIS, estimasi 2–3 hari kerja), set `MIDTRANS_IS_PRODUCTION=true` di Coolify, lalu uji satu transaksi kecil sungguhan.
-- [ ] Besaran biaya admin di `paymentAdminFee` (`features/subscriptions/plan-rules.ts`) perlu dicocokkan dengan tarif di kontrak Midtrans Anda.
+- [x] (9 Nov 2026) Biaya admin di `paymentAdminFee` disesuaikan dengan kontrak Midtrans (PKS Ver.Aug-26, Pasal 6): VA/kartu/Alfamart/Indomaret/Akulaku + PPN 11%; QRIS 0,7%; GoPay 5% dan ShopeePay 4% (tarif kategori digital).
+- [ ] Tanyakan ke Midtrans (business@midtrans.com): (a) TepatWaktu masuk kategori **digital atau non-digital**? Kalau non-digital, turunkan GoPay/ShopeePay ke 2%. (b) Berapa **Partner Fee Indomaret**? Sementara ditagih Rp 5.550 seperti Alfamart.
 - [ ] Refund/chargeback hanya dicatat; penonaktifan paket dilakukan manual bila perlu.
 
 ## 9. Uji email sungguhan (dicatat 7 Nov 2026, belum dikerjakan)

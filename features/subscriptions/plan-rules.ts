@@ -55,16 +55,27 @@ export const PAYMENT_LABELS: Record<string, string> = {
 export const ONLINE_PAYMENT_METHODS = ["bank_transfer", "qris", "gopay", "shopeepay", "credit_card", "indomaret", "alfamart", "akulaku"] as const;
 export type OnlinePaymentMethod = typeof ONLINE_PAYMENT_METHODS[number];
 
-/** Admin fee charged to the customer per method (follows Midtrans' fee per channel). */
+/** Adds 11% PPN (integer math, rounded up) to a fee the contract lists "tidak termasuk PPN". */
+const withVat = (fee: number) => Math.ceil(Math.round(fee * 111) / 100);
+
+/**
+ * Admin fee charged to the customer per method, following the Midtrans contract
+ * (PKS Ver.Aug-26, Pasal 6). Rounded up so the merchant never pays the difference.
+ * - VA, card, Alfamart/Indomaret, Akulaku: contract fee excludes VAT -> +11%.
+ * - QRIS, GoPay, ShopeePay: contract fee already includes VAT.
+ * - GoPay 5% / ShopeePay 4% are the "digital" category rates; use 2% if Midtrans
+ *   confirms the business is non-digital.
+ * - Indomaret is "Partner Fee + Rp 1.000" (partner fee unknown); charged like Alfamart for now.
+ */
 export function paymentAdminFee(method: string, packagePrice: number) {
   switch (method) {
-    case "credit_card": return Math.round(packagePrice * 0.029) + 2_000;
-    case "bank_transfer": return 4_000;
-    case "qris": return Math.round(packagePrice * 0.007);
-    case "gopay": return Math.round(packagePrice * 0.02);
-    case "shopeepay": return Math.round(packagePrice * 0.02);
-    case "indomaret": case "alfamart": return 5_000;
-    case "akulaku": return Math.round(packagePrice * 0.017);
+    case "credit_card": return withVat(packagePrice * 0.029 + 2_000);
+    case "bank_transfer": return withVat(4_000);
+    case "qris": return Math.ceil(packagePrice * 0.007);
+    case "gopay": return Math.ceil(packagePrice * 0.05);
+    case "shopeepay": return Math.ceil(packagePrice * 0.04);
+    case "indomaret": case "alfamart": return withVat(5_000);
+    case "akulaku": return withVat(packagePrice * 0.017);
     default: return 0;
   }
 }

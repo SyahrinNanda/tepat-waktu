@@ -1026,3 +1026,20 @@ td.retention-actions form { gap: 0; }
 .employee-lock-options strong { color: var(--ink); font-size: 12.5px; font-weight: 700; }
 .employee-lock-options small { color: var(--muted); font-size: 11px; line-height: 1.4; }
 .employee-lock-options > button > svg { flex: none; color: var(--primary-ink, #b05c07); }
+
+/* Sidebar: white labels, icons and dropdown arrows by default for legibility on the
+   yellow panel; hover / active / opened states keep the dark-on-white look. */
+.sidebar .nav-item, .sidebar .nav-group summary, .sidebar .nav-child, .sidebar .nav-section-label { color: #fff; opacity: 1; text-shadow: 0 1px 2px rgba(122, 62, 0, .35); }
+.sidebar .nav-item svg, .sidebar .nav-group summary svg { color: #fff; opacity: 1; filter: drop-shadow(0 1px 1px rgba(122, 62, 0, .3)); }
+.sidebar .nav-chevron { width: 18px; height: 18px; color: #fff !important; stroke-width: 2.75; }
+.sidebar .nav-child::before { background: rgba(255, 255, 255, .85); }
+.sidebar .nav-children::before { background: rgba(255, 255, 255, .45); }
+.sidebar .nav-item:hover, .sidebar .nav-group summary:hover, .sidebar .nav-item.active,
+.sidebar .nav-group[open] > summary, .sidebar .nav-group.active > summary,
+.sidebar .nav-child:hover, .sidebar .nav-child.active { color: var(--charcoal); text-shadow: none; }
+.sidebar .nav-item:hover svg, .sidebar .nav-group summary:hover svg,
+.sidebar .nav-group[open] > summary svg, .sidebar .nav-group.active > summary svg { color: var(--on-primary); filter: none; }
+.sidebar .nav-item.active svg { color: var(--primary-dark); filter: none; }
+.sidebar .nav-group summary:hover .nav-chevron, .sidebar .nav-group[open] > summary .nav-chevron,
+.sidebar .nav-group.active > summary .nav-chevron { color: var(--on-primary) !important; }
+.sidebar .nav-child.active::before { background: #fff; }
