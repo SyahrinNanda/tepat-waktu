@@ -104,7 +104,7 @@ export function SuperAdminShell({
               <Menu size={21} />
             </button>
             <div className="topbar-company">
-              <small>Presensi Super Admin Panel</small>
+              <small>Kehadiran Super Admin Panel</small>
               <strong>TepatWaktu Platform Console</strong>
             </div>
           </div>

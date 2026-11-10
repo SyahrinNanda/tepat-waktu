@@ -1,19 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ArrowLeft, Lock, LockOpen, Printer } from "lucide-react";
 import { confirmAction } from "@/components/confirm-dialog";
 import { finalizePayslipsAction, unlockPayslipAction } from "@/features/payslips/server/actions";
 import type { Payslip, PayslipLine } from "@/features/payslips/server/payslip-service";
+import { formatDuration } from "@/features/payslips/server/payslip-calculation";
 
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const basisLabels = { hourly: "Per Jam", daily: "Per Hari", monthly: "Per Bulan" } as const;
 const number = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 });
 const rupiah = (value: number) => `Rp ${new Intl.NumberFormat("id-ID").format(value)}`;
 
-export function PayslipDocument({ slip, companyName }: { slip: Payslip; companyName: string }) {
+/** `self`: an employee reading their own locked slip (no lock controls). */
+export function PayslipDocument({ slip, companyName, mode = "manage", backHref }: { slip: Payslip; companyName: string; mode?: "manage" | "self"; backHref?: string }) {
   const router = useRouter();
   const [error, setError] = useState(""), [pending, start] = useTransition();
   const period = `${monthNames[slip.month - 1]} ${slip.year}`;
@@ -37,9 +40,9 @@ export function PayslipDocument({ slip, companyName }: { slip: Payslip; companyN
 
   return <>
     <div className="payslip-actions no-print">
-      <Link className="btn btn-outline btn-compact" href={`/dashboard/karyawan/slip-gaji?year=${slip.year}&month=${slip.month}`}><ArrowLeft size={15}/> Kembali</Link>
+      <Link className="btn btn-outline btn-compact" href={(backHref ?? `/dashboard/karyawan/slip-gaji?year=${slip.year}&month=${slip.month}`) as Route}><ArrowLeft size={15}/> Kembali</Link>
       <span/>
-      <button className="btn btn-outline btn-compact" disabled={pending} onClick={toggleLock}>{slip.status === "final" ? <><LockOpen size={15}/> Buka Kunci</> : <><Lock size={15}/> Kunci Slip</>}</button>
+      {mode === "manage" && <button className="btn btn-outline btn-compact" disabled={pending} onClick={toggleLock}>{slip.status === "final" ? <><LockOpen size={15}/> Buka Kunci</> : <><Lock size={15}/> Kunci Slip</>}</button>}
       <button className="btn btn-primary btn-compact" onClick={() => window.print()}><Printer size={15}/> Cetak / PDF</button>
     </div>
     {error && <div className="announcement-inline-error no-print">{error}</div>}
@@ -61,7 +64,7 @@ export function PayslipDocument({ slip, companyName }: { slip: Payslip; companyN
         <Stat label="Izin dibayar" value={`${summary.paidLeaveDays} hari`}/>
         <Stat label="Izin tidak dibayar" value={`${summary.unpaidLeaveDays} hari`} warn={summary.unpaidLeaveDays > 0}/>
         <Stat label="Alpa" value={`${summary.absentDays} hari`} warn={summary.absentDays > 0}/>
-        <Stat label={slip.basis === "hourly" ? "Jam kerja" : "Lembur"} value={`${number.format(slip.basis === "hourly" ? summary.workedHours : summary.overtimeHours)} jam`}/>
+        <Stat label={slip.basis === "hourly" ? "Jam kerja" : "Lembur"} value={formatDuration(slip.basis === "hourly" ? summary.workedHours : summary.overtimeHours)}/>
       </section>
       <div className="payslip-doc-columns">
         <Lines title="Pendapatan" lines={slip.earnings} total={slip.grossPay}/>
@@ -82,7 +85,7 @@ function Info({ label, value }: { label: string; value: string }) { return <div>
 function Stat({ label, value, hint, warn }: { label: string; value: string; hint?: string; warn?: boolean }) { return <div className={warn ? "warn" : ""}><small>{label}</small><strong>{value}</strong>{hint ? <em>{hint}</em> : null}</div>; }
 function Lines({ title, lines, total }: { title: string; lines: PayslipLine[]; total: number }) {
   return <section className="payslip-lines"><h2>{title}</h2>
-    {lines.length ? <ul>{lines.map((line, index) => <li key={`${line.name}-${index}`}><span><strong>{line.name}</strong><small>{number.format(line.quantity)} {line.unit} × {rupiah(line.rate)}</small></span><b>{rupiah(line.amount)}</b></li>)}</ul> : <p>Tidak ada {title.toLowerCase()}.</p>}
+    {lines.length ? <ul>{lines.map((line, index) => <li key={`${line.name}-${index}`}><span><strong>{line.name}</strong><small>{line.unit === "jam" ? formatDuration(line.quantity) : `${number.format(line.quantity)} ${line.unit}`} × {rupiah(line.rate)}</small></span><b>{rupiah(line.amount)}</b></li>)}</ul> : <p>Tidak ada {title.toLowerCase()}.</p>}
     <div className="payslip-lines-total"><span>Total {title.toLowerCase()}</span><strong>{rupiah(total)}</strong></div>
   </section>;
 }

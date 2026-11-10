@@ -61,7 +61,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
   const tabs = [
     { id: "mobile", label: "Pengaturan Aplikasi", icon: Smartphone },
     { id: "general", label: "Profil & Kontak", icon: Building2 },
-    { id: "attendance", label: "Presensi Global", icon: Clock },
+    { id: "attendance", label: "Kehadiran Global", icon: Clock },
     { id: "storage", label: "Storage & Media", icon: HardDrive },
     { id: "security", label: "Keamanan & Sesi", icon: Shield },
     { id: "broadcast", label: "Pemberitahuan Sistem", icon: Bell },
@@ -132,9 +132,9 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                 <input
                   className="input"
                   name="quoteText"
-                  value={settings.quoteText ?? "Semangat Kerja ya!"}
+                  value={settings.quoteText ?? "Ayo Kerja Optimal 😂"}
                   onChange={(e) => handleChange("quoteText", e.target.value)}
-                  placeholder="Contoh: Semangat Kerja ya!"
+                  placeholder="Contoh: Ayo Kerja Optimal 😂"
                 />
               </label>
             </div>
@@ -220,7 +220,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                   name="platformTagline"
                   value={settings.platformTagline ?? "Sistem Manajemen Kehadiran & HR Terintegrasi"}
                   onChange={(e) => handleChange("platformTagline", e.target.value)}
-                  placeholder="Contoh: Portal Presensi Karyawan Multi-Tenant Terpercaya"
+                  placeholder="Contoh: Portal Kehadiran Karyawan Multi-Tenant Terpercaya"
                 />
               </label>
 
@@ -261,11 +261,11 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
           </div>
         )}
 
-        {/* TAB 3: PRESENSI GLOBAL */}
+        {/* TAB 3: KEHADIRAN GLOBAL */}
         {activeTab === "attendance" && (
           <div>
             <div className="settings-section-head">
-              <h3>Parameter Presensi Global</h3>
+              <h3>Parameter Kehadiran Global</h3>
               <p>Pengaturan zona waktu default, toleransi waktu, dan batas radius geofencing kantor.</p>
             </div>
 
@@ -314,7 +314,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                   required
                 />
                 <small style={{ color: "var(--muted)", fontSize: "12px", marginTop: "4px", display: "block" }}>
-                  Radius toleransi jarak GPS dari titik koordinat kantor pada saat presensi.
+                  Radius toleransi jarak GPS dari titik koordinat kantor pada saat mencatat kehadiran.
                 </small>
               </label>
             </div>
@@ -326,12 +326,12 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
           <div>
             <div className="settings-section-head">
               <h3>Penyimpanan Berkas & Media</h3>
-              <p>Aturan kuota upload foto selfie presensi, bukti lampiran, dan retensi data log.</p>
+              <p>Aturan kuota upload foto selfie kehadiran, bukti lampiran, dan retensi data log.</p>
             </div>
 
             <div className="form-grid">
               <label className="field">
-                <span className="field-label">Ukuran Maksimal Upload Foto Presensi (MB)</span>
+                <span className="field-label">Ukuran Maksimal Upload Foto Kehadiran (MB)</span>
                 <input
                   className="input"
                   name="maxUploadSizeMb"
@@ -467,7 +467,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
                 style={{ height: "auto", padding: "12px 14px" }}
                 value={settings.globalNoticeText ?? ""}
                 onChange={(e) => handleChange("globalNoticeText", e.target.value)}
-                placeholder="Contoh: Pemeliharaan server terjadwal pada hari Minggu pukul 01:00 - 04:00 WITA. Layanan presensi tetap dapat mencatat secara offline."
+                placeholder="Contoh: Pemeliharaan server terjadwal pada hari Minggu pukul 01:00 - 04:00 WITA. Layanan kehadiran tetap dapat mencatat secara offline."
               />
             </label>
           </div>

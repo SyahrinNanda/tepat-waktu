@@ -112,14 +112,14 @@ export async function GET(request: Request) {
     return new Response(new Uint8Array(buffer), {
       headers: {
         "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "content-disposition": `attachment; filename="presensi-harian-${date}.xlsx"`,
+        "content-disposition": `attachment; filename="kehadiran-harian-${date}.xlsx"`,
         "cache-control": "private, no-store",
       },
     });
   } catch (error) {
     if (error instanceof AttendanceError) return Response.json({ message: error.message }, { status: error.status });
     console.error("Export daily attendance error:", error);
-    return new Response(JSON.stringify({ message: "Gagal mengunduh laporan presensi." }), {
+    return new Response(JSON.stringify({ message: "Gagal mengunduh laporan kehadiran." }), {
       status: 500,
       headers: { "content-type": "application/json" },
     });

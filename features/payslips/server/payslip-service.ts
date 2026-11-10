@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { buildPayslip, hoursBetween, monthRange, type Payslip, type PayslipLine, type PayslipSummary, type SalaryBasis } from "./payslip-calculation";
 import {
@@ -137,4 +137,17 @@ export async function unlockPayslip(companyId: string, employeeId: string, year:
     .where(and(eq(payrolls.companyId, companyId), eq(payrolls.employeeId, employeeId), eq(payrolls.year, year), eq(payrolls.month, month), eq(payrolls.status, FINAL)));
   if (rows.length) await db.delete(payrolls).where(inArray(payrolls.id, rows.map((row) => row.id)));
   return rows.length;
+}
+
+/** Locked (published) payslip periods of one employee, newest first. Drafts are not shown to staff. */
+export async function listFinalPeriods(companyId: string, employeeId: string) {
+  return db.select({ year: payrolls.year, month: payrolls.month, netPay: payrolls.totalAmount, finalizedAt: payrolls.updatedAt }).from(payrolls)
+    .where(and(eq(payrolls.companyId, companyId), eq(payrolls.employeeId, employeeId), eq(payrolls.status, FINAL)))
+    .orderBy(desc(payrolls.year), desc(payrolls.month));
+}
+
+/** The locked payslip of one employee for a month, or null while it is still a draft. */
+export async function getFinalPayslip(companyId: string, employeeId: string, year: number, month: number) {
+  const employee = await loadEmployee(companyId, employeeId);
+  return employee ? finalSnapshot(companyId, employee, year, month) : null;
 }

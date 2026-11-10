@@ -18,7 +18,7 @@ export type CustomRequestRow = {
 };
 
 const idle: CustomPlanState = { status: "idle", message: "" };
-const statusLabel: Record<string, string> = { pending: "Menunggu negosiasi", approved: "Disetujui", rejected: "Ditolak", cancelled: "Dibatalkan" };
+const statusLabel: Record<string, string> = { pending: "Menunggu peninjauan", approved: "Disetujui", rejected: "Ditolak", cancelled: "Dibatalkan" };
 const statusTone: Record<string, string> = { pending: "orange", approved: "green", rejected: "red", cancelled: "gray" };
 const day = (value: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeZone: "Asia/Makassar" }).format(new Date(value));
 
@@ -34,7 +34,7 @@ function CustomPlanModal({ onClose }: { onClose: () => void }) {
       <header><span className="plan-dialog-title-icon"><Handshake size={18} /></span><div><small>PAKET CUSTOM</small><h2 id="custom-plan-title">Ajukan Paket Custom</h2></div><button type="button" onClick={onClose} aria-label="Tutup"><X size={19} /></button></header>
       <form action={action}>
         <div className="subscription-dialog-body custom-plan-form">
-          <p>Untuk perusahaan dengan lebih dari {(CUSTOM_MIN_EMPLOYEES - 1).toLocaleString("id-ID")} karyawan. Harga per karyawan bisa dinegosiasikan, minimal {formatRupiah(CUSTOM_PRICE_FLOOR)}.</p>
+          <p>Untuk perusahaan dengan lebih dari {(CUSTOM_MIN_EMPLOYEES - 1).toLocaleString("id-ID")} karyawan. Harga khusus per karyawan, mulai {formatRupiah(CUSTOM_PRICE_FLOOR)}.</p>
           <label className="plan-duration-field"><span>Jumlah karyawan</span><input className="input" name="employeeCount" type="number" min={CUSTOM_MIN_EMPLOYEES} step={1} required value={employees} onChange={(event) => setEmployees(Number(event.target.value))} /></label>
           <label className="plan-duration-field"><span>Harga yang diajukan per karyawan / bulan (Rp)</span><input className="input" name="proposedPricePerEmployee" type="number" min={CUSTOM_PRICE_FLOOR} step={50} required value={price} onChange={(event) => setPrice(Number(event.target.value))} /></label>
           <label className="plan-duration-field"><span>Durasi kontrak</span><select name="durationMonths" value={months} onChange={(event) => setMonths(Number(event.target.value))}>{DURATION_OPTIONS.map((value) => <option key={value} value={value}>{value} Bulan</option>)}</select></label>
@@ -57,14 +57,14 @@ export function CustomPlanCard({ canManage, requests }: { canManage: boolean; re
   const hasPending = requests.some((request) => request.status === "pending");
   return <>
     <article className="subscription-plan-reference custom-plan-reference" id="paket-custom">
-      <header><Building2 size={23} /><strong>PAKET CUSTOM</strong><span>NEGO</span></header>
+      <header><Building2 size={23} /><strong>PAKET CUSTOM</strong></header>
       <div>
         <h2>{formatRupiah(CUSTOM_PRICE_FLOOR)}<small>/ karyawan</small></h2>
         <button type="button" className="primary" disabled={!canManage || hasPending} onClick={() => setOpen(true)}>{hasPending ? "Pengajuan Diproses" : canManage ? "Ajukan Paket Custom" : "Hubungi Admin"}</button>
         <label>APA YANG ANDA PEROLEH</label>
         <ul>
           <li><CheckCircle2 size={14} />Lebih dari {(CUSTOM_MIN_EMPLOYEES - 1).toLocaleString("id-ID")} karyawan</li>
-          <li><CheckCircle2 size={14} />Harga per karyawan bisa dinegosiasikan (mulai {formatRupiah(CUSTOM_PRICE_FLOOR)})</li>
+          <li><CheckCircle2 size={14} />Harga khusus per karyawan (mulai {formatRupiah(CUSTOM_PRICE_FLOOR)})</li>
           <li><CheckCircle2 size={14} />Pendampingan khusus dari tim TepatWaktu</li>
         </ul>
       </div>

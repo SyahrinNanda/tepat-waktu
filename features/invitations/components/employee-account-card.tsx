@@ -9,7 +9,7 @@ import { employeeAccountMessage } from "@/features/invitations/account-messages"
 import type { EmployeeAccountStatus } from "@/features/invitations/server/employee-account";
 
 const copy: Record<EmployeeAccountStatus, { label: string; text: string }> = {
-  active: { label: "Aktif", text: "Karyawan sudah bisa masuk ke aplikasi untuk presensi, kunjungan, dan pengajuan." },
+  active: { label: "Aktif", text: "Karyawan sudah bisa masuk ke aplikasi untuk mencatat kehadiran, kunjungan, dan pengajuan." },
   pending: { label: "Menunggu undangan", text: "Email undangan sudah dikirim, tetapi karyawan belum membuat password." },
   expired: { label: "Undangan kedaluwarsa", text: "Tautan undangan sudah lewat 7 hari. Kirim ulang agar karyawan bisa membuat password." },
   none: { label: "Belum punya akun", text: "Karyawan belum bisa masuk ke aplikasi. Buat akun dan kirim undangan ke email karyawan." },

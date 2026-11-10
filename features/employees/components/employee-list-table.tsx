@@ -61,7 +61,7 @@ function LockMenu({ row, disabled }: { row: EmployeeListRow; disabled: boolean }
   };
   const label = locks.location && locks.photo ? "Lokasi & Foto" : locks.location ? "Kunci Lokasi" : locks.photo ? "Kunci Foto" : "Tanpa kunci";
   return <details className="employee-lock-menu"><summary>{pending ? "Menyimpan..." : label}<ChevronDown size={13}/></summary><div data-float-menu className="employee-lock-options">
-    <button type="button" disabled={disabled} onClick={() => toggle("location")}><span><strong>Kunci Lokasi</strong><small>{locks.location ? "Wajib presensi di dalam radius lokasi kerja" : "Boleh presensi di luar radius lokasi kerja"}</small></span>{locks.location && <Check size={14}/>}</button>
-    <button type="button" disabled={disabled} onClick={() => toggle("photo")}><span><strong>Kunci Foto</strong><small>{locks.photo ? "Wajib mengirim foto saat presensi" : "Foto boleh tidak dikirim"}</small></span>{locks.photo && <Check size={14}/>}</button>
+    <button type="button" disabled={disabled} onClick={() => toggle("location")}><span><strong>Kunci Lokasi</strong><small>{locks.location ? "Wajib mencatat kehadiran di dalam radius lokasi kerja" : "Boleh mencatat kehadiran di luar radius lokasi kerja"}</small></span>{locks.location && <Check size={14}/>}</button>
+    <button type="button" disabled={disabled} onClick={() => toggle("photo")}><span><strong>Kunci Foto</strong><small>{locks.photo ? "Wajib mengirim foto saat mencatat kehadiran" : "Foto boleh tidak dikirim"}</small></span>{locks.photo && <Check size={14}/>}</button>
   </div></details>;
 }

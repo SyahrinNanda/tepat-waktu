@@ -177,10 +177,10 @@ export function MonthlyAttendanceManager({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Gagal mengimpor data presensi.");
+        throw new Error(data.error || "Gagal mengimpor data kehadiran.");
       }
 
-      setNotice({ type: "success", message: data.message || "Presensi berhasil diimpor." });
+      setNotice({ type: "success", message: data.message || "Kehadiran berhasil diimpor." });
       setImportModalOpen(false);
       setImportFile(null);
       router.refresh();
@@ -215,13 +215,13 @@ export function MonthlyAttendanceManager({
     <div className="monthly-attendance-container">
       {/* Header Eyebrow, Title & Breadcrumb matching Gambar 1 */}
       <header className="monthly-attendance-header">
-        <div className="monthly-attendance-eyebrow">Presensi Admin Panel</div>
+        <div className="monthly-attendance-eyebrow">Kehadiran Admin Panel</div>
         <div className="monthly-attendance-title-row">
-          <h1 className="monthly-attendance-title">LAPORAN PRESENSI BULANAN</h1>
+          <h1 className="monthly-attendance-title">LAPORAN KEHADIRAN BULANAN</h1>
           <nav className="monthly-attendance-breadcrumb">
             <Link href="/dashboard">Beranda</Link>
             <span className="breadcrumb-separator">/</span>
-            <Link href="/dashboard/presensi/harian">Presensi</Link>
+            <Link href="/dashboard/presensi/harian">Kehadiran</Link>
             <span className="breadcrumb-separator">/</span>
             <span className="breadcrumb-current">Laporan Laporan Kehadiran Bulanan</span>
           </nav>
@@ -446,7 +446,7 @@ export function MonthlyAttendanceManager({
               </div>
               <h3 className="monthly-empty-title">Data Kosong...</h3>
               <p className="monthly-empty-desc">
-                Tidak ada data presensi pada periode bulan atau filter yang dipilih.
+                Tidak ada data kehadiran pada periode bulan atau filter yang dipilih.
               </p>
             </div>
           ) : (
@@ -457,7 +457,7 @@ export function MonthlyAttendanceManager({
                     <th className="th-num">#</th>
                     <th className="th-foto">Foto</th>
                     <th className="th-nama">Nama</th>
-                    <th className="th-center">Presensi</th>
+                    <th className="th-center">Kehadiran</th>
                     <th className="th-center">Izin/Cuti</th>
                     <th className="th-center">Terlambat</th>
                     <th className="th-center">Jam Kerja</th>
@@ -490,7 +490,7 @@ export function MonthlyAttendanceManager({
                         </div>
                       </td>
 
-                      {/* Presensi */}
+                      {/* Kehadiran */}
                       <td className="td-center">{row.presensiCount}</td>
 
                       {/* Izin/Cuti */}
@@ -531,13 +531,13 @@ export function MonthlyAttendanceManager({
         </div>
       </section>
 
-      {/* MODAL IMPORT PRESENSI matching Gambar 4 */}
+      {/* MODAL IMPORT KEHADIRAN matching Gambar 4 */}
       {importModalOpen ? (
         <div className="monthly-modal-backdrop" onClick={() => setImportModalOpen(false)}>
           <div className="monthly-modal-card" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <header className="monthly-modal-header">
-              <h2 className="monthly-modal-title">Import Presensi</h2>
+              <h2 className="monthly-modal-title">Import Kehadiran</h2>
               <button
                 type="button"
                 className="monthly-modal-close"

@@ -38,7 +38,7 @@ export function AnnouncementManager({ initialRows, canManage }: { initialRows: A
   }
 
   return <>
-    <div className="announcement-page-head"><span>Presensi Admin Panel</span><h1>Daftar Pemberitahuan</h1></div>
+    <div className="announcement-page-head"><span>Kehadiran Admin Panel</span><h1>Daftar Pemberitahuan</h1></div>
     <section className="announcement-card">
       <div className="announcement-toolbar">
         <div className="announcement-search"><Search size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari judul pemberitahuan ..." /></div>

@@ -40,7 +40,7 @@ function ReviewModal({ row, onClose }: { row: CustomRequestReviewRow; onClose: (
   }
   return <div className="standard-modal-overlay" onClick={onClose}>
     <div className="standard-modal-card" style={{ maxWidth: 560 }} onClick={(event) => event.stopPropagation()}>
-      <header className="standard-modal-header"><div><h2>Negosiasi Paket Custom</h2><p>{row.companyName} · diajukan {day(row.createdAt)}</p></div><button className="icon-button" type="button" onClick={onClose} aria-label="Tutup"><X size={18} /></button></header>
+      <header className="standard-modal-header"><div><h2>Tinjau Paket Custom</h2><p>{row.companyName} · diajukan {day(row.createdAt)}</p></div><button className="icon-button" type="button" onClick={onClose} aria-label="Tutup"><X size={18} /></button></header>
       <form action={action}>
         <div className="standard-modal-body">
           <input type="hidden" name="id" value={row.id} />
@@ -72,7 +72,7 @@ export function CustomRequestReview({ rows }: { rows: CustomRequestReviewRow[] }
   const [selected, setSelected] = useState<CustomRequestReviewRow | null>(null);
   const pendingCount = rows.filter((row) => row.status === "pending").length;
   return <section className="module-card custom-plan-history" id="paket-custom">
-    <div className="card-head"><div><h2 className="card-title"><Handshake size={18} /> Pengajuan Paket Custom</h2><p className="card-subtitle">Perusahaan &gt; {(CUSTOM_MIN_EMPLOYEES - 1).toLocaleString("id-ID")} karyawan · harga nego, batas bawah {formatRupiah(CUSTOM_PRICE_FLOOR)}/karyawan · {pendingCount} menunggu</p></div></div>
+    <div className="card-head"><div><h2 className="card-title"><Handshake size={18} /> Pengajuan Paket Custom</h2><p className="card-subtitle">Perusahaan &gt; {(CUSTOM_MIN_EMPLOYEES - 1).toLocaleString("id-ID")} karyawan · harga khusus, batas bawah {formatRupiah(CUSTOM_PRICE_FLOOR)}/karyawan · {pendingCount} menunggu</p></div></div>
     {rows.length ? <div className="table-wrap"><table className="table">
       <thead><tr><th>Perusahaan</th><th>Karyawan</th><th>Harga / karyawan</th><th>Per bulan</th><th>Durasi</th><th>Status</th><th /></tr></thead>
       <tbody>{rows.map((row) => {

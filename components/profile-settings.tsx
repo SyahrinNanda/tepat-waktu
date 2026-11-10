@@ -166,7 +166,7 @@ export function ProfileSettings({
   return (
     <div className="profile-page">
       <header className="profile-page-header">
-        <small>Presensi Admin Panel</small>
+        <small>Kehadiran Admin Panel</small>
         <h1>PROFILE</h1>
         <nav aria-label="Breadcrumb">
           <a href="/dashboard">Beranda</a><span>/</span><span>Settings</span><span>/</span><span>Profile</span>

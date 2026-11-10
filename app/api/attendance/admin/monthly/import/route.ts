@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     if (error instanceof AttendanceError) return Response.json({ message: error.message, error: error.message }, { status: error.status });
     console.error("Monthly attendance import error:", error);
     return Response.json(
-      { error: error instanceof Error ? error.message : "Gagal mengimpor data presensi." },
+      { error: error instanceof Error ? error.message : "Gagal mengimpor data kehadiran." },
       { status: 500 }
     );
   }

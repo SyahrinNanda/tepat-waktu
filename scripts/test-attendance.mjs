@@ -131,7 +131,8 @@ async function createSchedule(companyId, name, { start, grace = 15, active = tru
   return schedule.id;
 }
 async function createDivision(companyId, name, scheduleId) {
-  await db.query(`insert into divisions (company_id, name, schedule_id, active) values ($1, $2, $3, true)`, [companyId, name, scheduleId]);
+  const { rows: [division] } = await db.query(`insert into divisions (company_id, name, schedule_id, active) values ($1, $2, $3, true) returning id`, [companyId, name, scheduleId]);
+  await db.query(`insert into division_schedules (division_id, schedule_id, position) values ($1, $2, 0)`, [division.id, scheduleId]);
 }
 /** Company admin account (for the admin attendance API). Returns the session cookie. */
 async function createAdmin(companyId, key) {

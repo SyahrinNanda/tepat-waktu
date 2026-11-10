@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
 function attendanceErrorResponse(error: unknown) {
   if (error instanceof AttendanceError) return NextResponse.json({ message: error.message }, { status: error.status });
-  if (error instanceof z.ZodError) return NextResponse.json({ message: "Data presensi tidak valid.", issues: error.issues }, { status: 400 });
+  if (error instanceof z.ZodError) return NextResponse.json({ message: "Data kehadiran tidak valid.", issues: error.issues }, { status: 400 });
   console.error("Attendance API error", error);
-  return NextResponse.json({ message: "Presensi belum dapat diproses." }, { status: 500 });
+  return NextResponse.json({ message: "Kehadiran belum dapat diproses." }, { status: 500 });
 }

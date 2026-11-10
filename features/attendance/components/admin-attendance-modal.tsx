@@ -78,10 +78,10 @@ export function AdminAttendanceModal({
 
       const data = (await response.json()) as { message?: string };
       if (!response.ok) {
-        throw new Error(data.message || "Gagal menyimpan presensi.");
+        throw new Error(data.message || "Gagal menyimpan kehadiran.");
       }
 
-      setNotice({ type: "success", text: data.message || "Presensi berhasil dicatat." });
+      setNotice({ type: "success", text: data.message || "Kehadiran berhasil dicatat." });
       setTimeout(() => {
         setIsOpen(false);
         setCheckInPreview(null);
@@ -99,7 +99,7 @@ export function AdminAttendanceModal({
   return (
     <>
       <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
-        <Plus size={16} /> Catat Presensi Karyawan
+        <Plus size={16} /> Catat Kehadiran Karyawan
       </button>
 
       {isOpen ? (
@@ -115,7 +115,7 @@ export function AdminAttendanceModal({
                   <ClipboardCheck size={20} />
                 </span>
                 <div>
-                  <h2>Catat Presensi Karyawan</h2>
+                  <h2>Catat Kehadiran Karyawan</h2>
                   <p>Input kehadiran manual oleh Admin dengan lampiran foto masuk & pulang.</p>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export function AdminAttendanceModal({
                   </label>
 
                   <label className="field">
-                    <span className="field-label">Tanggal Presensi</span>
+                    <span className="field-label">Tanggal Kehadiran</span>
                     <input
                       className="input"
                       name="attendanceDate"
@@ -170,7 +170,7 @@ export function AdminAttendanceModal({
                   </select>
                 </label>
 
-                {/* Sesi Presensi & Foto Grid */}
+                {/* Sesi Kehadiran & Foto Grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "4px" }}>
                   {/* Bagian Masuk (Check-In) */}
                   <div
@@ -312,7 +312,7 @@ export function AdminAttendanceModal({
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? <LoaderCircle className="spin" size={16} /> : <ClipboardCheck size={16} />}
-                  {loading ? "Menyimpan Presensi..." : "Simpan Presensi"}
+                  {loading ? "Menyimpan Kehadiran..." : "Simpan Kehadiran"}
                 </button>
               </footer>
             </form>

@@ -31,7 +31,7 @@ export default async function Page() {
     quote:
       typeof fields.quote === "string"
         ? fields.quote
-        : "Semangat Kerja ya!",
+        : "Ayo Kerja Optimal 😂",
     menuIstirahat:
       fields.menuIstirahat === "false" || fields.menuIstirahat === false
         ? false

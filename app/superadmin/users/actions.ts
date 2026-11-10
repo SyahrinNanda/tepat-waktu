@@ -7,6 +7,7 @@ import { hashPassword } from "better-auth/crypto";
 import { db } from "@/db";
 import { account, companies, companyMembers, user } from "@/db/schema";
 import { revokeUserSessions } from "@/lib/member-status";
+import { seatLimitError } from "@/features/subscriptions/server/employee-capacity";
 import { requireSuperAdmin } from "@/lib/superadmin";
 import { recordAudit } from "@/lib/audit";
 
@@ -85,10 +86,15 @@ export async function setMemberStatus(formData: FormData) {
   const currentSession = await requireSuperAdmin();
   const userId = z.string().min(1).parse(formData.get("userId"));
   const active = z.enum(["true", "false"]).parse(formData.get("active")) === "true";
-  const [member] = await db.select({ id: companyMembers.id, role: companyMembers.role, companyId: companyMembers.companyId, companyName: companies.name, email: user.email })
+  const [member] = await db.select({ id: companyMembers.id, role: companyMembers.role, isActive: companyMembers.isActive, companyId: companyMembers.companyId, companyName: companies.name, email: user.email })
     .from(companyMembers).innerJoin(user, eq(user.id, companyMembers.userId)).innerJoin(companies, eq(companies.id, companyMembers.companyId))
     .where(eq(companyMembers.userId, userId)).limit(1);
   if (!member) throw new Error("Akun ini tidak terhubung ke perusahaan mana pun.");
+  // Re-activating a non-admin login takes a plan seat again (the plan limits non-admin logins).
+  if (active && !member.isActive && member.role !== "admin" && member.role !== "owner") {
+    const limitError = await seatLimitError(member.companyId, userId);
+    if (limitError) throw new Error(limitError);
+  }
   await db.update(companyMembers).set({ isActive: active }).where(eq(companyMembers.id, member.id));
   if (!active) await revokeUserSessions(userId);
   await recordAudit(currentSession, {

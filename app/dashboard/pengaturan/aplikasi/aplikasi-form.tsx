@@ -58,7 +58,7 @@ export function AplikasiSettingsForm({
             fontWeight: 500,
           }}
         >
-          Presensi Admin Panel
+          Kehadiran Admin Panel
         </div>
         <h1
           style={{
@@ -215,7 +215,7 @@ export function AplikasiSettingsForm({
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, quote: e.target.value }))
               }
-              placeholder="Semangat Kerja ya!"
+              placeholder="Ayo Kerja Optimal 😂"
               style={{
                 width: "100%",
                 height: "42px",
@@ -446,7 +446,7 @@ export function AplikasiSettingsForm({
             disabled={isPending}
             style={{
               backgroundColor: "#faa005",
-              color: "#1a1a1a",
+              color: "#fff",
               fontSize: "13px",
               fontWeight: 700,
               letterSpacing: "0.04em",

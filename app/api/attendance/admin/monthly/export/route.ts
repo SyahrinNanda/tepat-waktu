@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   } catch (error) {
     if (error instanceof AttendanceError) return Response.json({ message: error.message, error: error.message }, { status: error.status });
     console.error("Monthly attendance export error:", error);
-    return new Response(JSON.stringify({ message: "Gagal mengunduh laporan presensi bulanan." }), {
+    return new Response(JSON.stringify({ message: "Gagal mengunduh laporan kehadiran bulanan." }), {
       status: 500,
       headers: { "content-type": "application/json" },
     });

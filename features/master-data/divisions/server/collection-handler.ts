@@ -1,24 +1,27 @@
-import { and, asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/db";
-import { divisions, workSchedules } from "@/db/schema";
+import { divisions } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
-
-const schema = z.object({ name: z.string().trim().min(2).max(100), scheduleId: z.uuid(), active: z.boolean().default(true) });
+import { divisionBodySchema, listDivisionsWithSchedules, replaceDivisionSchedules, schedulesBelongToCompany } from "@/features/master-data/divisions/server/division-schedules";
 
 export async function GET(request: Request) {
   const context = await featureContext(request, "master/divisi", "read"); if ("error" in context) return context.error;
-  const rows = await db.select({ id: divisions.id, name: divisions.name, scheduleId: divisions.scheduleId, shiftName: workSchedules.name, active: divisions.active, createdAt: divisions.createdAt, updatedAt: divisions.updatedAt }).from(divisions).leftJoin(workSchedules, eq(divisions.scheduleId, workSchedules.id)).where(eq(divisions.companyId, context.companyId)).orderBy(asc(divisions.name));
-  return Response.json({ rows });
+  return Response.json({ rows: await listDivisionsWithSchedules(context.companyId) });
 }
 
 export async function POST(request: Request) {
   const context = await featureContext(request, "master/divisi", "write"); if ("error" in context) return context.error;
-  const parsed = schema.safeParse(await request.json().catch(() => null)); if (!parsed.success) return Response.json({ error: "Nama dan shift wajib diisi." }, { status: 400 });
-  const [shift] = await db.select({ id: workSchedules.id }).from(workSchedules).where(and(eq(workSchedules.id, parsed.data.scheduleId), eq(workSchedules.companyId, context.companyId))).limit(1);
-  if (!shift) return Response.json({ error: "Jadwal kerja tidak ditemukan." }, { status: 404 });
+  const parsed = divisionBodySchema.safeParse(await request.json().catch(() => null)); if (!parsed.success) return Response.json({ error: "Nama dan minimal satu jadwal kerja wajib diisi." }, { status: 400 });
+  const { scheduleIds, ...values } = parsed.data;
+  if (!(await schedulesBelongToCompany(context.companyId, scheduleIds))) return Response.json({ error: "Jadwal kerja tidak ditemukan." }, { status: 404 });
   try {
-    const [row] = await db.insert(divisions).values({ companyId: context.companyId, ...parsed.data }).returning(); revalidatePath("/dashboard/master/divisi"); return Response.json({ row }, { status: 201 });
+    const id = await db.transaction(async (tx) => {
+      const [row] = await tx.insert(divisions).values({ companyId: context.companyId, ...values, scheduleId: scheduleIds[0] }).returning({ id: divisions.id });
+      await replaceDivisionSchedules(tx, row.id, scheduleIds);
+      return row.id;
+    });
+    revalidatePath("/dashboard/master/divisi");
+    const [row] = await listDivisionsWithSchedules(context.companyId, id);
+    return Response.json({ row }, { status: 201 });
   } catch { return Response.json({ error: "Nama divisi sudah digunakan." }, { status: 409 }); }
 }

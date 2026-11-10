@@ -50,7 +50,7 @@ export default async function Page() {
     <>
       <header className="product-page-header">
         <div>
-          <span className="breadcrumb">Presensi Super Admin Panel</span>
+          <span className="breadcrumb">Kehadiran Super Admin Panel</span>
           <h1>DASHBOARD SUPER ADMIN</h1>
           <p>
             Kelola data multi-tenant, pantau operasional seluruh perusahaan, dan masuk ke ruang kerja sebagai Admin.

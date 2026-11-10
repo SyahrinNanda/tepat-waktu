@@ -72,7 +72,7 @@ const screens: Record<string, ScreenConfig> = {
     form: ["Judul Pengumuman", "Deskripsi Singkat", "Deskripsi Pengumuman", "Gambar Sampul"],
   },
   "master/shift": {
-    title: "Daftar Shift",
+    title: "Jadwal Kerja",
     description: "Atur kelompok jadwal dan toleransi keterlambatan.",
     breadcrumb: "Beranda / Master Data / Shift",
     action: "Tambah Shift",
@@ -126,9 +126,9 @@ const screens: Record<string, ScreenConfig> = {
     form: ["Nama Jabatan", "Divisi", "Status"],
   },
   "master/lokasi-presensi": {
-    title: "Daftar Lokasi Presensi",
-    description: "Tentukan titik dan radius lokasi yang sah untuk presensi.",
-    breadcrumb: "Beranda / Master Data / Lokasi Presensi",
+    title: "Daftar Lokasi Kehadiran",
+    description: "Tentukan titik dan radius lokasi yang sah untuk mencatat kehadiran.",
+    breadcrumb: "Beranda / Master Data / Lokasi Kehadiran",
     action: "Tambah Lokasi",
     columns: ["Lokasi", "Alamat", "Radius", "Karyawan", "Status", "Aksi"],
     rows: [
@@ -144,7 +144,7 @@ const screens: Record<string, ScreenConfig> = {
     breadcrumb: "Beranda / Karyawan / Daftar Karyawan",
     action: "Tambah Karyawan",
     exportable: true,
-    columns: ["Karyawan", "Nomor Induk", "Jabatan / Divisi", "Lokasi Presensi", "Mulai Kerja", "Status", "Aksi"],
+    columns: ["Karyawan", "Nomor Induk", "Jabatan / Divisi", "Lokasi Kehadiran", "Mulai Kerja", "Status", "Aksi"],
     rows: [
       ["Ardi Kurniawan", "EMP-001", "Software Engineer Â· Engineering", "Kantor Utama", "12 Jan 2024", "Aktif", ""],
       ["Nadia Safitri", "EMP-002", "HR Specialist Â· Human Resource", "Kantor Utama", "08 Mar 2024", "Aktif", ""],
@@ -203,10 +203,10 @@ const screens: Record<string, ScreenConfig> = {
     ["Dian Anggraini", "16 Okt 2026", "17:00â€“19:00", "2 jam", "Stock opname", "Disetujui", ""],
   ], "Tambah Lembur", ["Nama Karyawan", "Tanggal Lembur", "Jam", "Menit", "Deskripsi Lembur"]),
   "presensi/harian": {
-    title: "Presensi Harian",
-    description: "Pantau waktu masuk, pulang, dan status presensi hari ini.",
-    breadcrumb: "Beranda / Presensi / Presensi Harian",
-    action: "Tambah Presensi",
+    title: "Kehadiran Harian",
+    description: "Pantau waktu masuk, pulang, dan status kehadiran hari ini.",
+    breadcrumb: "Beranda / Kehadiran / Kehadiran Harian",
+    action: "Tambah Kehadiran",
     exportable: true,
     columns: ["Karyawan", "Shift", "Jadwal", "Jam Masuk", "Jam Pulang", "Keterlambatan", "Status", "Aksi"],
     rows: [
@@ -225,9 +225,9 @@ const screens: Record<string, ScreenConfig> = {
     form: ["Karyawan", "Tanggal", "Jam Masuk", "Jam Pulang", "Status", "Catatan"],
   },
   "presensi/bulanan": {
-    title: "Laporan Presensi Bulanan",
+    title: "Laporan Kehadiran Bulanan",
     description: "Rekap kehadiran bulanan berdasarkan karyawan dan divisi.",
-    breadcrumb: "Beranda / Presensi / Laporan Bulanan",
+    breadcrumb: "Beranda / Kehadiran / Laporan Bulanan",
     exportable: true,
     columns: ["Karyawan", "Hari Kerja", "Hadir", "Tepat Waktu", "Terlambat", "Izin", "Cuti", "Absen"],
     rows: [
@@ -288,9 +288,9 @@ const screens: Record<string, ScreenConfig> = {
     rows: [
       ["Admin Perusahaan", "1 perusahaan", "Seluruh modul perusahaan", "Tidak dapat mengakses perusahaan lain", "1", ""],
       ["General Manager", "1 perusahaan", "Monitor, laporan, persetujuan", "Tanpa pengaturan platform", "1", ""],
-      ["HRD", "1 perusahaan", "Karyawan dan presensi", "Tanpa billing dan pengaturan platform", "3", ""],
-      ["Manager", "Divisi / tim", "Tim, presensi, persetujuan", "Hanya divisi yang ditugaskan", "4", ""],
-      ["Karyawan / Staf", "Data pribadi", "Presensi dan pengajuan sendiri", "Tidak dapat melihat data karyawan lain", "29", ""],
+      ["HRD", "1 perusahaan", "Karyawan dan kehadiran", "Tanpa billing dan pengaturan platform", "3", ""],
+      ["Manager", "Divisi / tim", "Tim, kehadiran, persetujuan", "Hanya divisi yang ditugaskan", "4", ""],
+      ["Karyawan / Staf", "Data pribadi", "Kehadiran dan pengajuan sendiri", "Tidak dapat melihat data karyawan lain", "29", ""],
     ],
   },
 };
@@ -609,13 +609,13 @@ function EmployeeFormPage() {
           ].map(([label, placeholder], index) => <Field label={label} placeholder={placeholder} full={index === 6} key={label} />)}
         </div>
         <div className="form-divider" />
-        <div className="form-section-head"><div><span>03</span><div><h2>Informasi Pekerjaan</h2><p>Penempatan dan akses presensi.</p></div></div></div>
+        <div className="form-section-head"><div><span>03</span><div><h2>Informasi Pekerjaan</h2><p>Penempatan dan akses kehadiran.</p></div></div></div>
         <div className="wide-form-grid">
           <Field label="Tanggal Mulai Kerja" placeholder="dd/mm/yyyy" />
           <Field label="Divisi Karyawan" placeholder="Pilih divisi" select />
           <Field label="Jabatan Karyawan" placeholder="Pilih jabatan" select />
           <Field label="Shift Karyawan" placeholder="Pilih shift" select />
-          <Field label="Lokasi Presensi" placeholder="Semua lokasi perusahaan" select full />
+          <Field label="Lokasi Kehadiran" placeholder="Semua lokasi perusahaan" select full />
         </div>
       </section>
     </>
@@ -685,7 +685,7 @@ function SubscriptionPage() {
 
 function PlansPage() {
   const plans = [
-    ["Free", "Rp 0", "5", "Presensi dasar", "Laporan harian"],
+    ["Free", "Rp 0", "5", "Kehadiran dasar", "Laporan harian"],
     ["Basic", "Rp 36.000", "15", "Semua fitur Free", "Pengajuan karyawan"],
     ["Basic+", "Rp 60.000", "50", "Fitur premium", "Kunjungan"],
     ["Silver", "Rp 137.000", "75", "Semua fitur Basic+", "Kontrol akses"],
@@ -845,7 +845,7 @@ function isStatus(value: string) {
 }
 
 function EmployeeDetailSections() {
-  return <section className="module-card detail-section"><div className="detail-section-head"><div><UserRound size={17} /><h2>Data Pekerjaan</h2></div><button className="text-action">Atur Penempatan</button></div><div className="detail-grid"><div className="detail-field"><small>Divisi</small><strong>Engineering</strong></div><div className="detail-field"><small>Jabatan</small><strong>Software Engineer</strong></div><div className="detail-field"><small>Shift</small><strong>Shift Pagi</strong></div><div className="detail-field"><small>Mulai Kerja</small><strong>12 Januari 2024</strong></div><div className="detail-field"><small>Lokasi Presensi</small><strong>Kantor Utama</strong></div><div className="detail-field"><small>Status Karyawan</small><strong>Tetap</strong></div></div></section>;
+  return <section className="module-card detail-section"><div className="detail-section-head"><div><UserRound size={17} /><h2>Data Pekerjaan</h2></div><button className="text-action">Atur Penempatan</button></div><div className="detail-grid"><div className="detail-field"><small>Divisi</small><strong>Engineering</strong></div><div className="detail-field"><small>Jabatan</small><strong>Software Engineer</strong></div><div className="detail-field"><small>Shift</small><strong>Shift Pagi</strong></div><div className="detail-field"><small>Mulai Kerja</small><strong>12 Januari 2024</strong></div><div className="detail-field"><small>Lokasi Kehadiran</small><strong>Kantor Utama</strong></div><div className="detail-field"><small>Status Karyawan</small><strong>Tetap</strong></div></div></section>;
 }
 
 function RequestDetailSections() {
@@ -857,7 +857,7 @@ function InvoiceDetailPage({ id }: { id: string }) {
     <PageHeader title="Detail Invoice" description="Rincian paket, periode, nominal, dan status pembayaran langganan." breadcrumb="Beranda / Langganan / Invoice / Detail" actions={<><Link className="btn btn-outline btn-compact" href={"/dashboard/langganan" as Route}>Kembali</Link><button className="btn btn-outline btn-compact"><Download size={15} />Unduh Invoice</button></>} />
     <div className="invoice-detail-layout">
       <section className="module-card invoice-detail-sheet">
-        <div className="invoice-detail-brand"><div><span className="plan-icon"><ReceiptText size={20} /></span><span><strong>TepatWaktu</strong><small>Solusi Presensi & HRIS</small></span></div><div><span className="eyebrow">INVOICE</span><h2>#{id.toUpperCase()}</h2><StatusPill value="Lunas" /></div></div>
+        <div className="invoice-detail-brand"><div><span className="plan-icon"><ReceiptText size={20} /></span><span><strong>TepatWaktu</strong><small>Solusi Kehadiran & HRIS</small></span></div><div><span className="eyebrow">INVOICE</span><h2>#{id.toUpperCase()}</h2><StatusPill value="Lunas" /></div></div>
         <div className="invoice-addresses"><div><small>DITAGIHKAN KEPADA</small><strong>Ruang Kerja Utama</strong><span>admin@tepatwaktu.id</span><span>Makassar, Sulawesi Selatan</span></div><div><small>INFORMASI TAGIHAN</small><span>Tanggal invoice <strong>16 September 2026</strong></span><span>Jatuh tempo <strong>16 September 2026</strong></span><span>Metode <strong>Virtual Account</strong></span></div></div>
         <table className="invoice-detail-table"><thead><tr><th>Deskripsi</th><th>Periode</th><th>Qty</th><th>Jumlah</th></tr></thead><tbody><tr><td><strong>Paket Basic+</strong><small>Akses fitur premium Â· maksimal 50 karyawan</small></td><td>Sepâ€“Okt 2026</td><td>1</td><td>Rp 60.000</td></tr></tbody></table>
         <div className="invoice-totals"><span>Subtotal <strong>Rp 60.000</strong></span><span>Potongan <strong>Rp 0</strong></span><span>Biaya admin <strong>Rp 0</strong></span><span className="total">Total Pembayaran <strong>Rp 60.000</strong></span></div>

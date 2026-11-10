@@ -32,20 +32,20 @@ export function AdminAttendanceForm({ employees, superadmin = false }: { employe
     try {
       const response = await fetch("/api/attendance/admin", { method: "POST", body: source });
       const body = await response.json() as { message?: string; action?: string; time?: string };
-      if (!response.ok) throw new Error(body.message || "Presensi belum dapat disimpan.");
+      if (!response.ok) throw new Error(body.message || "Kehadiran belum dapat disimpan.");
       setMessage({ type: "success", text: `${body.action === "check_in" ? "Check-in" : "Check-out"} berhasil dicatat pada ${body.time?.slice(0, 5)}.` });
       formElement.reset();
       if (superadmin) setCompanyId("");
       router.refresh();
     } catch (cause) {
-      setMessage({ type: "error", text: cause instanceof Error ? cause.message : "Presensi belum dapat disimpan." });
+      setMessage({ type: "error", text: cause instanceof Error ? cause.message : "Kehadiran belum dapat disimpan." });
     } finally {
       setLoading(false);
     }
   }
 
   return <section className="card section-card modal-card">
-    <div className="card-head"><div><h2 className="card-title">Catat presensi karyawan</h2><p className="card-subtitle">Tindakan ini dicatat sebagai input administrator dan tidak membuat presensi untuk akun Anda.</p></div><span className="stat-icon green"><ClipboardCheck size={18} /></span></div>
+    <div className="card-head"><div><h2 className="card-title">Catat kehadiran karyawan</h2><p className="card-subtitle">Tindakan ini dicatat sebagai input administrator dan tidak membuat kehadiran untuk akun Anda.</p></div><span className="stat-icon green"><ClipboardCheck size={18} /></span></div>
     {message ? <div className={message.type === "success" ? "success-box" : "error-box"} role="status">{message.type === "success" ? <CheckCircle2 size={16} /> : null}{message.text}</div> : null}
     <form onSubmit={submit} className="form-grid">
       {superadmin ? <Field label="Perusahaan"><select className="input" value={companyId} onChange={(event) => setCompanyId(event.target.value)} required><option value="">Pilih perusahaan</option>{companies.map(([id, name]) => <option value={id} key={id}>{name}</option>)}</select></Field> : null}
@@ -53,7 +53,7 @@ export function AdminAttendanceForm({ employees, superadmin = false }: { employe
       <Field label="Aksi"><select className="input" name="action" defaultValue="check_in"><option value="check_in">Check-in</option><option value="check_out">Check-out</option></select></Field>
       <Field label="Waktu kejadian"><input className="input" name="occurredAt" type="datetime-local" defaultValue={currentLocalTime()} required /></Field>
       <Field label="Alasan / catatan audit"><input className="input" name="note" minLength={3} maxLength={500} placeholder="Contoh: koreksi karena perangkat karyawan bermasalah" required /></Field>
-      <div className="full action-row"><button className="btn btn-primary" disabled={loading || !visibleEmployees.length}>{loading ? <LoaderCircle className="spin" size={16} /> : <ClipboardCheck size={16} />}{loading ? "Menyimpan…" : "Simpan Presensi"}</button></div>
+      <div className="full action-row"><button className="btn btn-primary" disabled={loading || !visibleEmployees.length}>{loading ? <LoaderCircle className="spin" size={16} /> : <ClipboardCheck size={16} />}{loading ? "Menyimpan…" : "Simpan Kehadiran"}</button></div>
     </form>
   </section>;
 }

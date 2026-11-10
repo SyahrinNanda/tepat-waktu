@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { asc, count, eq } from "drizzle-orm";
 import { DivisionManager } from "@/features/master-data/divisions/components/division-manager";
+import { listDivisionsWithSchedules } from "@/features/master-data/divisions/server/division-schedules";
 import { db } from "@/db";
-import { divisions, employees, workSchedules } from "@/db/schema";
+import { employees, workSchedules } from "@/db/schema";
 import { requireCompanyRole } from "@/lib/current-company";
 
 export const metadata: Metadata = { title: "Daftar Divisi" };
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: "Daftar Divisi" };
 export default async function Page() {
   const context=await requireCompanyRole(["admin","general_manager","hrd","manager"]);
   const [rows,shifts,counts]=await Promise.all([
-    db.select({id:divisions.id,name:divisions.name,scheduleId:divisions.scheduleId,shiftName:workSchedules.name,active:divisions.active}).from(divisions).leftJoin(workSchedules,eq(divisions.scheduleId,workSchedules.id)).where(eq(divisions.companyId,context.companyId)).orderBy(asc(divisions.name)),
+    listDivisionsWithSchedules(context.companyId),
     db.select().from(workSchedules).where(eq(workSchedules.companyId,context.companyId)).orderBy(asc(workSchedules.name)),
     db.select({name:employees.department,value:count()}).from(employees).where(eq(employees.companyId,context.companyId)).groupBy(employees.department),
   ]);

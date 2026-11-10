@@ -21,7 +21,7 @@ export type ApplicationSettingsData = {
 
 const settingsSchema = z.object({
   greeting: z.string().trim().max(200).default("Hallo 👋 $nama"),
-  quote: z.string().trim().max(300).default("Semangat Kerja ya!"),
+  quote: z.string().trim().max(300).default("Ayo Kerja Optimal 😂"),
   menuIstirahat: z.boolean().default(true),
   menuLaporan: z.boolean().default(true),
   menuKunjungan: z.boolean().default(true),

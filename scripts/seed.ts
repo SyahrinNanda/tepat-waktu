@@ -3,7 +3,7 @@ import { and, eq, isNull, notInArray } from "drizzle-orm";
 import { hashPassword } from "better-auth/crypto";
 import { auth } from "../lib/auth";
 import { db, pool } from "../db";
-import { account as authAccount, attendanceLocations, attendances, companies, companyMembers, divisions, employees, jobPositions, leaveRequests, subscriptionPlans, user, visitLocations, workScheduleDays, workSchedules } from "../db/schema";
+import { account as authAccount, attendanceLocations, attendances, companies, companyMembers, divisions, divisionSchedules, employees, jobPositions, leaveRequests, subscriptionPlans, user, visitLocations, workScheduleDays, workSchedules } from "../db/schema";
 
 const DEMO_EMAIL = "admin@tepatwaktu.id";
 const DEMO_PASSWORD = "TepatWaktu123!";
@@ -110,7 +110,10 @@ async function main() {
   let [defaultShift] = await db.select().from(workSchedules).where(and(eq(workSchedules.companyId, membership.companyId), eq(workSchedules.name, "Reguler kantor"))).limit(1);
   if (!defaultShift) [defaultShift] = await db.insert(workSchedules).values({ companyId: membership.companyId, name: "Reguler kantor", workDays: "1,2,3,4,5", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15, active: true }).returning();
   for (let day = 1; day <= 7; day++) await db.insert(workScheduleDays).values({ scheduleId: defaultShift.id, dayOfWeek: day, enabled: day <= 5, startTime: "08:00:00", endTime: day === 5 ? "16:00:00" : "17:00:00" }).onConflictDoNothing({ target: [workScheduleDays.scheduleId, workScheduleDays.dayOfWeek] });
-  for (const name of ["Operasional", "People", "Teknologi", "Keuangan"]) await db.insert(divisions).values({ companyId: membership.companyId, name, scheduleId: defaultShift.id, active: true }).onConflictDoNothing({ target: [divisions.companyId, divisions.name] });
+  for (const name of ["Operasional", "People", "Teknologi", "Keuangan"]) {
+    const [division] = await db.insert(divisions).values({ companyId: membership.companyId, name, scheduleId: defaultShift.id, active: true }).onConflictDoNothing({ target: [divisions.companyId, divisions.name] }).returning({ id: divisions.id });
+    if (division) await db.insert(divisionSchedules).values({ divisionId: division.id, scheduleId: defaultShift.id }).onConflictDoNothing();
+  }
   for (const name of ["Supervisor", "HR Specialist", "Frontend Engineer", "Finance Officer", "Backend Engineer"]) await db.insert(jobPositions).values({ companyId: membership.companyId, name }).onConflictDoNothing({ target: [jobPositions.companyId, jobPositions.name] });
   await db.insert(attendanceLocations).values({ companyId: membership.companyId, name: "Kantor Pusat", type: "headquarters", address: "Yogyakarta", latitude: -7.7956, longitude: 110.3695, radiusMeters: 100 }).onConflictDoNothing({ target: [attendanceLocations.companyId, attendanceLocations.name] });
   await db.insert(visitLocations).values({ companyId: membership.companyId, name: "Mitra Sejahtera", ownerName: "Budi Santoso", email: "mitra@example.com", phone: "081234567890", address: "Yogyakarta", latitude: -7.8014, longitude: 110.3647, radiusMeters: 100 }).onConflictDoNothing({ target: [visitLocations.companyId, visitLocations.name] });

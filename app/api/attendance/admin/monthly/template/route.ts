@@ -7,7 +7,7 @@ export async function GET() {
     return await generateMonthlyAttendanceTemplate();
   } catch (error) {
     console.error("Monthly attendance template error:", error);
-    return new Response(JSON.stringify({ message: "Gagal mengunduh template presensi." }), {
+    return new Response(JSON.stringify({ message: "Gagal mengunduh template kehadiran." }), {
       status: 500,
       headers: { "content-type": "application/json" },
     });

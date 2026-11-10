@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Route } from "next";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { employeeDocuments, employees, fileAssets, leaveRequests, workSchedules } from "@/db/schema";
@@ -13,8 +13,31 @@ import { deletePrivateObject, putPrivateObject } from "@/lib/object-storage";
 import { compressUpload, storedFileName, type ImageProfile } from "@/lib/file-compression";
 import { assertEmployeeCapacity, employeeCapacity } from "@/features/subscriptions/server/employee-capacity";
 import { provisionEmployeeAccount, syncEmployeeEmailChange } from "@/features/invitations/server/employee-account";
+import { parseEmployeeLocations, saveEmployeeLocations } from "@/features/employees/server/employee-locations";
+import { employeeEmailConflict, isDuplicateEmployeeEmail } from "@/features/employees/server/employee-email";
 
 const requiredText = z.string().trim().min(1);
+
+export type EmployeeFormState = { error?: string };
+
+/** Readable message for a failed employee save (shown in the form instead of an error page). */
+function employeeErrorMessage(error: unknown) {
+  if (isDuplicateEmployeeEmail(error)) return "Email ini sudah dipakai karyawan lain di perusahaan ini. Satu email hanya untuk satu karyawan.";
+  const cause = typeof error === "object" && error && "cause" in error ? (error as { cause?: { code?: string; constraint?: string } }).cause : undefined;
+  if (cause?.code === "23505" && cause.constraint === "employees_company_code_unique") return "Nomor induk karyawan sudah dipakai karyawan lain. Gunakan nomor lain atau kosongkan agar dibuat otomatis.";
+  if (error instanceof z.ZodError) return "Data karyawan belum lengkap atau formatnya tidak valid. Periksa kembali isian formulir.";
+  return error instanceof Error ? error.message : "Data karyawan belum dapat disimpan.";
+}
+
+/** "Simpan" on Tambah Karyawan: returns an error to show in the form; on success it redirects. */
+export async function createEmployeeAction(form: FormData): Promise<EmployeeFormState> {
+  try { await createEmployee(form); return {}; } catch (error) { unstable_rethrow(error); return { error: employeeErrorMessage(error) }; }
+}
+
+/** "Simpan" on Edit Karyawan: returns an error to show in the form; on success it redirects. */
+export async function updateEmployeeAction(form: FormData): Promise<EmployeeFormState> {
+  try { await updateEmployee(form); return {}; } catch (error) { unstable_rethrow(error); return { error: employeeErrorMessage(error) }; }
+}
 
 export async function createEmployee(form: FormData) {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
@@ -26,13 +49,17 @@ export async function createEmployee(form: FormData) {
   }).parse(Object.fromEntries([...form.entries()].filter(([, value]) => typeof value === "string")));
   // Plan limit on active employees; the form page explains it and links to Langganan.
   if ((await employeeCapacity(context.companyId)).full) redirect("/dashboard/karyawan/tambah?limit=1");
+  const emailConflict = await employeeEmailConflict(context.companyId, parsed.email, { createAccount: form.get("createAccount") === "on" });
+  if (emailConflict) throw new Error(emailConflict);
+  const locationChoice = await parseEmployeeLocations(form, context.companyId);
   const [employee] = await db.insert(employees).values({
     ...parsed, employeeCode: parsed.employeeCode || `EMP-${randomUUID().slice(0, 8).toUpperCase()}`, email: parsed.email.toLowerCase(), companyId: context.companyId,
     birthDate: parsed.birthDate || null, phone: parsed.phone || null, address: parsed.address || null, taxNumber: parsed.taxNumber || null,
-    socialSecurityNumber: parsed.socialSecurityNumber || null, contractType: parsed.contractType || null, allAttendanceLocations: form.get("allAttendanceLocations") === "on",
+    socialSecurityNumber: parsed.socialSecurityNumber || null, contractType: parsed.contractType || null, allAttendanceLocations: locationChoice.all,
   }).returning({ id: employees.id });
   const stored: { bucket: string; key: string; assetId?: string }[] = [];
   try {
+    await saveEmployeeLocations(employee.id, locationChoice.ids);
     const fileInputs = [["profilePhoto", "profile_photo"], ["selfiePhoto", "selfie"], ["identityCard", "identity_card"], ["certificate", "certificate"]] as const;
     for (const [field, kind] of fileInputs) {
       const file = form.get(field); if (!(file instanceof File) || file.size === 0) continue;
@@ -146,6 +173,10 @@ export async function updateEmployee(form: FormData) {
   }).parse(Object.fromEntries([...form.entries()].filter(([, value]) => typeof value === "string")));
   if (parsed.status === "active" && !(await reactivationAllowed(context.companyId, parsed.id))) redirect(`/dashboard/karyawan/${parsed.id}/edit?limit=1`);
   const [previous] = await db.select({ email: employees.email }).from(employees).where(and(eq(employees.id, parsed.id), eq(employees.companyId, context.companyId))).limit(1);
+  if (!previous) throw new Error("Karyawan tidak ditemukan.");
+  const emailConflict = await employeeEmailConflict(context.companyId, parsed.email, { excludeEmployeeId: parsed.id });
+  if (emailConflict) throw new Error(emailConflict);
+  const locationChoice = await parseEmployeeLocations(form, context.companyId);
   await db.update(employees).set({
     employeeCode: parsed.employeeCode,
     name: parsed.name,
@@ -161,8 +192,9 @@ export async function updateEmployee(form: FormData) {
     socialSecurityNumber: parsed.socialSecurityNumber || null,
     contractType: parsed.contractType || null,
     status: parsed.status,
-    allAttendanceLocations: form.get("allAttendanceLocations") === "on",
+    allAttendanceLocations: locationChoice.all,
   }).where(and(eq(employees.id, parsed.id), eq(employees.companyId, context.companyId)));
+  await saveEmployeeLocations(parsed.id, locationChoice.ids);
   const fileInputs = [["profilePhoto", "profile_photo"], ["selfiePhoto", "selfie"], ["identityCard", "identity_card"], ["certificate", "certificate"]] as const;
   for (const [field, kind] of fileInputs) {
     const file = form.get(field); if (!(file instanceof File) || file.size === 0) continue;

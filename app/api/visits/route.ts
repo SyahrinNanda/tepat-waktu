@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { employees } from "@/db/schema";
+import { companies, employees } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
 import { createVisit, listVisits } from "@/features/visits/server/visit-service";
 
@@ -35,7 +35,6 @@ export async function POST(request: Request) {
       employeeId: z.string().uuid("Karyawan wajib dipilih."),
       locationId: z.union([z.string().uuid(), z.literal("")]).optional(),
       visitDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid."),
-      visitTime: z.string().regex(/^\d{2}:\d{2}$/, "Format jam tidak valid (HH:mm)."),
       outletName: z.string().trim().max(160).optional(),
       latitude: z.union([z.coerce.number().min(-90).max(90), z.literal("")]).optional(),
       longitude: z.union([z.coerce.number().min(-180).max(180), z.literal("")]).optional(),
@@ -73,9 +72,14 @@ export async function POST(request: Request) {
     attachments.push(...genericAtts.slice(0, 3));
   }
 
+  // The visit time is the moment of submission in the company time zone, never typed by hand.
+  const [company] = await db.select({ timezone: companies.timezone }).from(companies).where(eq(companies.id, context.companyId)).limit(1);
+  const visitTime = new Intl.DateTimeFormat("en-GB", { timeZone: company?.timezone ?? "Asia/Jakarta", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
+
   try {
     await createVisit({
       ...parsed.data,
+      visitTime,
       latitude: parsed.data.latitude === "" ? undefined : parsed.data.latitude,
       longitude: parsed.data.longitude === "" ? undefined : parsed.data.longitude,
       companyId: context.companyId,

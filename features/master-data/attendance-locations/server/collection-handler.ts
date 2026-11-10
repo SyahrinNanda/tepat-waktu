@@ -22,6 +22,6 @@ export async function POST(request: Request) {
     revalidatePath("/dashboard/master/lokasi-presensi");
     return Response.json({ row }, { status: 201 });
   } catch {
-    return Response.json({ error: "Nama lokasi presensi sudah digunakan." }, { status: 409 });
+    return Response.json({ error: "Nama lokasi kehadiran sudah digunakan." }, { status: 409 });
   }
 }

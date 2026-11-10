@@ -47,7 +47,7 @@ export async function submitCustomPlanRequest(_previous: CustomPlanState, formDa
     note: parsed.data.note || null,
   });
   refresh();
-  return { status: "success", message: "Pengajuan Paket Custom terkirim. Tim TepatWaktu akan menghubungi Anda untuk negosiasi." };
+  return { status: "success", message: "Pengajuan Paket Custom terkirim. Tim TepatWaktu akan menghubungi Anda untuk penawaran harga." };
 }
 
 export async function cancelCustomPlanRequest(formData: FormData) {
@@ -92,7 +92,7 @@ export async function reviewCustomPlanRequest(_previous: CustomPlanState, formDa
       name: `Custom ${agreedEmployeeCount.toLocaleString("id-ID")}`,
       monthlyPrice,
       maxEmployees: agreedEmployeeCount,
-      description: `Paket Custom hasil negosiasi: Rp ${agreedPricePerEmployee.toLocaleString("id-ID")} per karyawan per bulan`,
+      description: `Paket Custom: Rp ${agreedPricePerEmployee.toLocaleString("id-ID")} per karyawan per bulan`,
       companyId: request.companyId,
     }).returning({ id: subscriptionPlans.id });
     // Older custom plans of this company are superseded by the new agreement.

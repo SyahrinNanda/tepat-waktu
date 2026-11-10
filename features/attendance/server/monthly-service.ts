@@ -240,7 +240,7 @@ export async function fetchMonthlyAttendanceSummary({
 // Headers:
 // A: Nomor Induk
 // B: Nama Karyawan
-// C: Jumlah Presensi (contoh: 0 hari)
+// C: Jumlah Kehadiran (contoh: 0 hari)
 // D: Jumlah Izin/Cuti (contoh: 0 hari)
 // E: Jumlah Waktu Terlambat (contoh: 0 Jam 0 Menit)
 // F: Jumlah Jam Kerja (contoh: 0 Jam 0 Menit)
@@ -282,7 +282,7 @@ export async function exportMonthlyAttendanceExcel(request: Request) {
   sheet.columns = [
     { header: "Nomor Induk", key: "employeeCode", width: 16 },
     { header: "Nama Karyawan", key: "employeeName", width: 28 },
-    { header: "Jumlah Presensi", key: "presensiCount", width: 18 },
+    { header: "Jumlah Kehadiran", key: "presensiCount", width: 18 },
     { header: "Jumlah Izin/Cuti", key: "izinCutiCount", width: 18 },
     { header: "Jumlah Waktu Terlambat", key: "terlambat", width: 25 },
     { header: "Jumlah Jam Kerja", key: "jamKerja", width: 22 },
@@ -324,7 +324,7 @@ export async function exportMonthlyAttendanceExcel(request: Request) {
   return new Response(new Uint8Array(buffer), {
     headers: {
       "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "content-disposition": `attachment; filename="laporan-presensi-${year}-${String(month).padStart(2, "0")}.xlsx"`,
+      "content-disposition": `attachment; filename="laporan-kehadiran-${year}-${String(month).padStart(2, "0")}.xlsx"`,
       "cache-control": "private, no-store",
     },
   });
@@ -338,7 +338,7 @@ export async function generateMonthlyAttendanceTemplate() {
   workbook.creator = "TepatWaktu";
   workbook.created = new Date();
 
-  const sheet = workbook.addWorksheet("Template Presensi", {
+  const sheet = workbook.addWorksheet("Template Kehadiran", {
     views: [{ state: "frozen", ySplit: 1 }],
   });
 
@@ -382,7 +382,7 @@ export async function generateMonthlyAttendanceTemplate() {
   guideSheet.addRow({ col: "Mulai Istirahat", desc: "Opsional, format HH:mm, contoh: 12:00." });
   guideSheet.addRow({ col: "Selesai Istirahat", desc: "Opsional, format HH:mm, contoh: 13:00." });
   guideSheet.addRow({ col: "Status", desc: "Pilih salah satu: present / late / leave / absent." });
-  guideSheet.addRow({ col: "Keterangan", desc: "Opsional, catatan presensi." });
+  guideSheet.addRow({ col: "Keterangan", desc: "Opsional, catatan kehadiran." });
 
   guideSheet.getRow(1).font = { name: "Arial", bold: true, color: { argb: "FFFFFFFF" } };
   guideSheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0284C7" } };
@@ -391,7 +391,7 @@ export async function generateMonthlyAttendanceTemplate() {
   return new Response(new Uint8Array(buffer), {
     headers: {
       "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "content-disposition": "attachment; filename=\"template-import-presensi.xlsx\"",
+      "content-disposition": "attachment; filename=\"template-import-kehadiran.xlsx\"",
       "cache-control": "private, no-store",
     },
   });
@@ -538,6 +538,6 @@ export async function importMonthlyAttendanceExcel(request: Request) {
   return Response.json({
     ok: true,
     count: importedCount,
-    message: `Berhasil mengimpor ${importedCount} data presensi.`,
+    message: `Berhasil mengimpor ${importedCount} data kehadiran.`,
   });
 }

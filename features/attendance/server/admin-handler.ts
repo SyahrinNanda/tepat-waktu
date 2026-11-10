@@ -46,18 +46,18 @@ export async function POST(request: Request) {
     const checkOutLocationId = String(form.get("checkOutLocationId") || "").trim() || null;
     // Referenced shift and locations must belong to this company.
     const parsedIds = z.uuid().nullable().array().safeParse([shiftId, checkInLocationId, checkOutLocationId]);
-    if (!parsedIds.success) throw new AttendanceError("Shift atau lokasi presensi tidak valid.", 400);
+    if (!parsedIds.success) throw new AttendanceError("Shift atau lokasi kehadiran tidak valid.", 400);
     if (shiftId) {
       const [shift] = await db.select({ id: workSchedules.id }).from(workSchedules).where(and(eq(workSchedules.id, shiftId), eq(workSchedules.companyId, context.companyId))).limit(1);
       if (!shift) throw new AttendanceError("Shift tidak ditemukan di perusahaan ini.", 404);
     }
     for (const locationId of new Set([checkInLocationId, checkOutLocationId].filter((value): value is string => Boolean(value)))) {
       const [location] = await db.select({ id: attendanceLocations.id }).from(attendanceLocations).where(and(eq(attendanceLocations.id, locationId), eq(attendanceLocations.companyId, context.companyId))).limit(1);
-      if (!location) throw new AttendanceError("Lokasi presensi tidak ditemukan di perusahaan ini.", 404);
+      if (!location) throw new AttendanceError("Lokasi kehadiran tidak ditemukan di perusahaan ini.", 404);
     }
     const statusRaw = String(form.get("status") || "present").trim() as "present" | "late" | "absent" | "leave";
     const status = ["present", "late", "absent", "leave"].includes(statusRaw) ? statusRaw : "present";
-    const note = String(form.get("note") || "Presensi dicatat oleh administrator").trim();
+    const note = String(form.get("note") || "Kehadiran dicatat oleh administrator").trim();
 
     // Check for legacy action
     const legacyAction = form.get("action");
@@ -231,12 +231,12 @@ export async function POST(request: Request) {
       return { attendanceId: attendance.id, employeeName: employee.name, date: attendanceDate };
     });
 
-    return NextResponse.json({ ok: true, message: `Presensi ${result.employeeName} untuk tanggal ${result.date} berhasil disimpan.`, ...result }, { status: 201 });
+    return NextResponse.json({ ok: true, message: `Kehadiran ${result.employeeName} untuk tanggal ${result.date} berhasil disimpan.`, ...result }, { status: 201 });
   } catch (error) {
     if (error instanceof AttendanceError) return NextResponse.json({ message: error.message }, { status: error.status });
-    if (error instanceof z.ZodError) return NextResponse.json({ message: "Data presensi tidak valid.", issues: error.issues }, { status: 400 });
+    if (error instanceof z.ZodError) return NextResponse.json({ message: "Data kehadiran tidak valid.", issues: error.issues }, { status: 400 });
     console.error("Admin attendance API error", error);
-    return NextResponse.json({ message: error instanceof Error ? error.message : "Presensi belum dapat disimpan." }, { status: 500 });
+    return NextResponse.json({ message: error instanceof Error ? error.message : "Kehadiran belum dapat disimpan." }, { status: 500 });
   }
 }
 
@@ -245,15 +245,15 @@ export async function DELETE(request: Request) {
     const context = await attendanceManagerContext(request);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    if (!id) return NextResponse.json({ message: "ID presensi wajib diberikan." }, { status: 400 });
+    if (!id) return NextResponse.json({ message: "ID kehadiran wajib diberikan." }, { status: 400 });
 
-    if (!z.uuid().safeParse(id).success) return NextResponse.json({ message: "Presensi tidak ditemukan." }, { status: 404 });
+    if (!z.uuid().safeParse(id).success) return NextResponse.json({ message: "Kehadiran tidak ditemukan." }, { status: 404 });
     // Also removes the check-in/out photos from the database and object storage.
-    if (!await deleteAttendanceWithPhotos(context.companyId, id)) return NextResponse.json({ message: "Presensi tidak ditemukan." }, { status: 404 });
-    return NextResponse.json({ ok: true, message: "Presensi berhasil dihapus." });
+    if (!await deleteAttendanceWithPhotos(context.companyId, id)) return NextResponse.json({ message: "Kehadiran tidak ditemukan." }, { status: 404 });
+    return NextResponse.json({ ok: true, message: "Kehadiran berhasil dihapus." });
   } catch (error) {
     if (error instanceof AttendanceError) return NextResponse.json({ message: error.message }, { status: error.status });
     console.error("Admin delete attendance error:", error);
-    return NextResponse.json({ message: "Gagal menghapus presensi." }, { status: 500 });
+    return NextResponse.json({ message: "Gagal menghapus kehadiran." }, { status: 500 });
   }
 }

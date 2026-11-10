@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: Props) {
     return { ...rest, account: accounts.get(row.id) ?? "none" };
   });
   return <>
-    <div className="master-page-head"><span>Presensi Admin Panel</span><h1>Daftar Karyawan</h1></div>
+    <div className="master-page-head"><span>Kehadiran Admin Panel</span><h1>Daftar Karyawan</h1></div>
     <section className="employee-list-card">
       <form className="employee-list-toolbar" method="get">
         <div className="master-search"><Search size={16}/><input name="q" defaultValue={query} placeholder="Nama Karyawan..."/></div>

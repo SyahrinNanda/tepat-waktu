@@ -17,7 +17,7 @@ export async function savePlatformSettings(form: FormData) {
     supportPhone: String(form.get("supportPhone") || "").trim(),
     helpdeskUrl: String(form.get("helpdeskUrl") || "").trim(),
 
-    // Presensi Global
+    // Kehadiran Global
     defaultTimezone: String(form.get("defaultTimezone") || "Asia/Makassar").trim(),
     defaultGraceMinutes: String(form.get("defaultGraceMinutes") || "15").trim(),
     defaultGeofenceRadius: String(form.get("defaultGeofenceRadius") || "50").trim(),
@@ -38,7 +38,7 @@ export async function savePlatformSettings(form: FormData) {
 
     // Pengaturan Aplikasi (Main Feature)
     greetingText: String(form.get("greetingText") || "Hallo ✌️ $nama").trim(),
-    quoteText: String(form.get("quoteText") || "Semangat Kerja ya!").trim(),
+    quoteText: String(form.get("quoteText") || "Ayo Kerja Optimal 😂").trim(),
     showMenuIstirahat: form.get("showMenuIstirahat") === "true" ? "true" : "false",
     showMenuLaporan: form.get("showMenuLaporan") === "true" ? "true" : "false",
     showMenuKunjungan: form.get("showMenuKunjungan") === "true" ? "true" : "false",

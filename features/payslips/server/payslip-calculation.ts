@@ -62,6 +62,14 @@ export function hoursBetween(start: string | null, end: string | null) {
   return minutes > 0 ? minutes / 60 : 0;
 }
 
+/** Decimal hours as "1 jam 20 menit" (payslips show minutes, not fractions of an hour). */
+export function formatDuration(hours: number) {
+  const total = Math.round(hours * 60);
+  const h = Math.floor(total / 60), m = total % 60;
+  if (!h && !m) return "0 jam";
+  return [h ? `${h} jam` : "", m ? `${m} menit` : ""].filter(Boolean).join(" ");
+}
+
 export const round2 = (value: number) => Math.round(value * 100) / 100;
 
 export function buildPayslip({ employee, year, month, workWeek, attendanceRows, leaveRows, overtimeRows, components }: CalculationInput): Payslip {
@@ -84,9 +92,14 @@ export function buildPayslip({ employee, year, month, workWeek, attendanceRows, 
       absentDays++;
     }
   }
-  workedHours = round2(workedHours);
-  const overtimeHours = round2(overtimeRows.reduce((total, row) => total + row.minutes, 0) / 60);
-  const paidLeaveHours = round2(paidLeaveDates.reduce((total, date) => total + (workWeek.get(weekday(date)) ?? 8), 0));
+  // Pay is computed from exact hours; the 2-decimal values are only what the slip stores and shows.
+  // (80 minutes x Rp 30.000 must be Rp 40.000, not 1,33 x Rp 30.000 = Rp 39.900.)
+  const exactWorkedHours = workedHours;
+  const exactOvertimeHours = overtimeRows.reduce((total, row) => total + row.minutes, 0) / 60;
+  const exactPaidLeaveHours = paidLeaveDates.reduce((total, date) => total + (workWeek.get(weekday(date)) ?? 8), 0);
+  workedHours = round2(exactWorkedHours);
+  const overtimeHours = round2(exactOvertimeHours);
+  const paidLeaveHours = round2(exactPaidLeaveHours);
 
   const rate = employee.baseSalary;
   const earnings: PayslipLine[] = [];
@@ -100,15 +113,16 @@ export function buildPayslip({ employee, year, month, workWeek, attendanceRows, 
     earnings.push({ name: "Upah Harian", quantity: daysWorked, unit: "hari", rate, amount: rate * daysWorked });
     if (paidLeaveDates.length) earnings.push({ name: "Izin/Cuti Dibayar", quantity: paidLeaveDates.length, unit: "hari", rate, amount: rate * paidLeaveDates.length });
   } else {
-    earnings.push({ name: "Upah Per Jam", quantity: workedHours, unit: "jam", rate, amount: Math.round(rate * workedHours) });
-    if (paidLeaveHours) earnings.push({ name: "Izin/Cuti Dibayar", quantity: paidLeaveHours, unit: "jam", rate, amount: Math.round(rate * paidLeaveHours) });
+    earnings.push({ name: "Upah Per Jam", quantity: workedHours, unit: "jam", rate, amount: Math.round(rate * exactWorkedHours) });
+    if (paidLeaveHours) earnings.push({ name: "Izin/Cuti Dibayar", quantity: paidLeaveHours, unit: "jam", rate, amount: Math.round(rate * exactPaidLeaveHours) });
   }
-  if (overtimeHours) earnings.push({ name: "Lembur", quantity: overtimeHours, unit: "jam", rate: employee.overtimeRate, amount: Math.round(employee.overtimeRate * overtimeHours) });
+  if (overtimeHours) earnings.push({ name: "Lembur", quantity: overtimeHours, unit: "jam", rate: employee.overtimeRate, amount: Math.round(employee.overtimeRate * exactOvertimeHours) });
 
   for (const component of components) {
     const quantity = component.unit === "month" ? 1 : component.unit === "day" ? daysWorked : workedHours;
+    const exactQuantity = component.unit === "hour" ? exactWorkedHours : quantity;
     const unit = component.unit === "month" ? "bulan" : component.unit === "day" ? "hari" : "jam";
-    const line = { name: component.name, quantity, unit, rate: component.amount, amount: Math.round(component.amount * quantity) };
+    const line = { name: component.name, quantity, unit, rate: component.amount, amount: Math.round(component.amount * exactQuantity) };
     (component.type === "compensation" ? earnings : deductions).push(line);
   }
 

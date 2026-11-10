@@ -164,7 +164,7 @@ export function VisitReportManager({
   return (
     <>
       <header className="visit-report-head">
-        <small>Presensi Admin Panel</small>
+        <small>Kehadiran Admin Panel</small>
         <h1>LAPORAN KUNJUNGAN</h1>
         <p>Beranda &nbsp;/ &nbsp;Kunjungan &nbsp;/ &nbsp;Laporan Kunjungan</p>
       </header>

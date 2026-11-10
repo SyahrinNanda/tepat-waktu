@@ -44,10 +44,6 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
 
   // Form states for Modal
   const [formDate, setFormDate] = useState(today);
-  const [formTime, setFormTime] = useState(() => {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  });
   const [selectedEmployee, setSelectedEmployee] = useState<VisitEmployeeOption | null>(null);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
@@ -179,8 +175,6 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
     setEmployeeSearch("");
     setOutletName("");
     setFormDate(today);
-    const now = new Date();
-    setFormTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
     setFormNote("");
     setSelfieFile(null);
     setSelfiePreview(null);
@@ -219,7 +213,6 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
     const formData = new FormData();
     formData.append("employeeId", selectedEmployee.id);
     formData.append("visitDate", formDate);
-    formData.append("visitTime", formTime);
     formData.append("outletName", outletName.trim());
     if (formNote) formData.append("note", formNote);
 
@@ -255,7 +248,7 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
   return (
     <>
       <header className="visit-page-head">
-        <small>Presensi Admin Panel</small>
+        <small>Kehadiran Admin Panel</small>
         <h1>Daftar Kunjungan</h1>
       </header>
 
@@ -555,11 +548,11 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
                       <div className="visit-field-group">
                         <label className="visit-label">Jam</label>
                         <input
-                          type="time"
-                          value={formTime}
-                          onChange={(e) => setFormTime(e.target.value)}
+                          type="text"
+                          value="Otomatis saat disimpan"
                           className="visit-input"
-                          required
+                          readOnly
+                          disabled
                         />
                       </div>
 

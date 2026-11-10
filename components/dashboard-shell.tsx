@@ -77,6 +77,8 @@ const groups: NavGroup[] = [
       { href: "/dashboard/karyawan", label: "Daftar Karyawan", roles: managementRoles },
       { href: "/dashboard/karyawan/gaji", label: "Daftar Gaji Karyawan", roles: hrRoles },
       { href: "/dashboard/karyawan/slip-gaji", label: "Slip Gaji", roles: hrRoles },
+      // Admin/superadmin only set payslips up; everyone else reads their own.
+      { href: "/dashboard/karyawan/slip-gaji-saya", label: "Slip Gaji Saya", roles: ["general_manager", "hrd", "manager", "employee"] },
       { href: "/dashboard/karyawan/laporan-cuti", label: "Laporan Cuti", roles: managementRoles },
       { href: "/dashboard/karyawan/keluhan", label: "Keluhan Karyawan" },
     ],
@@ -176,7 +178,8 @@ export function DashboardShell({
     if (["/dashboard", "/dashboard/karyawan", "/dashboard/kunjungan"].includes(href)) {
       return pathname === href;
     }
-    return pathname.startsWith(href);
+    // Match whole segments, so "/slip-gaji" is not active on "/slip-gaji-saya".
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   return (
@@ -254,7 +257,7 @@ export function DashboardShell({
               <Menu size={21} />
             </button>
             <div className="topbar-company">
-              <small>{isSuperAdmin ? "Superadmin · Mode Perusahaan" : "Presensi Admin Panel"}</small>
+              <small>{isSuperAdmin ? "Superadmin · Mode Perusahaan" : "Kehadiran Admin Panel"}</small>
               <strong>{companyName}</strong>
             </div>
           </div>

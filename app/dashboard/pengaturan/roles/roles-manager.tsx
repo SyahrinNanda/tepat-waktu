@@ -263,7 +263,7 @@ export function RolesManager({ initialRoles }: Props) {
             fontWeight: 500,
           }}
         >
-          Presensi Admin Panel
+          Kehadiran Admin Panel
         </div>
         <h1
           style={{
@@ -448,7 +448,7 @@ export function RolesManager({ initialRoles }: Props) {
               backgroundColor: "#ef9905",
               border: "none",
               borderRadius: "4px",
-              color: "#1a1a1a",
+              color: "#fff",
               fontSize: "13px",
               fontWeight: 700,
               display: "inline-flex",
@@ -1121,7 +1121,7 @@ export function RolesManager({ initialRoles }: Props) {
                     backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#1a1a1a",
+                    color: "#fff",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1490,7 +1490,7 @@ export function RolesManager({ initialRoles }: Props) {
                     backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#1a1a1a",
+                    color: "#fff",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1602,7 +1602,7 @@ export function RolesManager({ initialRoles }: Props) {
                   borderRadius: "6px",
                   border: "none",
                   backgroundColor: "#faa005",
-                  color: "#1a1a1a",
+                  color: "#fff",
                   fontSize: "14px",
                   fontWeight: 600,
                   cursor: isPending ? "not-allowed" : "pointer",

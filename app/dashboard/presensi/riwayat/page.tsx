@@ -141,10 +141,10 @@ export default async function Page({ searchParams }: PageProps) {
         <h1>{canSelectEmployee ? "Riwayat Kehadiran Karyawan" : "Riwayat Kehadiran Saya"}</h1>
         <p>{employee.name} · {employee.code} · {employee.position}, {employee.department}</p>
       </div>
-      {!canSelectEmployee ? <Link className="btn btn-primary" href="/dashboard/presensi/check-in"><Camera size={16} /> Buka Presensi</Link> : null}
+      {!canSelectEmployee ? <Link className="btn btn-primary" href="/dashboard/presensi/check-in"><Camera size={16} /> Buka Kehadiran</Link> : null}
     </header>
 
-    <section className="attendance-history-summary" aria-label="Ringkasan presensi">
+    <section className="attendance-history-summary" aria-label="Ringkasan kehadiran">
       <Summary icon={<CalendarDays size={19} />} label="Total catatan" value={rows.length} tone="blue" />
       <Summary icon={<CheckCircle2 size={19} />} label="Tepat waktu" value={totals.present} tone="green" />
       <Summary icon={<Clock3 size={19} />} label="Terlambat" value={totals.late} tone="orange" />
@@ -180,7 +180,7 @@ export default async function Page({ searchParams }: PageProps) {
             <td className="attendance-history-note">{row.note || "—"}</td>
           </tr>;
         })}</tbody>
-      </table></div> : <div className="attendance-history-empty"><History size={34} /><strong>Belum ada riwayat presensi</strong><span>Tidak ditemukan catatan pada {monthNames[selectedMonth - 1]} {selectedYear}.</span>{!canSelectEmployee ? <Link className="btn btn-primary" href="/dashboard/presensi/check-in">Buka halaman presensi</Link> : null}</div>}
+      </table></div> : <div className="attendance-history-empty"><History size={34} /><strong>Belum ada riwayat kehadiran</strong><span>Tidak ditemukan catatan pada {monthNames[selectedMonth - 1]} {selectedYear}.</span>{!canSelectEmployee ? <Link className="btn btn-primary" href="/dashboard/presensi/check-in">Buka halaman kehadiran</Link> : null}</div>}
       <footer className="table-footer"><span>Menampilkan {rows.length} catatan milik {employee.name}</span></footer>
     </section>
   </>;
@@ -195,7 +195,7 @@ function EmployeeNotLinked() {
 }
 
 function NoActiveEmployees() {
-  return <div className="module-card attendance-history-empty"><History size={34} /><strong>Belum ada karyawan aktif</strong><span>Tambahkan atau aktifkan karyawan terlebih dahulu untuk melihat riwayat presensinya.</span><Link className="btn btn-outline" href="/dashboard/karyawan">Buka daftar karyawan</Link></div>;
+  return <div className="module-card attendance-history-empty"><History size={34} /><strong>Belum ada karyawan aktif</strong><span>Tambahkan atau aktifkan karyawan terlebih dahulu untuk melihat riwayat kehadirannya.</span><Link className="btn btn-outline" href="/dashboard/karyawan">Buka daftar karyawan</Link></div>;
 }
 
 function safeInteger(value: string | undefined, fallback: number, min: number, max: number) {

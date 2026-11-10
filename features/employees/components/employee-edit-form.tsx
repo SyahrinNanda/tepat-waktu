@@ -1,20 +1,42 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
-import { Save, Settings, UploadCloud, UserRound } from "lucide-react";
+import { Eye, EyeOff, KeyRound, LoaderCircle, Save, Settings, UploadCloud, UserRound } from "lucide-react";
 import { SubmitButton } from "@/components/submit-button";
-import { updateEmployee } from "@/features/workforce/server/actions";
+import { updateEmployeeAction } from "@/features/workforce/server/actions";
+import { useEmployeeSave } from "@/features/employees/components/use-employee-save";
+import { setEmployeePassword, type EmployeePasswordState } from "@/features/employees/server/password-actions";
+import { AttendanceLocationPicker, type LocationOption } from "@/features/employees/components/attendance-location-picker";
 
 type Option = { id: string; name: string };
 type Employee = { id: string; name: string; employeeCode: string; email: string; phone: string | null; address: string | null; taxNumber: string | null; socialSecurityNumber: string | null; birthDate: string | null; joinedAt: string; gender: "male" | "female" | "unspecified"; department: string; position: string; contractType: string | null; allAttendanceLocations: boolean; status: "active" | "inactive" };
 type Documents = Partial<Record<"profile_photo" | "selfie" | "identity_card" | "certificate", string>>;
+export type EmployeeAccountState = "active" | "pending" | "expired" | "none";
+type Tab = "detail" | "password";
 
-export function EmployeeEditForm({ employee, divisions, positions, documents }: { employee: Employee; divisions: Option[]; positions: Option[]; documents: Documents }) {
-  return <form action={updateEmployee} className="employee-create-card employee-edit-card">
-    <input type="hidden" name="id" value={employee.id}/>
+export function EmployeeEditForm({ employee, divisions, positions, documents, locations, selectedLocationIds, account, initialTab = "detail" }: {
+  employee: Employee; divisions: Option[]; positions: Option[]; documents: Documents;
+  locations: LocationOption[]; selectedLocationIds: string[]; account: EmployeeAccountState; initialTab?: Tab;
+}) {
+  const [tab, setTab] = useState<Tab>(initialTab);
+  return <div className="employee-create-card employee-edit-card">
     <div className="employee-create-head"><h2>Edit Karyawan</h2></div>
-    <div className="employee-edit-tabs"><span><UserRound size={15}/> Detail Karyawan</span><button type="button" title="Perubahan password dilakukan melalui akun pengguna"><Settings size={15}/> Ganti Password</button></div>
+    <div className="employee-edit-tabs" role="tablist">
+      <button type="button" role="tab" aria-selected={tab === "detail"} className={tab === "detail" ? "is-active" : ""} onClick={() => setTab("detail")}><UserRound size={15}/> Detail Karyawan</button>
+      <button type="button" role="tab" aria-selected={tab === "password"} className={tab === "password" ? "is-active" : ""} onClick={() => setTab("password")}><Settings size={15}/> Ganti Password</button>
+    </div>
+    {/* Both panels stay mounted so unsaved detail edits survive switching tabs. */}
+    <div hidden={tab !== "detail"}><DetailForm employee={employee} divisions={divisions} positions={positions} documents={documents} locations={locations} selectedLocationIds={selectedLocationIds}/></div>
+    <div hidden={tab !== "password"}><PasswordPanel employee={employee} account={account}/></div>
+  </div>;
+}
+
+function DetailForm({ employee, divisions, positions, documents, locations, selectedLocationIds }: { employee: Employee; divisions: Option[]; positions: Option[]; documents: Documents; locations: LocationOption[]; selectedLocationIds: string[] }) {
+  const { error, pending, onSubmit, errorRef } = useEmployeeSave(updateEmployeeAction);
+  return <form onSubmit={onSubmit} className="employee-edit-detail">
+    <input type="hidden" name="id" value={employee.id}/>
+    {error && <div ref={errorRef} className="announcement-inline-error employee-form-error" role="alert">{error}</div>}
     <div className="employee-upload-grid">
       <UploadField name="profilePhoto" label="Upload foto karyawan" existing={documents.profile_photo}/>
       <UploadField name="selfiePhoto" label="Upload foto selfie karyawan" existing={documents.selfie}/>
@@ -37,9 +59,34 @@ export function EmployeeEditForm({ employee, divisions, positions, documents }: 
       <Field label="Divisi Karyawan"><select name="department" defaultValue={employee.department} required>{!divisions.some((x) => x.name === employee.department) && <option value={employee.department}>{employee.department}</option>}{divisions.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></Field>
       <Field label="Jabatan Karyawan"><select name="position" defaultValue={employee.position} required>{!positions.some((x) => x.name === employee.position) && <option value={employee.position}>{employee.position}</option>}{positions.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></Field>
       <Field label="Tipe Kontrak"><select name="contractType" defaultValue={employee.contractType ?? ""}><option value="">Pilih tipe kontrak</option><option value="Tetap">Tetap</option><option value="Kontrak">Kontrak</option><option value="Magang">Magang</option><option value="Harian Lepas">Harian Lepas</option></select></Field>
-      <fieldset className="employee-location-choice"><legend>Lokasi Absen Karyawan</legend><label><input name="allAttendanceLocations" type="checkbox" defaultChecked={employee.allAttendanceLocations}/> Semua Lokasi Perusahaan</label></fieldset>
+      <AttendanceLocationPicker locations={locations} defaultAll={employee.allAttendanceLocations} defaultSelected={selectedLocationIds}/>
     </div></div>
-    <div className="employee-edit-actions"><Link className="btn btn-outline" href="/dashboard/karyawan">Batalkan</Link><SubmitButton pendingLabel="Menyimpan..."><Save size={15}/> Simpan</SubmitButton></div>
+    <div className="employee-edit-actions"><Link className="btn btn-outline" href="/dashboard/karyawan">Batalkan</Link><SubmitButton pendingLabel="Menyimpan..." pending={pending}><Save size={15}/> Simpan</SubmitButton></div>
+  </form>;
+}
+
+function PasswordPanel({ employee, account }: { employee: Employee; account: EmployeeAccountState }) {
+  const [state, action, pending] = useActionState<EmployeePasswordState, FormData>(setEmployeePassword, { status: "idle" });
+  const [show, setShow] = useState(false);
+
+  if (account === "none") return <div className="employee-password-panel">
+    <div className="employee-password-empty"><KeyRound size={22}/><div><strong>Karyawan ini belum punya akun login</strong><p>Buat akun dan kirim undangan dari halaman detail karyawan. Setelah itu password bisa diganti di sini.</p><Link className="btn btn-outline btn-sm" href={`/dashboard/karyawan/${employee.id}`}>Ke detail karyawan</Link></div></div>
+  </div>;
+
+  return <form action={action} className="employee-password-panel">
+    <input type="hidden" name="employeeId" value={employee.id}/>
+    <input type="email" name="username" autoComplete="username" value={employee.email} readOnly hidden/>
+    <div className="employee-password-intro">
+      <KeyRound size={20}/>
+      <div><strong>Atur password baru untuk {employee.name}</strong><p>Akun login: <b>{employee.email}</b>{account !== "active" && " · undangan belum dipakai (tautan undangan akan ditutup)"}. Setelah disimpan, karyawan keluar dari semua perangkat dan menerima email pemberitahuan. Berikan password baru ini langsung kepada karyawan.</p></div>
+    </div>
+    {state.status === "error" && <div className="error-box" role="alert">{state.message}</div>}
+    {state.status === "success" && <div className="success-box" role="status">{state.message}</div>}
+    <div className="employee-password-fields">
+      <Field label="Password Baru"><div className="employee-password-input"><input name="password" type={show ? "text" : "password"} minLength={8} maxLength={128} autoComplete="new-password" placeholder="Minimal 8 karakter" required/><button type="button" onClick={() => setShow(!show)} aria-label={show ? "Sembunyikan password" : "Tampilkan password"}>{show ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
+      <Field label="Konfirmasi Password Baru"><input name="confirmation" type={show ? "text" : "password"} minLength={8} maxLength={128} autoComplete="new-password" placeholder="Ulangi password baru" required/></Field>
+    </div>
+    <div className="employee-edit-actions"><button className="btn btn-primary" disabled={pending}>{pending ? <LoaderCircle size={15} className="spin"/> : <Save size={15}/>} {pending ? "Menyimpan..." : "Simpan Password"}</button></div>
   </form>;
 }
 

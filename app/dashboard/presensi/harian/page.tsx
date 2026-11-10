@@ -18,7 +18,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Kehadiran | TepatWaktu",
-  description: "Kelola catatan presensi harian karyawan secara lengkap dan akurat.",
+  description: "Kelola catatan kehadiran harian karyawan secara lengkap dan akurat.",
 };
 
 type Props = {

@@ -119,7 +119,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
   const refreshAttendance = useCallback(async () => {
     const response = await fetch("/api/attendance/me", { cache: "no-store" });
     const body = await response.json() as StatusResponse & { message?: string };
-    if (!response.ok) throw new Error(body.message || "Status presensi belum dapat dimuat.");
+    if (!response.ok) throw new Error(body.message || "Status kehadiran belum dapat dimuat.");
     setAttendance(body.attendance);
     setCompanyName(body.company.name);
     setRequirePhoto(body.rules?.requirePhoto !== false);
@@ -213,11 +213,11 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
       }
       const response = await fetch("/api/attendance/me", { method: "POST", body: form });
       const body = await response.json() as { message?: string };
-      if (!response.ok) throw new Error(body.message || "Presensi belum dapat disimpan.");
+      if (!response.ok) throw new Error(body.message || "Kehadiran belum dapat disimpan.");
       await refreshAttendance();
       setPhase("success");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Presensi belum dapat disimpan.");
+      setError(cause instanceof Error ? cause.message : "Kehadiran belum dapat disimpan.");
     } finally {
       setSubmitting(false);
     }
@@ -235,7 +235,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
 
   const nextAction = !attendance?.checkIn ? "check_in" : !attendance.checkOut ? "check_out" : null;
   const actionText = nextAction === "check_out" ? "Check-out sekarang" : "Check-in sekarang";
-  const headline = !attendance?.checkIn ? "Belum check-in" : !attendance.checkOut ? "Belum check-out" : "Presensi lengkap";
+  const headline = !attendance?.checkIn ? "Belum check-in" : !attendance.checkOut ? "Belum check-out" : "Kehadiran lengkap";
   const copy = !attendance?.checkIn
     ? "Siapkan kamera dan pastikan Anda berada di area kantor."
     : !attendance.checkOut
@@ -253,7 +253,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
 
     <section className="employee-home-attendance">
       <div><span>ABSENSI HARI INI</span><h2>{headline}</h2><p>{copy}</p></div>
-      {nextAction ? <button type="button" className="employee-home-camera-action" onClick={() => void openCamera(nextAction)} aria-label={actionText}><span><Camera size={18} /></span><strong>{actionText}</strong><small>Tanpa formulir · foto langsung dikirim</small></button> : <Link className="employee-home-camera-action complete" href={historyHref}><span><CheckCircle2 size={18} /></span><strong>Lihat riwayat</strong><small>Presensi hari ini sudah lengkap</small></Link>}
+      {nextAction ? <button type="button" className="employee-home-camera-action" onClick={() => void openCamera(nextAction)} aria-label={actionText}><span><Camera size={18} /></span><strong>{actionText}</strong><small>Tanpa formulir · foto langsung dikirim</small></button> : <Link className="employee-home-camera-action complete" href={historyHref}><span><CheckCircle2 size={18} /></span><strong>Lihat riwayat</strong><small>Kehadiran hari ini sudah lengkap</small></Link>}
       {error && phase === "ready" ? <div className="camera-error" role="alert">{error}</div> : null}
     </section>
 
@@ -264,11 +264,11 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
       <article><span><LogOut size={20} /></span><strong>{attendance?.checkOut?.slice(0, 5) ?? "—"}</strong><h3>Jam pulang</h3><small>Waktu check-out hari ini</small></article>
     </section> : null}
 
-    {phase !== "ready" ? <div className="camera-backdrop" role="dialog" aria-modal="true" aria-label="Ambil foto presensi"><section className="camera-dialog">
-      <header><div><span className="eyebrow">{actionLabel(action).toUpperCase()}</span><h2>{phase === "success" ? "Presensi berhasil dicatat" : "Foto langsung dari kamera"}</h2></div><button onClick={closeCamera} aria-label="Tutup"><X size={20} /></button></header>
-      {phase === "camera" ? <div className="camera-viewport"><video ref={videoRef} autoPlay playsInline muted /><span className="face-guide" /><span className="live-badge">● LIVE</span>{!cameraReady ? <div className="camera-loading"><LoaderCircle className="spin" size={28} /><strong>{cameraStarting ? "Meminta akses kamera…" : "Menyiapkan pratinjau…"}</strong><small>Pastikan izin kamera pada browser sudah aktif.</small></div> : null}</div> : null}
-      {phase === "preview" ? <div className="camera-viewport preview"><img src={photo} alt="Pratinjau foto presensi" /></div> : null}
-      {phase === "success" ? <div className="attendance-success"><span><Check size={34} /></span><h3>{actionLabel(action)} tercatat</h3><p>{time}{companyName ? ` · ${companyName}` : ""}</p><small>Data presensi telah disimpan dengan aman.</small></div> : null}
+    {phase !== "ready" ? <div className="camera-backdrop" role="dialog" aria-modal="true" aria-label="Ambil foto kehadiran"><section className="camera-dialog">
+      <header><div><span className="eyebrow">{actionLabel(action).toUpperCase()}</span><h2>{phase === "success" ? "Kehadiran berhasil dicatat" : "Foto langsung dari kamera"}</h2></div><button onClick={closeCamera} aria-label="Tutup"><X size={20} /></button></header>
+      {phase === "camera" ? <div className="camera-viewport"><video ref={videoRef} autoPlay playsInline muted /><span className="live-badge">● LIVE</span>{!cameraReady ? <div className="camera-loading"><LoaderCircle className="spin" size={28} /><strong>{cameraStarting ? "Meminta akses kamera…" : "Menyiapkan pratinjau…"}</strong><small>Pastikan izin kamera pada browser sudah aktif.</small></div> : null}</div> : null}
+      {phase === "preview" ? <div className="camera-viewport preview"><img src={photo} alt="Pratinjau foto kehadiran" /></div> : null}
+      {phase === "success" ? <div className="attendance-success"><span><Check size={34} /></span><h3>{actionLabel(action)} tercatat</h3><p>{time}{companyName ? ` · ${companyName}` : ""}</p><small>Data kehadiran telah disimpan dengan aman.</small></div> : null}
       {phase !== "success" ? <div className="camera-meta"><span><Clock3 size={15} /> {time}</span><span><LocateFixed size={15} /> {location}</span></div> : null}
       {error && phase !== "success" ? <div className="camera-error dialog-error" role="alert">{error}</div> : null}
       <footer>{phase === "camera" ? cameraFailed ? <button className="btn btn-primary btn-block" onClick={() => void openCamera(action)}><RefreshCw size={17} /> Coba Akses Kamera Lagi</button> : <button className="btn btn-primary btn-block" disabled={!cameraReady} onClick={capturePhoto}>{cameraReady ? <Camera size={18} /> : <LoaderCircle className="spin" size={18} />} {cameraReady ? "Ambil Foto Sekarang" : "Menyiapkan Kamera"}</button> : null}{phase === "preview" ? <><button className="btn btn-outline" disabled={submitting} onClick={() => void openCamera(action)}><RefreshCw size={16} /> Foto Ulang</button><button className="btn btn-primary" disabled={submitting} onClick={() => void confirmAttendance()}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `Konfirmasi ${actionLabel(action)}`}</button></> : null}{phase === "success" ? <button className="btn btn-primary btn-block" onClick={closeCamera}>Selesai</button> : null}{phase === "camera" && !requirePhoto ? <button className="btn btn-outline btn-block" disabled={submitting} onClick={() => { stopCamera(); void confirmAttendance(true); }}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `${actionLabel(action)} tanpa foto`}</button> : null}</footer>

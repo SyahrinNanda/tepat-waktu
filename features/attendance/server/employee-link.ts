@@ -24,8 +24,9 @@ export async function ensureEmployeeRecord(input: { companyId: string; userId: s
 
   let [existing] = await findExisting();
   if (!existing) {
-    // No new employee beyond the plan limit; callers that create users check this up front.
-    if ((await employeeCapacity(input.companyId)).full) return null;
+    // No new employee beyond the plan limit (callers also check up front). This person is left out
+    // of the count: as an active non-admin login they already take the seat this record fills.
+    if ((await employeeCapacity(input.companyId, undefined, { excludeUserId: input.userId })).full) return null;
     try {
       await db.insert(employees).values({
         companyId: input.companyId, userId: input.userId, employeeCode: `EMP-${randomUUID().slice(0, 8).toUpperCase()}`,

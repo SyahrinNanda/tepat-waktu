@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { workSchedules } from "@/db/schema";
+import { divisions, divisionSchedules, workSchedules } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
 
 type Params = { params: Promise<{ id: string }> };
@@ -20,6 +20,11 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(request: Request, { params }: Params) {
   const context = await featureContext(request, "master/shift", "manage"); if ("error" in context) return context.error;
+  const id = (await params).id;
+  // A division may list this schedule as a secondary one (division_schedules cascades), so check explicitly.
+  const [used] = await db.select({ name: divisions.name }).from(divisionSchedules).innerJoin(divisions, eq(divisions.id, divisionSchedules.divisionId))
+    .where(and(eq(divisionSchedules.scheduleId, id), eq(divisions.companyId, context.companyId))).limit(1);
+  if (used) return Response.json({ error: `Jadwal kerja masih digunakan oleh divisi ${used.name}. Lepaskan dari divisi terlebih dahulu.` }, { status: 409 });
   try {
     const [row] = await db.delete(workSchedules).where(and(eq(workSchedules.id, (await params).id), eq(workSchedules.companyId, context.companyId))).returning({ id: workSchedules.id });
     if (!row) return Response.json({ error: "Jadwal kerja tidak ditemukan." }, { status: 404 });

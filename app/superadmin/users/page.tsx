@@ -49,7 +49,7 @@ export default async function Page() {
     <>
       <header className="product-page-header">
         <div>
-          <span className="breadcrumb">Presensi Super Admin Panel</span>
+          <span className="breadcrumb">Kehadiran Super Admin Panel</span>
           <h1>DAFTAR USER PLATFORM</h1>
           <p>
             Daftar seluruh pengguna platform, kelola peran Super Admin, atur ulang kata sandi, dan pantau ruang kerja masing-masing akun.

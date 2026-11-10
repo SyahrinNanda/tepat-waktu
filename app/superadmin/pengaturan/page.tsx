@@ -16,7 +16,7 @@ export default async function Page() {
     <>
       <header className="product-page-header">
         <div>
-          <span className="breadcrumb">Presensi Super Admin Panel</span>
+          <span className="breadcrumb">Kehadiran Super Admin Panel</span>
           <h1>PENGATURAN PLATFORM</h1>
           <p>
             Konfigurasi global ekosistem TepatWaktu. Nilai ini menjadi parameter default untuk seluruh tenant dan integrasi sistem.

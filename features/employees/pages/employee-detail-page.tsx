@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { employeeLocationNames } from "@/features/employees/server/employee-locations";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { and, asc, eq, gte, lte } from "drizzle-orm";
@@ -35,8 +36,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const leave = attendanceRows.filter((row) => row.status === "leave").length;
   const absent = attendanceRows.filter((row) => row.status === "absent").length;
   const workedMinutes = attendanceRows.reduce((total, row) => total + duration(row.checkIn, row.checkOut), 0);
+  const locationNames = employee.allAttendanceLocations ? [] : await employeeLocationNames(employee.id);
   return <>
-    <div className="master-page-head"><span>Presensi Admin Panel</span><h1>DETAIL KARYAWAN</h1><p>Beranda / Karyawan / Detail Karyawan</p></div>
+    <div className="master-page-head"><span>Kehadiran Admin Panel</span><h1>DETAIL KARYAWAN</h1><p>Beranda / Karyawan / Detail Karyawan</p></div>
     <EmployeeAccountCard employeeId={employee.id} status={accountStatus} loginEmail={loginAccount?.email ?? null} employeeEmail={employee.email} canManage={canManage}
       initialNotice={employeeAccountMessage(query.akun, loginAccount?.email ?? employee.email)} />
     <section className="employee-detail-profile">
@@ -44,7 +46,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <div className="employee-detail-copy"><h2>{employee.name.toUpperCase()}</h2><div className="employee-detail-grid">
         <Info label="Nomor Induk" value={employee.employeeCode}/><Info label="Jenis Kelamin" value={gender(employee.gender)}/>
         <Info label="Jabatan" value={employee.position}/><Info label="No. Handphone" value={employee.phone}/>
-        <Info label="Divisi" value={employee.department}/><Info label="Lokasi Kerja" value={employee.allAttendanceLocations ? "Semua Lokasi Perusahaan" : "Lokasi Tertentu"}/>
+        <Info label="Divisi" value={employee.department}/><Info label="Lokasi Kerja" value={employee.allAttendanceLocations ? "Semua Lokasi Perusahaan" : locationNames.length ? locationNames.join(", ") : "Lokasi Tertentu"}/>
         <Info label="Email" value={employee.email}/><Info label="Alamat" value={employee.address}/>
         <Info label="Tanggal Lahir" value={employee.birthDate}/><Info label="Foto Selfie" value={documents.selfie ? "Lihat foto" : "–"} href={documents.selfie ? `/api/files/${documents.selfie}` : undefined}/>
         <Info label="Tgl Karyawan Bergabung" value={employee.joinedAt}/><Info label="Foto KTP" value={documents.identity_card ? "Lihat dokumen" : "–"} href={documents.identity_card ? `/api/files/${documents.identity_card}` : undefined}/>
@@ -52,11 +54,11 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </div></div>
     </section>
     <section className="employee-detail-tabs-card">
-      <nav className="employee-detail-tabs"><span>Presensi</span><button>Absen Kunjungan</button><button>Kontrak Kerja</button><button>Daftar Lembur ({overtimeRows.length})</button><button>Daftar Inventaris</button><button>Daftar Device</button></nav>
-      <h3>Laporan Presensi Karyawan</h3>
+      <nav className="employee-detail-tabs"><span>Kehadiran</span><button>Absen Kunjungan</button><button>Kontrak Kerja</button><button>Daftar Lembur ({overtimeRows.length})</button><button>Daftar Inventaris</button><button>Daftar Device</button></nav>
+      <h3>Laporan Kehadiran Karyawan</h3>
       <form className="employee-report-filters"><label>Filter Bulan<select name="month" defaultValue={month}>{months.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select></label><label>Filter Tahun<select name="year" defaultValue={year}>{[year - 1, year, year + 1].map((item) => <option key={item}>{item}</option>)}</select></label><button className="btn btn-outline" type="submit">Tampilkan</button></form>
-      <div className="employee-report-summary"><Info label="Jumlah Hari" value={`${new Date(Date.UTC(year, month, 0)).getUTCDate()} Hari`}/><Info label="Jumlah Presensi" value={`${attendanceRows.length} Hari`}/><Info label="Jumlah Berangkat Tepat Waktu" value={`${present} Hari`}/><Info label="Jumlah Terlambat" value={`${late} Hari`}/><Info label="Jumlah Izin/Cuti/Sakit" value={`${leaveRows.length + leave} Hari`}/><Info label="Jumlah Lembur" value={`${overtimeRows.length} Hari`}/><Info label="Jumlah Jam Kerja Aktual" value={`${workedMinutes} Menit`}/><Info label="Jumlah Alpa" value={`${absent} Hari`}/></div>
-      <div className="employee-attendance-table">{attendanceRows.length ? <table><thead><tr><th>Tanggal</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Status</th></tr></thead><tbody>{attendanceRows.map((row) => <tr key={row.id}><td>{row.attendanceDate}</td><td>{row.checkIn?.slice(0, 5) ?? "–"}</td><td>{row.checkOut?.slice(0, 5) ?? "–"}</td><td>{row.status}</td></tr>)}</tbody></table> : <div className="location-empty"><strong>Data Kosong</strong><span>Belum ada presensi pada periode ini.</span></div>}</div>
+      <div className="employee-report-summary"><Info label="Jumlah Hari" value={`${new Date(Date.UTC(year, month, 0)).getUTCDate()} Hari`}/><Info label="Jumlah Kehadiran" value={`${attendanceRows.length} Hari`}/><Info label="Jumlah Berangkat Tepat Waktu" value={`${present} Hari`}/><Info label="Jumlah Terlambat" value={`${late} Hari`}/><Info label="Jumlah Izin/Cuti/Sakit" value={`${leaveRows.length + leave} Hari`}/><Info label="Jumlah Lembur" value={`${overtimeRows.length} Hari`}/><Info label="Jumlah Jam Kerja Aktual" value={`${workedMinutes} Menit`}/><Info label="Jumlah Alpa" value={`${absent} Hari`}/></div>
+      <div className="employee-attendance-table">{attendanceRows.length ? <table><thead><tr><th>Tanggal</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Status</th></tr></thead><tbody>{attendanceRows.map((row) => <tr key={row.id}><td>{row.attendanceDate}</td><td>{row.checkIn?.slice(0, 5) ?? "–"}</td><td>{row.checkOut?.slice(0, 5) ?? "–"}</td><td>{row.status}</td></tr>)}</tbody></table> : <div className="location-empty"><strong>Data Kosong</strong><span>Belum ada kehadiran pada periode ini.</span></div>}</div>
     </section>
   </>;
 }

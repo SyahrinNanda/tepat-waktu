@@ -263,6 +263,21 @@ export const divisions = pgTable("divisions", {
   index("divisions_schedule_idx").on(table.scheduleId),
 ]);
 
+/**
+ * All work schedules a division may use (one or more). divisions.scheduleId stays the primary
+ * (first chosen) one for features that need a single schedule (overtime start, payslip work week).
+ */
+export const divisionSchedules = pgTable("division_schedules", {
+  divisionId: uuid("division_id").notNull().references(() => divisions.id, { onDelete: "cascade" }),
+  // Cascade so deleting a whole company works; the shift API refuses deleting a schedule still in use.
+  scheduleId: uuid("schedule_id").notNull().references(() => workSchedules.id, { onDelete: "cascade" }),
+  position: integer("position").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.divisionId, table.scheduleId] }),
+  index("division_schedules_schedule_idx").on(table.scheduleId),
+]);
+
 export const jobPositions = pgTable("job_positions", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
@@ -340,6 +355,16 @@ export const attendanceLocations = pgTable("attendance_locations", {
 }, (table) => [
   uniqueIndex("attendance_locations_company_name_unique").on(table.companyId, table.name),
   index("attendance_locations_company_idx").on(table.companyId, table.active),
+]);
+
+/** Locations an employee may check in at when employees.allAttendanceLocations is off. */
+export const employeeAttendanceLocations = pgTable("employee_attendance_locations", {
+  employeeId: uuid("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+  locationId: uuid("location_id").notNull().references(() => attendanceLocations.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.employeeId, table.locationId] }),
+  index("employee_attendance_locations_location_idx").on(table.locationId),
 ]);
 
 export const employeeSalaryProfiles = pgTable("employee_salary_profiles", {

@@ -385,7 +385,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
               fontWeight: 500,
             }}
           >
-            Presensi Admin Panel
+            Kehadiran Admin Panel
           </div>
           <h1
             style={{
@@ -597,7 +597,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
               height: "38px",
               padding: "0 20px",
               backgroundColor: "#faa005",
-              color: "#1a1a1a",
+              color: "#fff",
               border: "none",
               borderRadius: "6px",
               fontSize: "13px",
@@ -1529,7 +1529,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
                     backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#1a1a1a",
+                    color: "#fff",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1794,7 +1794,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
                     backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#1a1a1a",
+                    color: "#fff",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -2048,7 +2048,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
                     backgroundColor: "#faa005",
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#1a1a1a",
+                    color: "#fff",
                     cursor: isPending ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -2160,7 +2160,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
                   borderRadius: "6px",
                   border: "none",
                   backgroundColor: "#faa005",
-                  color: "#1a1a1a",
+                  color: "#fff",
                   fontSize: "14px",
                   fontWeight: 600,
                   cursor: isPending ? "not-allowed" : "pointer",
@@ -2208,7 +2208,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 5: Info Presensi Admin */}
+      {/* MODAL 5: Info Kehadiran Admin */}
       {/* ========================================================================= */}
       {isInfoOpen && (
         <div
@@ -2303,7 +2303,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
                   borderRadius: "6px",
                   border: "none",
                   backgroundColor: "#faa005",
-                  color: "#1a1a1a",
+                  color: "#fff",
                   fontSize: "13px",
                   fontWeight: 600,
                   cursor: "pointer",

@@ -9,6 +9,8 @@ import {
   companies,
   companyMembers,
   divisions,
+  divisionSchedules,
+  employeeAttendanceLocations,
   employees,
   fileAssets,
   user,
@@ -61,7 +63,7 @@ export async function authenticatedActor(request: Request): Promise<Actor> {
 
 export async function selfAttendanceContext(request: Request): Promise<SelfAttendanceContext> {
   const actor = await authenticatedActor(request);
-  if (actor.platformRole === "superadmin") throw new AttendanceError("Super Admin tidak diwajibkan melakukan presensi.", 403);
+  if (actor.platformRole === "superadmin") throw new AttendanceError("Super Admin tidak diwajibkan mencatat kehadiran.", 403);
 
   const [membership] = await db
     .select({ companyId: companyMembers.companyId, companyName: companies.name, timezone: companies.timezone, role: companyMembers.role })
@@ -72,7 +74,7 @@ export async function selfAttendanceContext(request: Request): Promise<SelfAtten
   if (!membership) throw new AttendanceError("Keanggotaan perusahaan tidak ditemukan.", 403);
   await assertSubscriptionActive(membership.companyId);
   if (membership.role === "admin" || membership.role === "owner") {
-    throw new AttendanceError("Admin Perusahaan tidak diwajibkan melakukan presensi.", 403);
+    throw new AttendanceError("Admin Perusahaan tidak diwajibkan mencatat kehadiran.", 403);
   }
 
   let [employee] = await db
@@ -122,7 +124,7 @@ export async function attendanceManagerContext(request: Request, requestedCompan
     .where(conditions)
     .limit(1);
   if (!membership || !["admin", "owner"].includes(membership.role)) {
-    throw new AttendanceError("Hanya Admin Perusahaan yang dapat menambahkan presensi karyawan lain.", 403);
+    throw new AttendanceError("Hanya Admin Perusahaan yang dapat menambahkan kehadiran karyawan lain.", 403);
   }
   await assertSubscriptionActive(membership.companyId);
   return { ...actor, ...membership, source: "admin" as const };
@@ -202,27 +204,41 @@ type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 /**
  * The work schedule that applies to one employee on one date. Used by both the check-in screen and
  * the recorder, so what the employee sees is exactly what lateness is judged against.
- * - source "division": the active schedule of the employee's active division;
+ * - source "division": an active schedule of the employee's active division. A division can have
+ *   several schedules (shifts); then the one already recorded on today's attendance (`scheduleId`) wins,
+ *   else the working-day schedule whose start time is closest to `time` (the check-in moment),
+ *   else the primary (first) one;
  * - source "company":  otherwise the company's oldest active schedule;
  * - source "default":  no schedule configured yet: 08:00–17:00 is shown, but lateness is not judged.
  * The schedule's row for that weekday overrides its times; a disabled row makes it a day off.
  */
-export type ResolvedSchedule = { name: string; startTime: string; endTime: string; graceMinutes: number; isWorkday: boolean; source: "division" | "company" | "default" };
+export type ResolvedSchedule = { id?: string; name: string; startTime: string; endTime: string; graceMinutes: number; isWorkday: boolean; source: "division" | "company" | "default" };
 
 export const DEFAULT_SCHEDULE: ResolvedSchedule = { name: "Jadwal perusahaan", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15, isWorkday: true, source: "default" };
 
-export async function resolveSchedule(executor: Executor, input: { companyId: string; department: string | null; date: string }): Promise<ResolvedSchedule> {
+const clockMinutes = (value: string) => Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5));
+/** Distance between two clock times on a 24h circle, so 23:00 and 00:30 are 90 minutes apart. */
+const clockDistance = (a: string, b: string) => { const diff = Math.abs(clockMinutes(a) - clockMinutes(b)); return Math.min(diff, 1440 - diff); };
+
+export async function resolveSchedule(executor: Executor, input: { companyId: string; department: string | null; date: string; time?: string; scheduleId?: string | null }): Promise<ResolvedSchedule> {
   const dayOfWeek = weekdayNumber(input.date);
   const columns = {
-    name: workSchedules.name, baseStart: workSchedules.startTime, baseEnd: workSchedules.endTime, graceMinutes: workSchedules.graceMinutes,
+    id: workSchedules.id, name: workSchedules.name, baseStart: workSchedules.startTime, baseEnd: workSchedules.endTime, graceMinutes: workSchedules.graceMinutes,
     dayEnabled: workScheduleDays.enabled, dayStart: workScheduleDays.startTime, dayEnd: workScheduleDays.endTime,
   };
   const dayJoin = and(eq(workScheduleDays.scheduleId, workSchedules.id), eq(workScheduleDays.dayOfWeek, dayOfWeek));
 
-  const [division] = input.department ? await executor.select(columns).from(divisions)
-    .innerJoin(workSchedules, and(eq(workSchedules.id, divisions.scheduleId), eq(workSchedules.active, true)))
+  const divisionRows = input.department ? await executor.select(columns).from(divisions)
+    .innerJoin(divisionSchedules, eq(divisionSchedules.divisionId, divisions.id))
+    .innerJoin(workSchedules, and(eq(workSchedules.id, divisionSchedules.scheduleId), eq(workSchedules.active, true)))
     .leftJoin(workScheduleDays, dayJoin)
-    .where(and(eq(divisions.companyId, input.companyId), eq(divisions.name, input.department), eq(divisions.active, true))).limit(1) : [];
+    .where(and(eq(divisions.companyId, input.companyId), eq(divisions.name, input.department), eq(divisions.active, true)))
+    .orderBy(asc(divisionSchedules.position), asc(workSchedules.name)) : [];
+  const resolved = divisionRows.map((row) => ({ ...row, start: row.dayStart ?? row.baseStart, workday: row.dayEnabled !== false }));
+  const workdays = resolved.filter((row) => row.workday);
+  const division = resolved.find((row) => row.id === input.scheduleId)
+    ?? (input.time && workdays.length ? workdays.reduce((best, row) => clockDistance(row.start, input.time!) < clockDistance(best.start, input.time!) ? row : best) : undefined)
+    ?? workdays[0] ?? resolved[0];
   const [company] = division ? [] : await executor.select(columns).from(workSchedules)
     .leftJoin(workScheduleDays, dayJoin)
     .where(and(eq(workSchedules.companyId, input.companyId), eq(workSchedules.active, true)))
@@ -231,6 +247,7 @@ export async function resolveSchedule(executor: Executor, input: { companyId: st
   const row = division ?? company;
   if (!row) return DEFAULT_SCHEDULE;
   return {
+    id: row.id,
     name: row.name,
     startTime: row.dayStart ?? row.baseStart,
     endTime: row.dayEnd ?? row.baseEnd,
@@ -251,11 +268,29 @@ export function isLateCheckIn(schedule: ResolvedSchedule, time: string) {
  * - requirePhoto: "Kunci Foto" on -> a camera photo must be sent.
  */
 export async function selfAttendanceRules(companyId: string, employeeId: string, executor: Executor = db) {
-  const [[employee], [location]] = await Promise.all([
+  const [[employee], locations] = await Promise.all([
     executor.select({ lockLocation: employees.lockLocation, lockPhoto: employees.lockPhoto }).from(employees).where(and(eq(employees.id, employeeId), eq(employees.companyId, companyId))).limit(1),
-    executor.select({ id: attendanceLocations.id }).from(attendanceLocations).where(and(eq(attendanceLocations.companyId, companyId), eq(attendanceLocations.active, true))).limit(1),
+    allowedAttendanceLocations(executor, companyId, employeeId),
   ]);
-  return { requireLocation: Boolean(employee?.lockLocation && location), requirePhoto: employee?.lockPhoto ?? true };
+  return { requireLocation: Boolean(employee?.lockLocation && locations.length), requirePhoto: employee?.lockPhoto ?? true };
+}
+
+/**
+ * Active locations an employee may check in at. "Semua Lokasi Perusahaan" -> every active company
+ * location; "Lokasi Tertentu" -> only the chosen ones. If none of the chosen ones is still active, it
+ * falls back to all active company locations so the employee is never locked out by a deactivation.
+ */
+export async function allowedAttendanceLocations(executor: Executor, companyId: string, employeeId: string) {
+  const columns = { id: attendanceLocations.id, name: attendanceLocations.name, latitude: attendanceLocations.latitude, longitude: attendanceLocations.longitude, radiusMeters: attendanceLocations.radiusMeters };
+  const active = and(eq(attendanceLocations.companyId, companyId), eq(attendanceLocations.active, true));
+  const [employee] = await executor.select({ all: employees.allAttendanceLocations }).from(employees).where(and(eq(employees.id, employeeId), eq(employees.companyId, companyId))).limit(1);
+  if (employee && !employee.all) {
+    const chosen = await executor.select(columns).from(employeeAttendanceLocations)
+      .innerJoin(attendanceLocations, eq(attendanceLocations.id, employeeAttendanceLocations.locationId))
+      .where(and(eq(employeeAttendanceLocations.employeeId, employeeId), active));
+    if (chosen.length) return chosen;
+  }
+  return executor.select(columns).from(attendanceLocations).where(active);
 }
 
 export async function getSelfAttendanceStatus(context: SelfAttendanceContext) {
@@ -263,10 +298,10 @@ export async function getSelfAttendanceStatus(context: SelfAttendanceContext) {
   const zoned = zonedParts(now, context.timezone);
   const [[employee], [attendance], rules] = await Promise.all([
     db.select({ department: employees.department }).from(employees).where(and(eq(employees.id, context.employeeId), eq(employees.companyId, context.companyId))).limit(1),
-    db.select({ id: attendances.id, checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.employeeId, context.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1),
+    db.select({ id: attendances.id, checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status, shiftId: attendances.shiftId }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.employeeId, context.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1),
     selfAttendanceRules(context.companyId, context.employeeId),
   ]);
-  const schedule = await resolveSchedule(db, { companyId: context.companyId, department: employee?.department ?? null, date: zoned.date });
+  const schedule = await resolveSchedule(db, { companyId: context.companyId, department: employee?.department ?? null, date: zoned.date, time: zoned.time, scheduleId: attendance?.shiftId });
   return {
     employee: { id: context.employeeId, name: context.employeeName },
     company: { id: context.companyId, name: context.companyName, timezone: context.timezone },
@@ -303,18 +338,18 @@ export async function recordAttendanceEvent(input: {
       if (!employee) throw new AttendanceError("Karyawan aktif tidak ditemukan.", 404);
       // Kunci Lokasi off: the employee may check in outside the radius (coordinates are still recorded).
       if (input.source === "self" && employee.lockLocation) {
-        const locations = await tx.select({ name: attendanceLocations.name, latitude: attendanceLocations.latitude, longitude: attendanceLocations.longitude, radiusMeters: attendanceLocations.radiusMeters }).from(attendanceLocations).where(and(eq(attendanceLocations.companyId, input.companyId), eq(attendanceLocations.active, true)));
+        const locations = await allowedAttendanceLocations(tx, input.companyId, input.employeeId);
         if (locations.length) {
-          if (input.latitude == null || input.longitude == null) throw new AttendanceError("Aktifkan izin lokasi untuk melakukan presensi.", 422);
+          if (input.latitude == null || input.longitude == null) throw new AttendanceError("Aktifkan izin lokasi untuk mencatat kehadiran.", 422);
           const accuracyAllowance = Math.min(Math.max(input.accuracyMeters ?? 0, 0), 50);
           const insideLocation = locations.some((location) => distanceInMeters(input.latitude!, input.longitude!, location.latitude, location.longitude) <= location.radiusMeters + accuracyAllowance);
-          if (!insideLocation) throw new AttendanceError("Anda berada di luar radius lokasi presensi yang aktif.", 422);
+          if (!insideLocation) throw new AttendanceError("Anda berada di luar radius lokasi kehadiran yang aktif.", 422);
         }
       }
       if (input.source !== "self" && employee.userId) {
         const [targetMembership] = await tx.select({ role: companyMembers.role }).from(companyMembers).where(and(eq(companyMembers.companyId, input.companyId), eq(companyMembers.userId, employee.userId))).limit(1);
         if (targetMembership && ["admin", "owner"].includes(targetMembership.role)) {
-          throw new AttendanceError("Super Admin dan Admin Perusahaan tidak memiliki presensi.", 400);
+          throw new AttendanceError("Super Admin dan Admin Perusahaan tidak memiliki kehadiran.", 400);
         }
       }
 
@@ -350,7 +385,7 @@ export async function recordAttendanceEvent(input: {
         photoAssetId = asset.id;
       }
 
-      const schedule = await resolveSchedule(tx, { companyId: input.companyId, department: employee.department, date: zoned.date });
+      const schedule = await resolveSchedule(tx, { companyId: input.companyId, department: employee.department, date: zoned.date, time: zoned.time, scheduleId: attendance.shiftId });
       const status = input.action === "check_in" && isLateCheckIn(schedule, zoned.time) ? "late" : attendance.status;
       await tx.insert(attendanceEvents).values({
         attendanceId: attendance.id,
@@ -371,7 +406,7 @@ export async function recordAttendanceEvent(input: {
       });
 
       await tx.update(attendances).set(input.action === "check_in"
-        ? { checkIn: zoned.time, status, note: input.note ?? attendance.note, updatedAt: new Date() }
+        ? { checkIn: zoned.time, status, shiftId: schedule.id ?? attendance.shiftId, note: input.note ?? attendance.note, updatedAt: new Date() }
         : { checkOut: zoned.time, note: input.note ?? attendance.note, updatedAt: new Date() })
         .where(eq(attendances.id, attendance.id));
 
@@ -381,8 +416,8 @@ export async function recordAttendanceEvent(input: {
     if (input.photo) await deletePrivateObject(input.photo.bucket, input.photo.key).catch(() => undefined);
     if (error instanceof AttendanceError) throw error;
     const code = pgErrorCode(error);
-    if (code === "23505") throw new AttendanceError("Presensi untuk aksi ini sudah tercatat.", 409);
-    if (code === "40001" || code === "40P01") throw new AttendanceError("Server sedang sibuk memproses presensi lain. Silakan coba lagi.", 503);
+    if (code === "23505") throw new AttendanceError("Kehadiran untuk aksi ini sudah tercatat.", 409);
+    if (code === "40001" || code === "40P01") throw new AttendanceError("Server sedang sibuk memproses kehadiran lain. Silakan coba lagi.", 503);
     throw error;
   }
 }
@@ -441,6 +476,6 @@ export async function deleteAttendanceWithPhotos(companyId: string, attendanceId
   if (!photos) return false;
   // Storage is not transactional: remove objects only after the database commit.
   const results = await Promise.allSettled(photos.map((photo) => deletePrivateObject(photo.bucket, photo.key)));
-  results.forEach((result, index) => { if (result.status === "rejected") console.error(`Foto presensi ${photos[index].key} gagal dihapus dari storage:`, result.reason); });
+  results.forEach((result, index) => { if (result.status === "rejected") console.error(`Foto kehadiran ${photos[index].key} gagal dihapus dari storage:`, result.reason); });
   return true;
 }

@@ -9,7 +9,9 @@ import { hashPassword } from "better-auth/crypto";
 import { db } from "@/db";
 import { account, companyMembers, employees, session, user } from "@/db/schema";
 import { ensureEmployeeRecord } from "@/features/attendance/server/employee-link";
-import { employeeCapacity, employeeLimitMessage } from "@/features/subscriptions/server/employee-capacity";
+import { employeeCapacity, employeeLimitMessage, seatLimitError } from "@/features/subscriptions/server/employee-capacity";
+
+const isAdminRole = (role: string) => role === "admin" || role === "owner";
 import { auth } from "@/lib/auth";
 import { requireCompanyRole } from "@/lib/current-company";
 import { revokeUserSessions } from "@/lib/member-status";
@@ -342,8 +344,9 @@ export async function updateCompanyUserAction(input: {
       .parse(input);
 
     const [member] = await db
-      .select({ id: companyMembers.id, userId: companyMembers.userId })
+      .select({ id: companyMembers.id, userId: companyMembers.userId, role: companyMembers.role, email: user.email })
       .from(companyMembers)
+      .innerJoin(user, eq(user.id, companyMembers.userId))
       .where(
         and(
           eq(companyMembers.id, parsed.memberId),
@@ -361,6 +364,13 @@ export async function updateCompanyUserAction(input: {
       };
     }
 
+    // An Administrator does not use a plan seat; turning one into another role does.
+    const becomesSeat = isAdminRole(member.role) && !isAdminRole(parsed.role);
+    if (becomesSeat) {
+      const limitError = await seatLimitError(context.companyId, member.userId);
+      if (limitError) return { ok: false, error: limitError };
+    }
+
     await db.transaction(async (tx) => {
       await tx
         .update(user)
@@ -375,6 +385,8 @@ export async function updateCompanyUserAction(input: {
         })
         .where(eq(companyMembers.id, member.id));
     });
+    // Non-admin roles check in, so they need an employee record (counted against the plan).
+    if (becomesSeat) await ensureEmployeeRecord({ companyId: context.companyId, userId: member.userId, name: parsed.name, email: member.email, role: parsed.role });
 
     revalidatePath("/dashboard/pengaturan/users");
     return { ok: true, message: "Data user berhasil diperbarui." };
@@ -445,7 +457,7 @@ export async function toggleUserStatusAction(input: {
       .parse(input);
 
     const [member] = await db
-      .select({ id: companyMembers.id, userId: companyMembers.userId, role: companyMembers.role })
+      .select({ id: companyMembers.id, userId: companyMembers.userId, role: companyMembers.role, isActive: companyMembers.isActive })
       .from(companyMembers)
       .where(
         and(
@@ -466,6 +478,12 @@ export async function toggleUserStatusAction(input: {
 
     if ((member.role === "admin" || member.role === "owner") && !context.isSuperAdmin) {
       return { ok: false, error: "Status akun Administrator hanya bisa diubah oleh Superadmin TepatWaktu." };
+    }
+
+    // Re-activating a non-admin login takes a plan seat again.
+    if (parsed.isActive && !member.isActive && !isAdminRole(member.role)) {
+      const limitError = await seatLimitError(context.companyId, member.userId);
+      if (limitError) return { ok: false, error: limitError };
     }
 
     await db
@@ -616,8 +634,9 @@ export async function updateCompanyUserRole(form: FormData) {
     .object({ memberId: z.string().uuid(), role: roleSchema })
     .parse(Object.fromEntries(form));
   const [member] = await db
-    .select({ id: companyMembers.id, userId: companyMembers.userId })
+    .select({ id: companyMembers.id, userId: companyMembers.userId, role: companyMembers.role, email: user.email, name: user.name })
     .from(companyMembers)
+    .innerJoin(user, eq(user.id, companyMembers.userId))
     .where(
       and(
         eq(companyMembers.id, parsed.memberId),
@@ -629,6 +648,12 @@ export async function updateCompanyUserRole(form: FormData) {
   if (member.userId === context.session.user.id && parsed.role !== "admin") {
     throw new Error("Anda tidak dapat mencabut akses Admin milik sendiri.");
   }
+  // An Administrator does not use a plan seat; turning one into another role does.
+  const becomesSeat = isAdminRole(member.role) && !isAdminRole(parsed.role);
+  if (becomesSeat) {
+    const limitError = await seatLimitError(context.companyId, member.userId);
+    if (limitError) throw new Error(limitError);
+  }
   await db
     .update(companyMembers)
     .set({ role: parsed.role })
@@ -638,6 +663,7 @@ export async function updateCompanyUserRole(form: FormData) {
         eq(companyMembers.companyId, context.companyId),
       ),
     );
+  if (becomesSeat) await ensureEmployeeRecord({ companyId: context.companyId, userId: member.userId, name: member.name, email: member.email, role: parsed.role });
   revalidatePath("/dashboard/pengaturan/users");
   revalidatePath(`/dashboard/pengaturan/users/${member.id}`);
 }
