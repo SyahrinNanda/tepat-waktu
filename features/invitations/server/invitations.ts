@@ -1,15 +1,14 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, desc, eq, gt, inArray, isNull } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull } from "drizzle-orm";
 import { hashPassword } from "better-auth/crypto";
 import { db } from "@/db";
 import { account, companies, companyMembers, session, user, userInvitations } from "@/db/schema";
+import { reserveEmailSend, resetEmailSend } from "@/lib/email-throttle";
 import { sendMail } from "@/lib/mailer";
 import { renderBrandedEmail } from "@/lib/registration/auth-emails";
 
 /** How long an emailed invitation link stays valid. */
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-/** A new invitation for the same user can be sent at most this often. */
-export const INVITE_RESEND_COOLDOWN_MS = 60 * 1000;
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
@@ -33,14 +32,11 @@ export async function createAndSendInvitation(input: {
   companyId: string; userId: string; email: string; name: string; roleLabel: string; invitedBy: string; inviterName: string; now?: Date;
 }) {
   const now = input.now ?? new Date();
-  const [latest] = await db.select({ createdAt: userInvitations.createdAt }).from(userInvitations)
-    .where(and(eq(userInvitations.userId, input.userId), eq(userInvitations.companyId, input.companyId), isNull(userInvitations.acceptedAt)))
-    .orderBy(desc(userInvitations.createdAt)).limit(1);
-  if (latest && now.getTime() - latest.createdAt.getTime() < INVITE_RESEND_COOLDOWN_MS) {
-    throw new InvitationError("Undangan baru saja dikirim. Tunggu satu menit sebelum mengirim ulang.");
-  }
   const [company] = await db.select({ name: companies.name }).from(companies).where(eq(companies.id, input.companyId)).limit(1);
   if (!company) throw new InvitationError("Perusahaan tidak ditemukan.");
+  // Escalating resend limit per address (1 min, 5 min, 1 h, 5 h, 24 h): see lib/email-throttle.ts.
+  const turn = await reserveEmailSend("invitation", input.email, now);
+  if (!turn.allowed) throw new InvitationError(turn.message);
 
   const token = randomBytes(32).toString("base64url");
   await db.transaction(async (tx) => {
@@ -108,6 +104,7 @@ export async function acceptInvitation(token: string, password: string, now = ne
     await tx.update(user).set({ emailVerified: true, updatedAt: now }).where(eq(user.id, invitation.userId));
     await tx.delete(session).where(eq(session.userId, invitation.userId));
   });
+  await resetEmailSend("invitation", invitation.email).catch(() => undefined);
   return { email: invitation.email, companyName: invitation.companyName };
 }
 

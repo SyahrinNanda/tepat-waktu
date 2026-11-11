@@ -118,7 +118,7 @@ export async function calculatePayslip(companyId: string, employee: EmployeeRow,
   return buildPayslip({ employee, year, month, planFor, rules, absentFrom, absentBefore: today, attendanceRows, leaveRows, overtimeRows, components });
 }
 
-const summaryKeys: (keyof PayslipSummary)[] = ["workingDays", "daysWorked", "lateDays", "lateMinutes", "absentDays", "paidLeaveDays", "unpaidLeaveDays", "workedHours", "overtimeHours"];
+const summaryKeys: (keyof PayslipSummary)[] = ["workingDays", "daysWorked", "lateDays", "lateMinutes", "missingCheckouts", "absentDays", "paidLeaveDays", "unpaidLeaveDays", "workedHours", "overtimeHours"];
 
 async function finalSnapshot(companyId: string, employee: EmployeeRow, year: number, month: number): Promise<Payslip | null> {
   const [payroll] = await db.select().from(payrolls)

@@ -28,7 +28,7 @@ export function LoginForm() {
   async function sendCode() {
     const result = await authClient.twoFactor.sendOtp();
     if (result.error) {
-      setError(result.error.status === 429 ? "Terlalu banyak permintaan kode. Tunggu sebentar lalu coba lagi." : "Kode belum bisa dikirim ke email Anda. Coba kirim ulang, atau masuk ulang dari awal.");
+      setError(result.error.status === 429 ? result.error.message || "Terlalu banyak permintaan kode. Tunggu sebentar lalu coba lagi." : "Kode belum bisa dikirim ke email Anda. Coba kirim ulang, atau masuk ulang dari awal.");
       return false;
     }
     setResendIn(RESEND_SECONDS);
@@ -53,7 +53,7 @@ export function LoginForm() {
       if (result.error) {
         if (result.error.code === "EMAIL_NOT_VERIFIED") {
           // Better Auth (sendOnSignIn) has just emailed a fresh verification link.
-          setError("Email belum diverifikasi. Kami sudah mengirim ulang tautan verifikasi ke email Anda; buka tautan itu untuk mengaktifkan akun.");
+          setError("Email belum diverifikasi. Tautan verifikasi sudah dikirim ke email Anda; buka tautan itu untuk mengaktifkan akun. Pengiriman ulang dibatasi bertahap agar tidak spam, jadi periksa juga email sebelumnya dan folder spam.");
         } else if (result.error.code === "ACCOUNT_DISABLED" || result.error.status === 403) {
           // Status switched off by the company admin (lib/auth.ts databaseHooks).
           setError(result.error.message || "Akun Anda dinonaktifkan oleh admin perusahaan.");

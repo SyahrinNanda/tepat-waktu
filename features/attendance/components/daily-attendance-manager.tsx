@@ -142,19 +142,15 @@ export function DailyAttendanceManager({
     });
   };
 
-  const handlePrevDay = () => {
-    const current = new Date(`${date}T00:00:00`);
-    current.setDate(current.getDate() - 1);
-    const prev = current.toISOString().slice(0, 10);
-    handleDateChange(prev);
+  // Day arithmetic in UTC: a local-midnight Date turned into ISO text shifts a day back in WIB/WITA/WIT,
+  // which made "next day" land on the same date and "previous day" skip one.
+  const shiftDate = (value: string, days: number) => {
+    const current = new Date(`${value}T00:00:00Z`);
+    current.setUTCDate(current.getUTCDate() + days);
+    return current.toISOString().slice(0, 10);
   };
-
-  const handleNextDay = () => {
-    const current = new Date(`${date}T00:00:00`);
-    current.setDate(current.getDate() + 1);
-    const next = current.toISOString().slice(0, 10);
-    handleDateChange(next);
-  };
+  const handlePrevDay = () => handleDateChange(shiftDate(date, -1));
+  const handleNextDay = () => handleDateChange(shiftDate(date, 1));
 
   const handleResetFilters = () => {
     setSearch("");
@@ -163,7 +159,7 @@ export function DailyAttendanceManager({
     setFilterShift("");
     setFilterPanelOpen(false);
     setActivePill("all");
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     if (date !== today) {
       handleDateChange(today);
     }

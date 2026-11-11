@@ -5,7 +5,6 @@ import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
-  Bell,
   Building2,
   CalendarCheck2,
   ChevronDown,
@@ -28,7 +27,8 @@ import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
 import { PlatformAnnouncements } from "@/features/platform-admin/components/platform-announcements";
 import type { TenantAnnouncement } from "@/features/platform-admin/server/announcements";
-import { SubscriptionBanner, SubscriptionBell, SubscriptionWarningDialog, type SubscriptionAlertInput } from "@/features/subscriptions/components/subscription-alerts";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { SubscriptionBanner, SubscriptionWarningDialog, type SubscriptionAlertInput } from "@/features/subscriptions/components/subscription-alerts";
 import { leaveCompany } from "@/app/superadmin/actions";
 import { Logo } from "./logo";
 import { FloatingMenuLayer } from "./floating-menu-layer";
@@ -272,7 +272,7 @@ export function DashboardShell({
             ) : null}
             <button className="support-link"><FileText size={14} /> Tutorial</button>
             <button className="support-link"><MessageCircleQuestion size={14} /> Customer Service</button>
-            {subscription ? <SubscriptionBell status={subscription} canRenew={canRenew} /> : <button className="icon-button notification-button" aria-label="Notifikasi"><Bell size={19} /></button>}
+            <NotificationBell subscription={subscription ?? undefined} canRenew={canRenew} />
             <span className="role-pill">{isSuperAdmin ? "Super Admin" : roleLabels[normalizedRole] ?? role}</span>
             <div className="topbar-user" title={userEmail}>
               <span className="avatar">{initials}</span>

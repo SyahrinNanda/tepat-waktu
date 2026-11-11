@@ -314,7 +314,8 @@ export async function createCompanyUserAction(input: {
       const sent = await createAndSendInvitation({
         companyId: context.companyId, userId: targetUser.id, email, name: parsed.name, roleLabel: getRoleDisplay(parsed.role),
         invitedBy: context.session.user.id, inviterName: context.session.user.name,
-      }).catch(() => false);
+      }).catch((error) => (error instanceof InvitationError ? error.message : false));
+      if (typeof sent === "string") return { ok: true, message: `User ditambahkan, tetapi undangan belum dikirim: ${sent}` };
       return sent
         ? { ok: true, message: `User ditambahkan. Email undangan dikirim ke ${email}; tautannya berlaku 7 hari.` }
         : { ok: true, message: "User ditambahkan, tetapi email undangan gagal dikirim. Coba lagi lewat menu ⋮ → Kirim ulang undangan." };

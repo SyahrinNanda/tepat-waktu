@@ -7,6 +7,8 @@ export type PayslipSummary = {
   daysWorked: number;
   lateDays: number;
   lateMinutes: number;
+  /** Past days with a check-in but no check-out, counted until the scheduled end time. */
+  missingCheckouts: number;
   absentDays: number;
   paidLeaveDays: number;
   unpaidLeaveDays: number;
@@ -60,7 +62,10 @@ export type CalculationInput = {
    */
   planFor: (date: string, scheduleId: string | null) => DayPlan;
   rules: PayrollRules;
-  /** Working days in [absentFrom, absentBefore) without attendance or leave count as alpa. */
+  /**
+   * Working days in [absentFrom, absentBefore) without attendance or leave count as alpa; a check-in
+   * before absentBefore without check-out counts until the scheduled end. absentBefore is today.
+   */
   absentFrom: string;
   absentBefore: string;
   attendanceRows: { date: string; scheduleId: string | null; status: "present" | "late" | "absent" | "leave"; checkIn: string | null; checkOut: string | null; breakStart: string | null; breakEnd: string | null }[];
@@ -128,13 +133,24 @@ export function buildPayslip({ employee, year, month, planFor, rules, absentFrom
   const paidLeaveDates = [...leaveByDate].filter(([, paid]) => paid).map(([date]) => date);
   const unpaidLeaveDays = [...leaveByDate.values()].filter((paid) => !paid).length;
 
-  let daysWorked = 0, lateDays = 0, lateMinutes = 0, lateHours = 0, absentDays = 0, workedMinutes = 0;
+  let daysWorked = 0, lateDays = 0, lateMinutes = 0, lateHours = 0, absentDays = 0, workedMinutes = 0, missingCheckouts = 0;
   const recordedDates = new Set<string>();
   for (const row of attendanceRows) {
     recordedDates.add(row.date);
     if (row.status === "present" || row.status === "late") {
       daysWorked++;
-      const span = minutesBetween(row.checkIn, row.checkOut);
+      let span = minutesBetween(row.checkIn, row.checkOut);
+      // Forgot to check out on a day that is over (check-out is only possible on the same day):
+      // the day counts until the schedule's end time, so the pay is as if they left on time.
+      if (row.checkIn && !row.checkOut && row.date < absentBefore) {
+        const plan = planFor(row.date, row.scheduleId);
+        if (plan) {
+          let end = clock(plan.end);
+          if (end <= clock(plan.start)) end += 1440;
+          span = Math.max(0, end - clock(row.checkIn));
+          missingCheckouts++;
+        }
+      }
       workedMinutes += span - breakMinutesFor(span, minutesBetween(row.breakStart, row.breakEnd), rules);
       if (row.status === "late") {
         lateDays++;
@@ -201,7 +217,7 @@ export function buildPayslip({ employee, year, month, planFor, rules, absentFrom
   return {
     employee: { id: employee.id, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, department: employee.department },
     year, month, basis: employee.salaryBasis, baseRate: rate,
-    summary: { workingDays: workingDates.length, daysWorked, lateDays, lateMinutes, absentDays, paidLeaveDays: paidLeaveDates.length, unpaidLeaveDays, workedHours, overtimeHours },
+    summary: { workingDays: workingDates.length, daysWorked, lateDays, lateMinutes, missingCheckouts, absentDays, paidLeaveDays: paidLeaveDates.length, unpaidLeaveDays, workedHours, overtimeHours },
     earnings, deductions, grossPay, totalDeductions, netPay: grossPay - totalDeductions,
     status: "draft", finalizedAt: null,
   };

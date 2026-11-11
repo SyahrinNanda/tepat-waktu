@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { companyMembers, subscriptionPlans, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { peekEmailSend } from "@/lib/email-throttle";
 import { REGISTRATION_INDUSTRIES, saveRegistrationRequest } from "./provision";
 
 export const VERIFIED_CALLBACK = "/verifikasi-email/berhasil";
@@ -35,6 +36,10 @@ export async function handleRegistration(input: unknown, headers: Headers): Prom
     .where(and(eq(subscriptionPlans.code, data.plan), eq(subscriptionPlans.active, true), isNull(subscriptionPlans.companyId))).limit(1);
   if (!plan) return fail(400, "Paket tidak tersedia. Pilih paket lain.");
 
+  // Signing up again and again with the same address would resend the verification email each time.
+  const throttle = await peekEmailSend("verification", data.email);
+  if (!throttle.allowed) return { status: 429, body: { message: throttle.message, retryAfterSeconds: throttle.retryAfterSeconds } };
+
   const [existing] = await db.select({ id: user.id, emailVerified: user.emailVerified }).from(user).where(eq(user.email, data.email)).limit(1);
   if (existing) {
     const [membership] = await db.select({ id: companyMembers.id }).from(companyMembers).where(eq(companyMembers.userId, existing.id)).limit(1);
@@ -61,6 +66,11 @@ export async function handleRegistration(input: unknown, headers: Headers): Prom
     return fail(500, "Akun belum dapat dibuat. Silakan coba lagi.");
   }
 
-  await auth.api.sendVerificationEmail({ body: { email: data.email, callbackURL: VERIFIED_CALLBACK }, headers });
+  try {
+    await auth.api.sendVerificationEmail({ body: { email: data.email, callbackURL: VERIFIED_CALLBACK }, headers });
+  } catch (error) {
+    // Limit reached between the check above and now: the account exists; the link can be resent later.
+    if (!(error instanceof APIError && error.statusCode === 429)) throw error;
+  }
   return { status: 201, body: { ok: true, email: data.email } };
 }

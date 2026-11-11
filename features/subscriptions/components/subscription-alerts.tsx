@@ -13,7 +13,7 @@ export type SubscriptionAlertInput = Pick<SubscriptionStatus, "state" | "endsAt"
 
 const day = (value: string, timeZone?: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeStyle: "short", timeZone: resolveTimeZone(timeZone) }).format(new Date(value));
 
-function copy(status: SubscriptionAlertInput, canRenew: boolean) {
+export function subscriptionAlertCopy(status: SubscriptionAlertInput, canRenew: boolean) {
   const plan = status.planName ? `Paket ${status.planName}` : "Paket perusahaan";
   const action = canRenew ? "Perpanjang sekarang atau pilih paket lain agar seluruh akun tetap bisa mengakses TepatWaktu." : "Hubungi Admin Perusahaan untuk memperpanjang agar akun Anda tetap bisa mengakses TepatWaktu.";
   if (status.state === "expired") return { tone: "expired", title: `${plan} telah berakhir`, body: canRenew ? "Akses seluruh akun dihentikan. Perpanjang atau pilih paket baru untuk membukanya kembali." : "Akses dihentikan sampai paket diperpanjang." };
@@ -22,14 +22,14 @@ function copy(status: SubscriptionAlertInput, canRenew: boolean) {
   return { tone: status.warning === 2 ? "urgent" : "warning", title: `${plan} berakhir ${when}`, body: `${status.endsAt ? `Masa aktif sampai ${day(status.endsAt, status.timezone)}. ` : ""}${action}` };
 }
 
-function hasAlert(status: SubscriptionAlertInput) {
+export function hasSubscriptionAlert(status: SubscriptionAlertInput) {
   return status.state === "expired" || status.warning !== null;
 }
 
 /** Persistent strip at the top of every dashboard page while a warning applies. */
 export function SubscriptionBanner({ status, canRenew }: { status: SubscriptionAlertInput; canRenew: boolean }) {
-  if (!hasAlert(status)) return null;
-  const text = copy(status, canRenew);
+  if (!hasSubscriptionAlert(status)) return null;
+  const text = subscriptionAlertCopy(status, canRenew);
   return <div className={`subscription-banner ${text.tone}`} role={status.warning === 2 || status.state === "expired" ? "alert" : "status"}>
     {status.state === "expired" ? <CalendarX2 size={18} /> : <AlarmClock size={18} />}
     <span><strong>{text.title}.</strong> {text.body}</span>
@@ -57,7 +57,7 @@ export function SubscriptionWarningDialog({ status, canRenew, userKey }: { statu
     try { window.localStorage.setItem(storageKey, "1"); } catch { /* ignore */ }
     setOpen(false);
   }
-  const text = copy(status, canRenew);
+  const text = subscriptionAlertCopy(status, canRenew);
   return <div className="standard-modal-overlay" onClick={close}>
     <div className={`standard-modal-card subscription-warning-dialog ${text.tone}`} role="alertdialog" aria-modal="true" aria-labelledby="subscription-warning-title" onClick={(event) => event.stopPropagation()}>
       <header className="standard-modal-header"><div><span className="subscription-warning-icon"><AlarmClock size={22} /></span><h2 id="subscription-warning-title">{text.title}</h2></div><button className="icon-button" type="button" onClick={close} aria-label="Tutup"><X size={18} /></button></header>
@@ -82,8 +82,8 @@ export function SubscriptionBell({ status, canRenew }: { status: SubscriptionAle
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
-  const alert = hasAlert(status);
-  const text = alert ? copy(status, canRenew) : null;
+  const alert = hasSubscriptionAlert(status);
+  const text = alert ? subscriptionAlertCopy(status, canRenew) : null;
   return <div className="notification-wrap" ref={ref}>
     <button className="icon-button notification-button" type="button" aria-label={alert ? "Notifikasi (1 baru)" : "Notifikasi"} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
       <Bell size={19} />

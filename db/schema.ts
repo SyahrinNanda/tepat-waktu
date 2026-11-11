@@ -114,9 +114,16 @@ export const twoFactor = pgTable(
   (table) => [index("two_factor_secret_idx").on(table.secret), index("two_factor_user_id_idx").on(table.userId)],
 );
 
+/**
+ * Escalating resend limit per (purpose, email): see lib/email-throttle.ts. email_hash is a SHA-256 of
+ * "purpose:email" so the table never stores addresses.
+ */
 export const emailSendCooldowns = pgTable("email_send_cooldowns", {
   emailHash: text("email_hash").primaryKey(),
   nextAllowedAt: timestamp("next_allowed_at", { withTimezone: true }).notNull(),
+  /** Emails sent in the current streak; picks the next wait (1 min, 5 min, 1 h, 5 h, 24 h...). */
+  sendCount: integer("send_count").default(0).notNull(),
+  lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -1010,3 +1017,12 @@ export const employeeComplaints = pgTable("employee_complaints", {
   index("employee_complaints_company_created_idx").on(table.companyId, table.createdAt),
   index("employee_complaints_reporter_idx").on(table.companyId, table.reporterKey),
 ]);
+
+/**
+ * When a user last opened the notification bell. Notifications themselves are derived from the source
+ * records (announcements, complaints, leave and overtime requests); anything newer than seen_at is unread.
+ */
+export const notificationReads = pgTable("notification_reads", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  seenAt: timestamp("seen_at", { withTimezone: true }).defaultNow().notNull(),
+});

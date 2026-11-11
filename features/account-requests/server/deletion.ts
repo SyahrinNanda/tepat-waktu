@@ -2,13 +2,12 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, count, eq, gt, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { companies, companyMembers, deletionRequests, user } from "@/db/schema";
+import { reserveEmailSend } from "@/lib/email-throttle";
 import { sendMail } from "@/lib/mailer";
 import { renderBrandedEmail } from "@/lib/registration/auth-emails";
 
 /** How long the emailed confirmation link stays valid. */
 export const CONFIRM_TTL_MS = 24 * 60 * 60 * 1000;
-/** A new confirmation email for the same account is sent at most this often. */
-const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
 
 /** Same answer whether or not the email exists, so the form cannot be used to probe accounts. */
 export const DELETION_REQUEST_MESSAGE =
@@ -41,7 +40,8 @@ export async function requestAccountDeletion(rawEmail: string, reason: string | 
     .from(deletionRequests)
     .where(and(eq(deletionRequests.userId, account.id), eq(deletionRequests.status, "pending")));
   if (open.some((row) => row.confirmedAt)) return; // Already waiting for review.
-  if (open.some((row) => now.getTime() - row.createdAt.getTime() < RESEND_COOLDOWN_MS)) return;
+  // Escalating resend limit (1 min, 5 min, 1 h, 5 h, 24 h). Silent: the answer is the same either way.
+  if (!(await reserveEmailSend("account_deletion", email, now)).allowed) return;
 
   const token = randomBytes(32).toString("base64url");
   await db.transaction(async (tx) => {

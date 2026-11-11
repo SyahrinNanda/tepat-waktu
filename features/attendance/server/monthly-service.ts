@@ -3,10 +3,12 @@ import { and, asc, eq, gte, ilike, lte, or } from "drizzle-orm";
 import { db } from "@/db";
 import {
   attendances,
+  companies,
   employees,
   workSchedules,
 } from "@/db/schema";
 import { attendanceManagerContext } from "@/features/attendance/server/attendance-service";
+import { dateInTimeZone } from "@/lib/current-company";
 import { getPayrollRules } from "@/features/payslips/server/payroll-settings";
 import { breakMinutesFor } from "@/features/payslips/server/payslip-calculation";
 
@@ -78,7 +80,11 @@ export async function fetchMonthlyAttendanceSummary({
     .where(eq(workSchedules.companyId, companyId));
 
   // Break length comes from the company payroll rules (Slip Gaji > Pengaturan Perhitungan).
-  const rules = await getPayrollRules(companyId);
+  const [rules, [company]] = await Promise.all([
+    getPayrollRules(companyId),
+    db.select({ timezone: companies.timezone }).from(companies).where(eq(companies.id, companyId)).limit(1),
+  ]);
+  const today = dateInTimeZone(company?.timezone ?? "Asia/Jakarta");
   const shiftMap = new Map<string, { name: string; start: number; end: number; duration: number }>();
   for (const s of shiftRows) {
     const startM = parseTimeToMinutes(s.startTime) ?? 8 * 60;
@@ -201,8 +207,16 @@ export async function fetchMonthlyAttendanceSummary({
               lemburMinutes += outM - scheduledEnd;
             }
           } else {
-            // Belum keluar
+            // Belum keluar. A past day without check-out (forgotten) counts until the schedule's end,
+            // the same as the payslip, so the employee's hours are not lost.
             hasCheckedInTodayWithoutCheckOut = true;
+            if (rec.attendanceDate < today) {
+              const end = scheduledEnd > scheduledStart ? scheduledEnd : scheduledEnd + 1440;
+              const totalDuration = Math.max(0, end - inM);
+              const breakMinutes = breakMinutesFor(totalDuration, 0, rules);
+              jamIstirahatMinutes += breakMinutes;
+              jamAktualMinutes += totalDuration - breakMinutes;
+            }
           }
         }
       } else if (rec.status === "leave" || rec.status === "absent") {

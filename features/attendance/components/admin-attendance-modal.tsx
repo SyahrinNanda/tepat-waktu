@@ -31,7 +31,8 @@ export function AdminAttendanceModal({
   const checkInInputRef = useRef<HTMLInputElement>(null);
   const checkOutInputRef = useRef<HTMLInputElement>(null);
 
-  const todayStr = defaultDate || new Date().toISOString().slice(0, 10);
+  // Local calendar date (toISOString would give yesterday before 07:00 WIB).
+  const todayStr = defaultDate || new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
   function handleCheckInFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

@@ -6,7 +6,7 @@ export function employeeAccountMessage(code: string | undefined, email: string):
     case "email_updated": return { tone: "success", text: `Email akun ikut diperbarui dan undangan baru dikirim ke ${email}.` };
     case "linked": return { tone: "success", text: "Email ini sudah punya akun di perusahaan ini, jadi akun tersebut ditautkan ke data karyawan." };
     case "already_active": return { tone: "warning", text: "Karyawan ini sudah punya akun aktif; tidak ada undangan yang dikirim." };
-    case "cooldown": return { tone: "warning", text: "Undangan baru saja dikirim. Tunggu satu menit sebelum mengirim ulang." };
+    case "cooldown": return { tone: "warning", text: "Undangan ke email ini baru saja dikirim. Untuk mencegah spam, pengiriman ulang dibatasi bertahap (1 menit, 5 menit, 1 jam, 5 jam, lalu 24 jam). Coba lagi nanti." };
     case "email_kept": return { tone: "warning", text: "Data karyawan diperbarui. Karyawan sudah membuat password, jadi email login-nya tidak diubah. Untuk mengganti email login, hubungi admin TepatWaktu." };
     case "email_taken": return { tone: "error", text: `Email ${email} sudah dipakai akun lain, jadi email login karyawan tidak diubah.` };
     case "email_failed": return { tone: "error", text: "Email undangan gagal dikirim. Coba lagi dengan tombol Kirim ulang undangan." };
