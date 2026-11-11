@@ -33,3 +33,5 @@
 
 /* Employee create/edit: save rejected (email in use, plan limit...) */
 .employee-form-error { margin: 0 0 16px; }
+
+.payroll-rules{padding:6px 24px 22px}.payroll-rules section{padding:18px 0;border-bottom:1px dashed var(--line-strong)}.payroll-rules h2{margin:0 0 4px;color:#2d2a27;font-size:14px}.payroll-rules section>p{margin:0 0 12px;color:#6f6a65;font-size:12px;line-height:1.5}.payroll-rules section>small{color:#827e79;font-size:11px}.payroll-rules-grid{display:grid;grid-template-columns:repeat(2,minmax(0,320px));gap:0 20px}.payroll-rules .employee-field input:disabled{background:#f4f3f2;color:#a19c97}.payroll-rules-ok{margin-top:16px;padding:10px 14px;color:#1f6b3a;background:#eaf7ef;border:1px solid #bfe5cc;border-radius:6px;font-size:12px}.payroll-rules .announcement-inline-error{margin-top:16px}.payroll-rules-actions{margin-top:18px;display:flex;justify-content:flex-end;gap:10px}@media (max-width:700px){.payroll-rules{padding:4px 16px 18px}.payroll-rules-grid{grid-template-columns:1fr}.payroll-rules-actions{flex-direction:column-reverse}.payroll-rules-actions>*{justify-content:center}}

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { employees } from "@/db/schema";
 import { requireCompanyRole } from "@/lib/current-company";
+import { payrollRulesSchema, savePayrollRules } from "./payroll-settings";
 import { finalizePayslips, unlockPayslip } from "./payslip-service";
 
 const period = { year: z.coerce.number().int().min(2000).max(2100), month: z.coerce.number().int().min(1).max(12) };
@@ -30,4 +31,14 @@ export async function unlockPayslipAction(input: { employeeId: string; year: num
   const count = await unlockPayslip(context.companyId, parsed.employeeId, parsed.year, parsed.month);
   revalidatePath("/dashboard/karyawan/slip-gaji");
   return { count };
+}
+
+/** Saves the company's payslip rules (break, late and alpa deductions). Locked slips keep their numbers. */
+export async function savePayrollRulesAction(input: unknown): Promise<{ ok: boolean; error?: string }> {
+  const context = await payslipContext();
+  const parsed = payrollRulesSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Pengaturan tidak valid." };
+  await savePayrollRules(context.companyId, parsed.data, context.session.user.id);
+  revalidatePath("/dashboard/karyawan/slip-gaji", "layout");
+  return { ok: true };
 }

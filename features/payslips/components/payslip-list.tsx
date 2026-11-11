@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { FileText, Lock, Search } from "lucide-react";
+import { FileText, Lock, Search, Settings2 } from "lucide-react";
 import { confirmAction } from "@/components/confirm-dialog";
 import { finalizePayslipsAction } from "@/features/payslips/server/actions";
 import type { Payslip } from "@/features/payslips/server/payslip-service";
@@ -43,6 +43,7 @@ export function PayslipList({ slips, year, month, years }: { slips: Payslip[]; y
         <select value={month} onChange={(event) => changePeriod(year, Number(event.target.value))} aria-label="Bulan">{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select>
         <select value={year} onChange={(event) => changePeriod(Number(event.target.value), month)} aria-label="Tahun">{years.map((item) => <option key={item}>{item}</option>)}</select>
         <span/>
+        <Link className="btn btn-outline btn-compact" href="/dashboard/karyawan/slip-gaji/pengaturan"><Settings2 size={15}/> Pengaturan Perhitungan</Link>
         <button className="btn btn-primary btn-compact" disabled={pending || !(selected.length || drafts.length)} onClick={() => finalize(selected.length ? selected : drafts.map((slip) => slip.employee.id))}>
           <Lock size={15}/> {pending ? "Mengunci..." : selected.length ? `Kunci ${selected.length} Slip` : "Kunci Semua Draft"}
         </button>

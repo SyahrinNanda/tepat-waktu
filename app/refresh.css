@@ -412,7 +412,7 @@ h1, h2, h3 { letter-spacing: -.02em; }
 .payslip-summary-grid strong { display: block; margin-top: 6px; color: var(--ink); font-size: 21px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .payslip-summary-grid .highlight { background: linear-gradient(135deg, #ffb424, #faa30e); border-color: transparent; color: #fff; }
 .payslip-summary-grid .highlight span { color: var(--on-primary); }
-.payslip-toolbar { padding: 18px 22px; display: grid; grid-template-columns: minmax(220px, 320px) 150px 110px 1fr auto; gap: 10px; align-items: center; border-bottom: 1px dashed var(--line-strong); }
+.payslip-toolbar { padding: 18px 22px; display: grid; grid-template-columns: minmax(220px, 320px) 150px 110px 1fr auto auto; gap: 10px; align-items: center; border-bottom: 1px dashed var(--line-strong); }
 .payslip-toolbar select { height: 42px; padding: 0 12px; color: var(--ink-soft); background: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
 .payslip-table td small { display: block; margin-top: 3px; color: var(--muted); font-size: 11.5px; }
 .payslip-table td small.payslip-warn, .payslip-warn { color: #c4511d; font-weight: 700; }
@@ -455,7 +455,7 @@ button.leave-paid:hover { box-shadow: 0 0 0 2px currentColor inset; }
 @media (max-width: 980px) {
   .payslip-summary-grid { grid-template-columns: 1fr 1fr; }
   .payslip-toolbar { grid-template-columns: 1fr 1fr; }
-  .payslip-toolbar .master-search, .payslip-toolbar > button { grid-column: 1 / -1; }
+  .payslip-toolbar .master-search, .payslip-toolbar > button, .payslip-toolbar > a { grid-column: 1 / -1; }
   .payslip-toolbar > span { display: none; }
   .payslip-doc { padding: 20px; }
   .payslip-doc-info, .payslip-doc-attendance { grid-template-columns: 1fr 1fr; }

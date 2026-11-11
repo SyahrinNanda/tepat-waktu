@@ -495,6 +495,26 @@ export const payrollItems = pgTable("payroll_items", {
   index("payroll_items_company_idx").on(table.companyId),
 ]);
 
+/**
+ * How a company turns attendance into pay (one row per company; missing row = defaults).
+ * - break: deducted from each worked day when the employee did not record a break, but only when
+ *   that day's work span is longer than `breakMinWorkMinutes` (a short half day keeps its hours);
+ * - late: "none" | "per_day" (amount x late days) | "per_hour" (amount x started hours late, per day)
+ *   | "per_minute" (amount x minutes after start time);
+ * - absent (alpa, monthly salaries): "daily_rate" (base salary / working days) | "fixed" | "none".
+ */
+export const payrollSettings = pgTable("payroll_settings", {
+  companyId: uuid("company_id").primaryKey().references(() => companies.id, { onDelete: "cascade" }),
+  breakMinutes: integer("break_minutes").default(60).notNull(),
+  breakMinWorkMinutes: integer("break_min_work_minutes").default(240).notNull(),
+  lateDeductionMode: text("late_deduction_mode").default("none").notNull(),
+  lateDeductionAmount: bigint("late_deduction_amount", { mode: "number" }).default(0).notNull(),
+  absentDeductionMode: text("absent_deduction_mode").default("daily_rate").notNull(),
+  absentDeductionAmount: bigint("absent_deduction_amount", { mode: "number" }).default(0).notNull(),
+  updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const attendances = pgTable(
   "attendances",
   {

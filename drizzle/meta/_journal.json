@@ -309,6 +309,13 @@
       "when": 1795600000000,
       "tag": "0043_division_schedules_employee_locations",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1795700000000,
+      "tag": "0044_payroll_settings",
+      "breakpoints": true
     }
   ]
 }

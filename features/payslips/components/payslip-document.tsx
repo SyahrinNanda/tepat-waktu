@@ -60,7 +60,7 @@ export function PayslipDocument({ slip, companyName, mode = "manage", backHref }
       </section>
       <section className="payslip-doc-attendance">
         <Stat label="Hari kerja" value={`${summary.workingDays} hari`}/>
-        <Stat label="Hadir" value={`${summary.daysWorked} hari`} hint={summary.lateDays ? `${summary.lateDays} terlambat` : undefined}/>
+        <Stat label="Hadir" value={`${summary.daysWorked} hari`} hint={summary.lateDays ? `${summary.lateDays}x terlambat${summary.lateMinutes ? ` · ${formatDuration(summary.lateMinutes / 60)}` : ""}` : undefined}/>
         <Stat label="Izin dibayar" value={`${summary.paidLeaveDays} hari`}/>
         <Stat label="Izin tidak dibayar" value={`${summary.unpaidLeaveDays} hari`} warn={summary.unpaidLeaveDays > 0}/>
         <Stat label="Alpa" value={`${summary.absentDays} hari`} warn={summary.absentDays > 0}/>
@@ -73,9 +73,9 @@ export function PayslipDocument({ slip, companyName, mode = "manage", backHref }
       <footer className="payslip-doc-net"><span>Gaji Bersih Diterima</span><strong>{rupiah(slip.netPay)}</strong></footer>
       <p className="payslip-doc-note">
         {slip.basis === "monthly"
-          ? "Gaji bulanan dipotong untuk izin/cuti tidak dibayar dan alpa, sebesar gaji pokok dibagi jumlah hari kerja bulan ini."
+          ? "Hari kerja mengikuti jadwal kerja divisi. Izin/cuti tidak dibayar dipotong sebesar gaji pokok dibagi jumlah hari kerja bulan ini; alpa dan terlambat dipotong sesuai pengaturan perhitungan gaji perusahaan."
           : "Upah dihitung dari kehadiran nyata. Izin/cuti dibayar tetap diupah, sedangkan izin tidak dibayar dan alpa tidak diupah."}
-        {" "}Komponen per hari mengikuti hari hadir, dan komponen per jam mengikuti jam kerja.
+        {" "}Jam kerja sudah dikurangi jam istirahat. Komponen per hari mengikuti hari hadir, dan komponen per jam mengikuti jam kerja.
       </p>
     </article>
   </>;

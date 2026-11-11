@@ -7,6 +7,8 @@ import {
   workSchedules,
 } from "@/db/schema";
 import { attendanceManagerContext } from "@/features/attendance/server/attendance-service";
+import { getPayrollRules } from "@/features/payslips/server/payroll-settings";
+import { breakMinutesFor } from "@/features/payslips/server/payslip-calculation";
 
 import {
   formatMinutesExcel,
@@ -75,11 +77,14 @@ export async function fetchMonthlyAttendanceSummary({
     .from(workSchedules)
     .where(eq(workSchedules.companyId, companyId));
 
+  // Break length comes from the company payroll rules (Slip Gaji > Pengaturan Perhitungan).
+  const rules = await getPayrollRules(companyId);
   const shiftMap = new Map<string, { name: string; start: number; end: number; duration: number }>();
   for (const s of shiftRows) {
     const startM = parseTimeToMinutes(s.startTime) ?? 8 * 60;
     const endM = parseTimeToMinutes(s.endTime) ?? 17 * 60;
-    const duration = Math.max(0, endM - startM - 60); // standard 8 hours minus 1 hour break
+    const span = Math.max(0, endM - startM);
+    const duration = span - breakMinutesFor(span, 0, rules);
     shiftMap.set(s.id, { name: s.name, start: startM, end: endM, duration });
   }
 
@@ -130,7 +135,7 @@ export async function fetchMonthlyAttendanceSummary({
 
   const defaultShiftStart = 8 * 60; // 08:00
   const defaultShiftEnd = 17 * 60; // 17:00
-  const defaultShiftDuration = 8 * 60; // 8 hours
+  const defaultShiftDuration = 9 * 60 - breakMinutesFor(9 * 60, 0, rules); // 08:00-17:00 minus break
 
   // 4. Calculate summaries per employee
   const summaries: MonthlyEmployeeSummary[] = [];
@@ -176,15 +181,13 @@ export async function fetchMonthlyAttendanceSummary({
 
           // Check out & actual hours
           if (outM !== null) {
-            let breakMinutes = 60; // default 1 hour
             const bStart = parseTimeToMinutes(rec.breakStart);
             const bEnd = parseTimeToMinutes(rec.breakEnd);
-            if (bStart !== null && bEnd !== null && bEnd > bStart) {
-              breakMinutes = bEnd - bStart;
-            }
+            const recordedBreak = bStart !== null && bEnd !== null && bEnd > bStart ? bEnd - bStart : 0;
+            const totalDuration = Math.max(0, outM - inM);
+            const breakMinutes = breakMinutesFor(totalDuration, recordedBreak, rules);
             jamIstirahatMinutes += breakMinutes;
 
-            const totalDuration = Math.max(0, outM - inM);
             const actualWork = Math.max(0, totalDuration - breakMinutes);
             jamAktualMinutes += actualWork;
 
