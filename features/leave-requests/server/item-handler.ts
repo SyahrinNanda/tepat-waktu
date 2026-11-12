@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { employees, leaveRequests } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
 import { leaveInputSchema, resolveLeavePaid, reviewerRoles } from "./schemas";
+import { resolveLeaveRules } from "./resolve-leave";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -37,7 +38,9 @@ export async function PATCH(request: Request, { params }: Params) {
   if (existing.status !== "pending") return Response.json({ error: "Hanya pengajuan berstatus menunggu yang dapat diedit." }, { status: 409 });
   const [employee] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, userId: employees.userId }).from(employees).where(and(eq(employees.id, parsed.data.employeeId), eq(employees.companyId, context.companyId), eq(employees.status, "active"))).limit(1);
   if (!employee || (!canReview && employee.userId !== context.userId)) return Response.json({ error: "Karyawan tidak ditemukan atau tidak dapat dipilih." }, { status: 403 });
-  const [updated] = await db.update(leaveRequests).set({ ...parsed.data, paid: resolveLeavePaid(parsed.data, canReview) }).where(and(eq(leaveRequests.id, id), eq(leaveRequests.companyId, context.companyId))).returning();
+  const special = await resolveLeaveRules(context.companyId, parsed.data, id);
+  if (!special.ok) return Response.json({ error: special.error }, { status: 400 });
+  const [updated] = await db.update(leaveRequests).set({ ...parsed.data, ...special.values, paid: resolveLeavePaid(parsed.data, canReview, special.paid) }).where(and(eq(leaveRequests.id, id), eq(leaveRequests.companyId, context.companyId))).returning();
   revalidatePaths(id);
   return Response.json({ row: { ...updated, name: employee.name, employeeCode: employee.employeeCode, department: employee.department } });
 }

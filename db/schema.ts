@@ -139,7 +139,7 @@ export const employeeStatus = pgEnum("employee_status", ["active", "inactive"]);
 export const employeeGender = pgEnum("employee_gender", ["male", "female", "unspecified"]);
 export const attendanceStatus = pgEnum("attendance_status", ["present", "late", "absent", "leave"]);
 export const leaveStatus = pgEnum("leave_status", ["pending", "approved", "rejected"]);
-export const leaveType = pgEnum("leave_type", ["annual", "sick", "permission"]);
+export const leaveType = pgEnum("leave_type", ["annual", "sick", "permission", "special"]);
 export const deletionStatus = pgEnum("deletion_status", ["pending", "processed", "rejected"]);
 export const attendanceEventType = pgEnum("attendance_event_type", ["check_in", "check_out"]);
 export const attendanceEventSource = pgEnum("attendance_event_source", ["self", "admin", "superadmin"]);
@@ -163,6 +163,11 @@ export const companies = pgTable("companies", {
   address: text("address"),
   phone: text("phone"),
   whatsapp: text("whatsapp"),
+  /** Cuti Tahunan rules (see features/leave-requests/annual-leave.ts): days per period, "immediate" | "after_one_year", carry-over. */
+  annualLeaveDays: integer("annual_leave_days").default(12).notNull(),
+  annualLeaveEligibility: text("annual_leave_eligibility").default("immediate").notNull(),
+  annualLeaveCarryOver: boolean("annual_leave_carry_over").default(false).notNull(),
+  annualLeaveCarryOverMax: integer("annual_leave_carry_over_max"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -403,6 +408,7 @@ export const employeeSalaryComponents = pgTable("employee_salary_components", {
   index("employee_salary_components_company_employee_idx").on(table.companyId, table.employeeId),
 ]);
 
+/** Per-employee override of the Cuti Tahunan days of one period; year = the year the period starts (work anniversary). */
 export const employeeLeaveEntitlements = pgTable("employee_leave_entitlements", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
@@ -577,6 +583,45 @@ export const attendanceEvents = pgTable(
   ],
 );
 
+/**
+ * Kinds of "Cuti Khusus" a company offers (Menikah, Melahirkan, Berduka...). durationDays: fixed length in the
+ * employee's working days (the end date is computed); null lets the employee pick both dates.
+ */
+export const specialLeaveTypes = pgTable(
+  "special_leave_types",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    durationDays: integer("duration_days"),
+    paid: boolean("paid").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("special_leave_types_company_name_unique").on(table.companyId, sql`lower(${table.name})`)],
+);
+
+/**
+ * Work contracts of an employee (Kontrak Kerja tab). durationMonths null = no end date (e.g. Tetap).
+ * At most one contract per employee is active; the active one mirrors employees.contract_type.
+ */
+export const employeeContracts = pgTable(
+  "employee_contracts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    employeeId: uuid("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+    contractType: text("contract_type").notNull(),
+    startDate: date("start_date").notNull(),
+    durationMonths: integer("duration_months"),
+    note: text("note"),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("employee_contracts_employee_idx").on(table.companyId, table.employeeId)],
+);
+
 export const leaveRequests = pgTable(
   "leave_requests",
   {
@@ -584,6 +629,11 @@ export const leaveRequests = pgTable(
     companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
     employeeId: uuid("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
     type: leaveType("type").notNull(),
+    /** Only for type "special". The name is kept so history still reads right if the kind is renamed or removed. */
+    specialLeaveTypeId: uuid("special_leave_type_id").references(() => specialLeaveTypes.id, { onDelete: "set null" }),
+    specialLeaveName: text("special_leave_name"),
+    /** Working days covered (Cuti Khusus), per the employee's schedule. Null for the other types. */
+    workDays: integer("work_days"),
     startDate: date("start_date").notNull(),
     endDate: date("end_date").notNull(),
     reason: text("reason").notNull(),

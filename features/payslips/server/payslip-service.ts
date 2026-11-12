@@ -44,7 +44,7 @@ export function parseWorkDays(text: string) {
  * works that weekday; a day already worked on a specific shift uses that shift's hours.
  * Per-weekday rows (Jam Kerja) override a schedule's times; without rows its "work_days" text applies.
  */
-async function schedulePlanner(companyId: string, department: string, recordedScheduleIds: string[]) {
+export async function schedulePlanner(companyId: string, department: string, recordedScheduleIds: string[]) {
   const assigned = await db.select({ id: workSchedules.id }).from(divisions)
     .innerJoin(divisionSchedules, eq(divisionSchedules.divisionId, divisions.id))
     .innerJoin(workSchedules, and(eq(workSchedules.id, divisionSchedules.scheduleId), eq(workSchedules.active, true)))

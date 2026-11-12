@@ -18,7 +18,12 @@
     "superadmin:create": "node scripts/create-superadmin.mjs",
     "accounts:demo": "node scripts/list-demo-accounts.mjs",
     "storage:start": "powershell -ExecutionPolicy Bypass -File scripts/start-object-storage.ps1",
-    "storage:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-object-storage.ps1"
+    "storage:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-object-storage.ps1",
+    "local:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-services.ps1 setup",
+    "local:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-services.ps1 start",
+    "local:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-services.ps1 stop",
+    "local:status": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-services.ps1 status",
+    "local:import-docker": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-services.ps1 import-docker"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",

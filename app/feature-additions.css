@@ -35,3 +35,204 @@
 .employee-form-error { margin: 0 0 16px; }
 
 .payroll-rules{padding:6px 24px 22px}.payroll-rules section{padding:18px 0;border-bottom:1px dashed var(--line-strong)}.payroll-rules h2{margin:0 0 4px;color:#2d2a27;font-size:14px}.payroll-rules section>p{margin:0 0 12px;color:#6f6a65;font-size:12px;line-height:1.5}.payroll-rules section>small{color:#827e79;font-size:11px}.payroll-rules-grid{display:grid;grid-template-columns:repeat(2,minmax(0,320px));gap:0 20px}.payroll-rules .employee-field input:disabled{background:#f4f3f2;color:#a19c97}.payroll-rules-ok{margin-top:16px;padding:10px 14px;color:#1f6b3a;background:#eaf7ef;border:1px solid #bfe5cc;border-radius:6px;font-size:12px}.payroll-rules .announcement-inline-error{margin-top:16px}.payroll-rules-actions{margin-top:18px;display:flex;justify-content:flex-end;gap:10px}@media (max-width:700px){.payroll-rules{padding:4px 16px 18px}.payroll-rules-grid{grid-template-columns:1fr}.payroll-rules-actions{flex-direction:column-reverse}.payroll-rules-actions>*{justify-content:center}}
+
+/* Cuti Khusus (special leave kinds) */
+.leave-primary-toolbar.with-kinds { grid-template-columns: minmax(180px, 1fr) repeat(7, auto); }
+.leave-primary-toolbar.with-kinds > span { display: none; }
+.leave-primary-toolbar.with-kinds > .btn, .leave-primary-toolbar.with-kinds > .leave-filter-button { white-space: nowrap; padding-inline: 14px; }
+.leave-kind { display: flex; flex-direction: column; gap: 2px; }
+.leave-kind small { color: #8a8782; font-size: 10.5px; }
+.special-kind-row { display: flex; gap: 8px; align-items: center; }
+.special-kind-row select { flex: 1; }
+.special-kind-row .btn { white-space: nowrap; min-height: 41px; }
+.special-kind-hint { color: #8a8782; font-size: 11px; }
+.special-kinds { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; max-height: min(70vh, 620px); overflow: auto; }
+.special-kinds-intro { margin: 0; color: #5d5955; font-size: 12.5px; line-height: 1.5; }
+.special-kinds-list { margin: 0; padding: 0; list-style: none; border: 1px solid #e4e3e1; border-radius: 8px; }
+.special-kinds-list li { min-height: 52px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #efeeec; }
+.special-kinds-list li:last-child { border-bottom: 0; }
+.special-kinds-list li > div { display: flex; flex-direction: column; gap: 2px; }
+.special-kinds-list strong { font-size: 13px; color: #34312e; }
+.special-kinds-list small { font-size: 11px; color: #8a8782; }
+.special-kinds-actions { display: flex; gap: 6px; }
+.special-kinds-actions button { width: 32px; height: 32px; display: grid; place-items: center; color: #5d5955; background: #fff; border: 1px solid #dedcd9; border-radius: 6px; cursor: pointer; }
+.special-kinds-actions button.danger { color: #c43e3e; }
+.special-kinds-empty { padding: 16px; color: #8a8782; font-size: 12px; text-align: center; border: 1px dashed #dcdad7; border-radius: 8px; }
+.special-kinds-suggest { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11.5px; color: #6b6762; }
+.special-kinds-suggest > span { width: 100%; }
+.special-kinds-suggest button { padding: 5px 9px; display: inline-flex; align-items: center; gap: 4px; color: #8a4f05; background: #fff9ee; border: 1px solid #f6d9a3; border-radius: 999px; font: inherit; font-size: 11.5px; cursor: pointer; }
+.special-kinds-suggest button small { color: #b58a4a; }
+.special-kinds-footer { min-height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: flex-end; background: #fafafa; border-top: 1px solid #e4e3e1; }
+@media (max-width: 1100px) { .leave-primary-toolbar.with-kinds { grid-template-columns: 1fr auto auto; } }
+@media (max-width: 700px) {
+  .leave-primary-toolbar.with-kinds { grid-template-columns: 1fr 1fr; }
+  .special-kinds { padding: 14px; }
+  .special-kind-row { flex-direction: column; align-items: stretch; }
+}
+
+/* Cuti Khusus rules: form preview, kind editor, per-employee summary */
+.leave-modal-grid input.readonly { color: #6b6762; background: #f6f5f3; }
+.special-preview { padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; border-radius: 6px; font-size: 12px; }
+.special-preview.ok { color: #1f6b45; background: #ecf8f1; border: 1px solid #c8ebd6; }
+.special-preview.bad { color: #b33a3a; background: #fff0f0; border: 1px solid #f5cccc; }
+.special-preview small { color: inherit; opacity: .85; font-size: 11px; }
+.special-kinds-list li.editing { background: #fff9ee; }
+.special-kinds-form { padding: 14px; display: flex; flex-direction: column; gap: 12px; border: 1px solid #e4e3e1; border-radius: 8px; background: #fcfcfb; }
+.special-kinds-form h3 { margin: 0; font-size: 13px; color: #34312e; }
+.special-kinds-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+.special-kinds-fields .wide { grid-column: 1 / -1; }
+.special-kinds-fields label { display: flex; flex-direction: column; gap: 5px; color: #3d3a36; font-size: 11.5px; }
+.special-kinds-fields input, .special-kinds-fields select { width: 100%; height: 36px; padding: 0 10px; color: #413d3a; background: #fff; border: 1px solid #d9d7d4; border-radius: 5px; font: inherit; font-size: 12.5px; }
+.special-kinds-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.leave-special-cell span { display: flex; flex-direction: column; margin-bottom: 4px; }
+.leave-special-cell strong { font-size: 12px; }
+.leave-special-cell small { color: #8a8782; font-size: 10.5px; }
+@media (max-width: 700px) { .special-kinds-fields { grid-template-columns: 1fr; } }
+
+/* Employee detail tabs: Absen Kunjungan + Kontrak Kerja (11 Nov 2026). */
+.employee-detail-tabs a{padding:10px 13px;white-space:nowrap;color:#413d3a;font-size:11px;text-decoration:none;border-bottom:2px solid transparent}
+.employee-detail-tabs a:hover{color:#b05c07}
+.employee-detail-tabs a.active{color:#b05c07;border-bottom-color:#f19a05}
+.employee-tab-panel{padding-top:4px}
+.employee-tab-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 16px}
+.employee-tab-head h3{margin:0 !important}
+.employee-tab-table{width:100%;border-collapse:collapse;min-width:720px}
+.employee-tab-table th{padding:11px 10px;text-align:left;color:#3d3a36;font-size:11px;font-weight:700;border-top:1px solid #ebeae8;border-bottom:1px solid #ebeae8;white-space:nowrap}
+.employee-tab-table td{padding:12px 10px;color:#413d3a;font-size:11px;border-bottom:1px solid #f1f1f0;vertical-align:top}
+.employee-tab-table td small{display:block;margin-top:3px;color:#8a8580;font-size:10px}
+.employee-tab-table td.accent{color:#b05c07}
+.employee-tab-table td:last-child{width:44px}
+.employee-contract-form label small{color:#8a8580;font-size:10.5px}
+.employee-contract-summary{margin:0 0 20px;display:grid;gap:6px;font-size:12px;color:#413d3a}
+.employee-contract-summary div{display:flex;gap:6px}
+.employee-contract-summary dt{font-weight:700}
+.employee-contract-summary dd{margin:0}
+.employee-visit-filters{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end;margin:6px 0 18px}
+.employee-visit-filters>div{display:flex;flex-direction:column;gap:6px}
+.employee-visit-filters>div>span{color:#797570;font-size:10.5px}
+.employee-date-range{position:relative}
+.employee-date-range-input{width:340px;max-width:100%;height:36px;display:flex;align-items:center;gap:10px;padding:0 12px 0 0;background:#fff;border:1px solid #d7d5d3;border-radius:4px;color:#413d3a;font:inherit;font-size:12px;cursor:pointer;text-align:left}
+.employee-date-range-input>span{width:36px;height:34px;display:grid;place-items:center;background:#f3f2f1;border-right:1px solid #d7d5d3;color:#59554e}
+.employee-date-range-input em{color:#8a8580;font-style:normal}
+.employee-date-range-pop{position:absolute;z-index:40;top:42px;left:0;display:grid;grid-template-columns:150px 1fr;gap:12px;padding:12px;width:min(480px,calc(100vw - 32px));background:#fff;border:1px solid #e1dfde;border-radius:6px;box-shadow:0 12px 28px #2d2a2726}
+.employee-date-range-pop ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;align-content:start}
+.employee-date-range-pop ul button{width:100%;padding:7px 10px;text-align:left;background:#f3f2f1;border:0;border-radius:3px;color:#b05c07;font:inherit;font-size:11.5px;cursor:pointer}
+.employee-date-range-pop ul button.active,.employee-date-range-pop ul button.custom{background:#f19a05;color:#fff}
+.employee-date-range-custom{display:grid;gap:10px;align-content:start}
+.employee-date-range-custom label{display:flex;flex-direction:column;gap:5px;color:#413d3a;font-size:11px;font-weight:600}
+.employee-date-range-custom input{height:34px;padding:0 9px;border:1px solid #d7d5d3;border-radius:4px;font:inherit;font-size:12px}
+.employee-date-range-custom footer{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.employee-link-button{padding:0;background:none;border:0;color:#b05c07;font:inherit;font-size:11px;cursor:pointer}
+.employee-link-button:hover{text-decoration:underline}
+.employee-visit-empty{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#aba8a3;font-size:11px}
+.employee-visit-empty svg{color:#f19a05;stroke-width:1.4}
+.employee-visit-empty strong{color:#413d3a;font-size:12.5px}
+.employee-tab-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:10px 4px;font-size:11px;color:#59554e;flex-wrap:wrap}
+.employee-tab-footer nav{display:flex;gap:6px}
+.employee-tab-footer nav button{min-width:34px;height:34px;display:grid;place-items:center;background:#fff;border:1px solid #e1dfde;border-radius:4px;color:#59554e;font:inherit;cursor:pointer}
+.employee-tab-footer nav button.active{background:#f19a05;border-color:#f19a05;color:#fff}
+.employee-tab-footer nav button:disabled{opacity:.45;cursor:default}
+.employee-visit-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:4px 0}
+.employee-visit-gallery img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:1px solid #ebeae8}
+.employee-visit-gallery-meta{margin:10px 0 0;color:#797570;font-size:11.5px}
+@media(max-width:640px){.employee-date-range-pop{grid-template-columns:1fr}.employee-date-range-input{width:100%}.employee-visit-filters{gap:14px}.employee-visit-filters>div{width:100%}.employee-tab-head{flex-wrap:wrap}}
+.employee-tab-action{min-height:38px !important;height:38px;padding:0 18px;display:inline-flex;align-items:center;gap:7px;font-size:12.5px !important}
+.employee-tab-action.btn-outline:disabled{opacity:.55;cursor:default}
+.employee-contract-table tr.active td{background:#fff8ec}
+.employee-contract-table tr.active td:first-child{box-shadow:inset 3px 0 0 #faa30e}
+.employee-contract-table .employee-contract-badge{display:inline-block;margin:0 0 0 7px;padding:2px 8px;border-radius:999px;background:#fff0d6;color:#b05c07;font-size:9.5px;font-weight:700}
+.employee-contract-table .employee-contract-badge.off{background:#f3f2f1;color:#8a8580;font-weight:600}
+.employee-row-menu{position:relative}
+.employee-row-menu summary{width:32px;height:32px;display:grid;place-items:center;list-style:none;cursor:pointer;border-radius:999px;color:#68645f;transition:background .12s,color .12s}
+.employee-row-menu summary::-webkit-details-marker{display:none}
+.employee-row-menu summary:hover,.employee-row-menu[open] summary{background:#fff0d6;color:#b05c07}
+.employee-row-menu>div{position:absolute;right:0;top:36px;z-index:30;min-width:170px;padding:5px;display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #ebe9e7;border-radius:10px;box-shadow:0 10px 25px -5px #0000001a,0 8px 10px -6px #0000001a}
+.employee-row-menu>div a,.employee-row-menu>div button,.employee-row-menu .muted{width:100%;padding:8px 10px;display:flex;align-items:center;gap:9px;color:#484540;background:transparent;border:0;border-radius:6px;font:inherit;font-size:12.5px;text-align:left;text-decoration:none;white-space:nowrap;cursor:pointer;transition:background .12s}
+.employee-row-menu>div a svg,.employee-row-menu>div button svg{color:#b05c07}
+.employee-row-menu>div a:hover,.employee-row-menu>div button:hover{background:#fff6e6;color:#181715}
+.employee-row-menu>div button.danger,.employee-row-menu>div button.danger svg{color:#d43c3c}
+.employee-row-menu>div button.danger:hover{background:#fdeeee}
+.employee-row-menu .muted{color:#aba8a3;cursor:default}
+.employee-tab-sub{margin:4px 0 0;color:#8a8580;font-size:11px;line-height:1.5}
+.employee-tab-note{margin:0 0 12px;padding:10px 14px;border-radius:8px;background:#fff8ec;color:#8a5a12;font-size:11.5px}
+.employee-tab-success{margin:0 0 12px;padding:10px 14px;border-radius:8px;background:#e8f9f1;color:#098b59;font-size:11.5px}
+.employee-overtime-filters label{display:flex;flex-direction:column;gap:6px}
+.employee-overtime-filters label>span{color:#797570;font-size:10.5px}
+.employee-overtime-filters select{width:220px;max-width:100%;height:38px;padding:0 10px;background:#fff;border:1px solid #d7d5d3;border-radius:6px;color:#413d3a;font:inherit;font-size:12px}
+.employee-overtime-filters select:focus{outline:none;border-color:#faa30e;box-shadow:0 0 0 3px #faa30e26}
+.employee-sort{padding:0;display:inline-flex;align-items:center;gap:5px;background:none;border:0;color:inherit;font:inherit;font-weight:700;cursor:pointer}
+.employee-sort svg{color:#b5b0aa}
+.employee-sort:hover,.employee-sort:hover svg{color:#b05c07}
+.employee-overtime-desc{max-width:320px;white-space:pre-wrap}
+.employee-tab-table .badge.gray{background:#f3f2f1;color:#8a8580}
+.employee-device-name{display:flex;align-items:center;gap:10px}
+.employee-device-name>span{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:#fff0d6;color:#b05c07}
+.employee-device-name strong{display:block;color:#292724;font-weight:600}
+.employee-device-name small{margin-top:2px !important}
+@media(max-width:640px){.employee-overtime-filters select{width:100%}.employee-overtime-filters label{width:100%}}
+
+/* Cuti Tahunan per periode kerja + Laporan Cuti dengan rentang tanggal (12 Nov 2026). */
+.leave-report-bar{padding:20px 22px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.leave-report-bar .master-search{width:min(380px,100%);height:40px}
+.leave-report-bar select{height:40px;padding:0 12px;color:#413d3a;background:#fff;border:1px solid #d8d6d3;border-radius:6px;font:inherit;font-size:12px}
+.leave-report-spacer{flex:1}
+.leave-report-action{min-height:38px !important;height:38px;padding:0 16px;display:inline-flex;align-items:center;gap:7px;font-size:12.5px !important}
+.leave-report-range{margin:0 22px 14px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;background:#fffaf1;border:1px solid #fde7c2;border-radius:10px}
+.leave-report-range-label{align-self:center;display:inline-flex;align-items:center;gap:7px;color:#b05c07;font-size:12px;font-weight:700}
+.leave-report-range label{display:flex;flex-direction:column;gap:5px;color:#797570;font-size:10.5px}
+.leave-report-range input{height:38px;padding:0 10px;background:#fff;border:1px solid #d8d6d3;border-radius:6px;color:#413d3a;font:inherit;font-size:12px}
+.leave-report-range input:focus{outline:none;border-color:#faa30e;box-shadow:0 0 0 3px #faa30e26}
+.leave-report-presets{display:flex;flex-wrap:wrap;gap:6px}
+.leave-report-presets button{height:32px;padding:0 12px;background:#fff;border:1px solid #f3d7a6;border-radius:999px;color:#b05c07;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+.leave-report-presets button.active,.leave-report-presets button:hover{background:#faa30e;border-color:#faa30e;color:#fff}
+.leave-report-reset{height:32px;margin-left:auto;padding:0 10px;display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:#68645f;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
+.leave-report-reset:hover{color:#b05c07}
+.leave-report-rules{margin:0 22px 14px;color:#6c6863;font-size:11.5px;line-height:1.55}
+.leave-report-rules strong{color:#413d3a}
+.leave-report-table-v2{min-width:1320px}
+.leave-report-table-v2 td{height:auto;vertical-align:top}
+.leave-report-table-v2 .leave-report-groups th{height:34px;padding-top:10px;color:#b05c07;font-size:10.5px;font-weight:700;letter-spacing:.2px;text-transform:uppercase}
+.leave-report-table-v2 .leave-report-groups th:not(:empty){border-bottom:2px solid #fde7c2}
+.leave-remaining{min-width:34px;height:26px;padding:0 9px;display:inline-grid;place-items:center;border-radius:999px;background:#e8f9f1;color:#098b59;font-weight:800}
+.leave-remaining.low{background:#fff3e3;color:#c16d18}
+.leave-remaining.empty{background:#ffedef;color:#c83d49}
+.leave-entitlement-form,.leave-rules-form{display:grid;gap:14px}
+.leave-entitlement-form label,.leave-modal-body>label,.leave-rules-max{display:flex;flex-direction:column;gap:6px;color:#2e2b29;font-size:12px;font-weight:600}
+.leave-entitlement-form input[type=number],.leave-rules-form input[type=number]{height:40px;padding:0 12px;border:1px solid #d9d7d4;border-radius:6px;font:inherit;font-size:13px;max-width:220px}
+.leave-entitlement-info{margin:0;padding:12px 14px;display:grid;gap:6px;background:#fafaf9;border:1px solid #eeedeb;border-radius:8px;font-size:12px}
+.leave-entitlement-info div{display:grid;grid-template-columns:150px 1fr;gap:8px}
+.leave-entitlement-info dt{color:#8a8580}
+.leave-entitlement-info dd{margin:0;color:#292724;font-weight:600}
+.leave-entitlement-form footer,.leave-rules-form footer{display:flex;align-items:center;gap:8px;padding-top:6px}
+.leave-entitlement-form footer span{flex:1}
+.leave-rules-form footer{justify-content:flex-end}
+.leave-rules-intro{margin:0;padding:12px 14px;background:#fffaf1;border:1px solid #fde7c2;border-radius:8px;color:#6c4a12;font-size:12px;line-height:1.6}
+.leave-rules-form fieldset{margin:0;padding:0;border:0;display:grid;gap:8px}
+.leave-rules-form legend{margin-bottom:8px;color:#2e2b29;font-size:12px;font-weight:700}
+.leave-rules-option{padding:10px 12px;display:flex;align-items:flex-start;gap:10px;border:1px solid #e7e6e5;border-radius:8px;cursor:pointer}
+.leave-rules-option:has(input:checked){border-color:#faa30e;background:#fffaf1}
+.leave-rules-option input{margin-top:3px;accent-color:#f59d05}
+.leave-rules-option strong{display:block;color:#292724;font-size:12.5px}
+.leave-rules-option small{display:block;margin-top:2px;color:#8a8580;font-size:11px}
+.location-modal:has(>.leave-rules-form),.location-modal:has(>.leave-entitlement-form){width:min(600px,calc(100vw - 32px))}
+.leave-entitlement-form,.leave-rules-form{flex:1 1 auto;min-height:0;overflow:hidden;gap:0;grid-template-rows:minmax(0,1fr) auto}
+.leave-modal-body{min-height:0;overflow-y:auto;padding:20px 22px;display:grid;gap:16px;align-content:start}
+.leave-entitlement-form footer,.leave-rules-form footer{padding:14px 22px;border-top:1px solid #eeedeb;background:#fcfcfb}
+.leave-entitlement-form .drawer-help,.leave-rules-form .drawer-help{margin:-8px 0 0;color:#8a8580;font-size:11.5px;line-height:1.5}
+.leave-entitlement-form input[type=number]:focus,.leave-rules-form input[type=number]:focus{outline:none;border-color:#faa30e;box-shadow:0 0 0 3px #faa30e26}
+.leave-entitlement-info{padding:14px 16px}
+.leave-rules-form fieldset{gap:10px}
+.leave-rules-option{padding:12px 14px}
+.leave-rules-max{margin-top:4px}
+@media(max-width:520px){.leave-modal-body{padding:16px}.leave-entitlement-form footer,.leave-rules-form footer{padding:12px 16px;flex-wrap:wrap}}
+.annual-balance-card{margin-bottom:14px;padding:18px 22px;display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:24px;align-items:center;background:#fff;border:1px solid #fde7c2;border-radius:12px;box-shadow:0 8px 22px #faa30e14}
+.annual-balance-card>div>span{color:#8a8580;font-size:11.5px;font-weight:600}
+.annual-balance-card>div>strong{display:block;margin:4px 0 8px;color:#b05c07;font-size:30px;line-height:1}
+.annual-balance-card>div>strong small{color:#8a8580;font-size:13px;font-weight:600}
+.annual-balance-bar{height:8px;border-radius:999px;background:#fff0d6;overflow:hidden}
+.annual-balance-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#fbbf24,#f59d05)}
+.annual-balance-card dl{margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.annual-balance-card dt{color:#8a8580;font-size:11px}
+.annual-balance-card dd{margin:3px 0 0;color:#292724;font-size:12.5px;font-weight:700}
+.annual-balance-card p{grid-column:1/-1;margin:0;color:#8a5a12;font-size:11.5px}
+@media(max-width:900px){.annual-balance-card{grid-template-columns:1fr}.annual-balance-card dl{grid-template-columns:repeat(2,minmax(0,1fr))}.leave-report-reset{margin-left:0}.leave-entitlement-info div{grid-template-columns:1fr}}

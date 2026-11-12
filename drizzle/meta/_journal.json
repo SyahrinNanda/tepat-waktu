@@ -330,6 +330,34 @@
       "when": 1795900000000,
       "tag": "0046_email_send_escalation",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1795950000000,
+      "tag": "0047_special_leave",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1795960000000,
+      "tag": "0048_special_leave_rules",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1795970000000,
+      "tag": "0049_employee_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1795980000000,
+      "tag": "0050_annual_leave_rules",
+      "breakpoints": true
     }
   ]
 }

@@ -53,12 +53,109 @@ Seed demo hanya perlu dijalankan saat database masih kosong:
 docker compose run --rm migrate npm run db:seed
 ```
 
-## Menjalankan tanpa container aplikasi
+## Menjalankan lokal tanpa Docker (Windows)
 
-Untuk pengembangan Next.js langsung dari Windows, salin `.env.example` menjadi
-`.env.local`, lalu jalankan PostgreSQL/object storage yang sesuai, migrasi, dan
-development server secara manual. Script `npm run storage:start` tetap tersedia
-khusus mode pengembangan lokal dan memakai data di `D:\mini-data\tepatwaktu`.
+Mode ini lebih ringan untuk pengembangan dan testing. **Deploy tetap memakai
+`Dockerfile` dan `docker-compose.prod.yml`**, jadi tidak ada yang berubah untuk produksi.
+
+Tiga service berjalan sebagai proses biasa (bukan Windows service), sehingga tidak
+ada yang tetap menyala setelah `npm run local:stop` atau restart komputer:
+
+| Service | Alamat lokal | Lokasi file |
+|---|---|---|
+| PostgreSQL 17 (portable) | `localhost:5432` | binary `D:mini-datapgsql`, data `D:mini-datapgdata`, log `D:mini-datapostgres.log` |
+| Object storage SeaweedFS | `http://127.0.0.1:18334` | binary `D:mini-dataweed.exe`, data `D:mini-data	epatwaktu` |
+| Mailpit (inbox email) | inbox `http://localhost:8025`, SMTP `localhost:1025` | `D:mini-datamailpit` |
+| Aplikasi (`npm run dev`) | `http://localhost:3000` | – |
+
+Semua perintah dijalankan dari folder proyek. Pengaturannya ada di
+`scripts/local-services.ps1`.
+
+### Persiapan (sekali saja)
+
+1. Salin `.env.example` menjadi `.env.local` bila belum ada. Untuk mode lokal pastikan nilainya:
+
+   ```env
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tepatwaktu
+   OBJECT_STORAGE_ENDPOINT=http://127.0.0.1:18334
+   MAIL_PROVIDERS=mailpit
+   SMTP_MAILPIT_HOST=localhost
+   SMTP_MAILPIT_PORT=1025
+   ```
+
+2. Pastikan `D:mini-dataweed.exe` ada. Bila belum ada, unduh SeaweedFS `windows_amd64`
+   dari GitHub releases lalu taruh `weed.exe` di `D:mini-data`.
+3. Matikan container Docker supaya port 5432, 8025, dan 1025 kosong:
+
+   ```bash
+   docker compose down
+   ```
+
+4. Pasang dependency: `npm install`
+5. Siapkan service lokal:
+
+   ```bash
+   npm run local:setup
+   ```
+
+   Perintah ini mengunduh PostgreSQL 17 portable (sekitar 300 MB, tanpa pgAdmin) dan
+   Mailpit, membuat cluster database dengan user dan password yang sama seperti di
+   `DATABASE_URL`, lalu membuat database `tepatwaktu`.
+
+6. Isi database. Pilih salah satu:
+
+   - **Pindahkan data lama dari Docker.** Docker Desktop perlu menyala sekali ini saja.
+     Data lokal akan diganti dengan isi database di volume Docker.
+
+     ```bash
+     npm run local:import-docker
+     npm run db:migrate
+     ```
+
+   - **Mulai dari data demo baru** (khusus lokal, jangan jalankan seed di produksi):
+
+     ```bash
+     npm run db:migrate
+     npm run db:seed
+     ```
+
+### Setiap kali mulai bekerja
+
+```bash
+npm run local:start    # PostgreSQL + object storage + Mailpit
+npm run db:migrate     # hanya bila ada migrasi baru
+npm run dev            # buka http://localhost:3000
+```
+
+Selesai bekerja: tekan Ctrl+C di jendela `npm run dev`, lalu:
+
+```bash
+npm run local:stop
+```
+
+### Perintah lain
+
+| Perintah | Fungsi |
+|---|---|
+| `npm run local:status` | Menampilkan service mana yang berjalan atau berhenti |
+| `npm run local:import-docker` | Menyalin database dari volume Docker ke PostgreSQL lokal |
+| `npm run storage:start` / `storage:stop` | Hanya menyalakan atau mematikan object storage |
+| `npm run db:studio` | Melihat isi database lewat Drizzle Studio |
+| `npm run build` lalu `npm run start` | Menguji build produksi tanpa Docker |
+
+### Catatan dan masalah umum
+
+- **Foto lama tidak ikut pindah.** `local:import-docker` hanya memindahkan isi database.
+  Foto yang diunggah saat aplikasi berjalan di Docker tersimpan di volume Docker, jadi
+  tampil kosong di mode lokal. Foto yang diunggah di mode lokal tersimpan di
+  `D:mini-data	epatwaktu`.
+- **"Port 5432 dipakai proses lain"**: container Docker atau PostgreSQL lain masih menyala.
+  Jalankan `docker compose down` atau matikan PostgreSQL lain, lalu ulangi `npm run local:start`.
+- **PostgreSQL gagal menyala**: lihat `D:mini-datapostgres.log`.
+- **Email tidak terkirim**: pastikan Mailpit berjalan (`npm run local:status`) dan
+  `SMTP_MAILPIT_HOST=localhost` di `.env.local`.
+- **Mengulang database dari nol**: `npm run local:stop`, hapus folder `D:mini-datapgdata`,
+  lalu jalankan lagi `npm run local:setup` dan isi ulang database (langkah 6).
 
 Buka `http://localhost:3000`. Akun seed:
 
