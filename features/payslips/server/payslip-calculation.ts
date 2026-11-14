@@ -1,4 +1,6 @@
 // Pure payslip arithmetic (no database access) so the rules can be reasoned about and tested.
+import { minutesLate } from "@/features/attendance/shift-time";
+import { payrollPeriod } from "@/features/payslips/payroll-period";
 
 export type SalaryBasis = "hourly" | "daily" | "monthly";
 export type PayslipLine = { name: string; quantity: number; unit: string; rate: number; amount: number };
@@ -19,6 +21,9 @@ export type Payslip = {
   employee: { id: string; name: string; employeeCode: string; position: string; department: string };
   year: number;
   month: number;
+  /** Dates the slip covers (the company's payroll period), "YYYY-MM-DD" inclusive. */
+  periodStart: string;
+  periodEnd: string;
   basis: SalaryBasis;
   baseRate: number;
   summary: PayslipSummary;
@@ -43,9 +48,11 @@ export type PayrollRules = {
   lateDeductionAmount: number;
   absentDeductionMode: AbsentDeductionMode;
   absentDeductionAmount: number;
+  /** Payroll period starts on this day (1–28); 1 = calendar month. See payroll-period.ts. */
+  periodStartDay: number;
 };
 export const DEFAULT_PAYROLL_RULES: PayrollRules = {
-  breakMinutes: 60, breakMinWorkMinutes: 240, lateDeductionMode: "none", lateDeductionAmount: 0, absentDeductionMode: "daily_rate", absentDeductionAmount: 0,
+  breakMinutes: 60, breakMinWorkMinutes: 240, lateDeductionMode: "none", lateDeductionAmount: 0, absentDeductionMode: "daily_rate", absentDeductionAmount: 0, periodStartDay: 1,
 };
 
 /** Scheduled hours of one day ("HH:MM:SS"), or null on a day off. */
@@ -74,12 +81,9 @@ export type CalculationInput = {
   components: { name: string; type: "compensation" | "deduction"; unit: "hour" | "day" | "month"; amount: number }[];
 };
 
+/** The calendar month (the default payroll period). */
 export function monthRange(year: number, month: number) {
-  const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const start = `${year}-${String(month).padStart(2, "0")}-01`;
-  const end = `${year}-${String(month).padStart(2, "0")}-${String(days).padStart(2, "0")}`;
-  const dates = Array.from({ length: days }, (_, index) => `${start.slice(0, 8)}${String(index + 1).padStart(2, "0")}`);
-  return { start, end, dates };
+  return payrollPeriod(year, month, 1);
 }
 
 export function weekday(date: string) {
@@ -124,7 +128,7 @@ export function formatDuration(hours: number) {
 export const round2 = (value: number) => Math.round(value * 100) / 100;
 
 export function buildPayslip({ employee, year, month, planFor, rules, absentFrom, absentBefore, attendanceRows, leaveRows, overtimeRows, components }: CalculationInput): Payslip {
-  const { dates } = monthRange(year, month);
+  const { start: periodStart, end: periodEnd, dates } = payrollPeriod(year, month, rules.periodStartDay);
   const workingDates = dates.filter((date) => planFor(date, null));
   const leaveByDate = new Map<string, boolean>();
   for (const leave of leaveRows) {
@@ -155,7 +159,8 @@ export function buildPayslip({ employee, year, month, planFor, rules, absentFrom
       if (row.status === "late") {
         lateDays++;
         const plan = planFor(row.date, row.scheduleId);
-        const minutes = plan && row.checkIn ? Math.max(0, clock(row.checkIn) - clock(plan.start)) : 0;
+        // Measured against the shift recorded at check-in (the one the employee chose).
+        const minutes = plan && row.checkIn ? minutesLate(row.checkIn, plan.start, plan.end) : 0;
         lateMinutes += minutes;
         // "Per jam": every started hour of a late day counts (5 minutes late = 1 hour, 61 minutes = 2 hours).
         lateHours += Math.ceil(minutes / 60);
@@ -216,7 +221,7 @@ export function buildPayslip({ employee, year, month, planFor, rules, absentFrom
   const totalDeductions = deductions.reduce((total, line) => total + line.amount, 0);
   return {
     employee: { id: employee.id, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, department: employee.department },
-    year, month, basis: employee.salaryBasis, baseRate: rate,
+    year, month, periodStart, periodEnd, basis: employee.salaryBasis, baseRate: rate,
     summary: { workingDays: workingDates.length, daysWorked, lateDays, lateMinutes, missingCheckouts, absentDays, paidLeaveDays: paidLeaveDates.length, unpaidLeaveDays, workedHours, overtimeHours },
     earnings, deductions, grossPay, totalDeductions, netPay: grossPay - totalDeductions,
     status: "draft", finalizedAt: null,

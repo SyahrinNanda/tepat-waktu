@@ -1,7 +1,8 @@
 import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { dateInTimeZone } from "@/lib/current-company";
-import { buildPayslip, monthRange, weekday, type DayPlan, type Payslip, type PayslipLine, type PayslipSummary, type SalaryBasis } from "./payslip-calculation";
+import { payrollPeriod } from "@/features/payslips/payroll-period";
+import { buildPayslip, weekday, type DayPlan, type Payslip, type PayslipLine, type PayslipSummary, type SalaryBasis } from "./payslip-calculation";
 import { getPayrollRules } from "./payroll-settings";
 import {
   attendances,
@@ -95,10 +96,14 @@ async function loadEmployee(companyId: string, employeeId: string): Promise<Empl
   return { ...row, baseSalary: row.baseSalary ?? 0, overtimeRate: row.overtimeRate ?? 0, salaryBasis: row.salaryBasis ?? "monthly" };
 }
 
-/** Live calculation from salary settings, work schedules, attendance, leave and overtime for one month. */
+/**
+ * Live calculation from salary settings, work schedules, attendance, leave and overtime for one payroll
+ * period (the company's period start day: "Oktober" with day 26 = 26 Okt – 25 Nov).
+ */
 export async function calculatePayslip(companyId: string, employee: EmployeeRow, year: number, month: number): Promise<Payslip> {
-  const { start, end } = monthRange(year, month);
-  const [attendanceRows, leaveRows, overtimeRows, components, rules, [company]] = await Promise.all([
+  const rules = await getPayrollRules(companyId);
+  const { start, end } = payrollPeriod(year, month, rules.periodStartDay);
+  const [attendanceRows, leaveRows, overtimeRows, components, [company]] = await Promise.all([
     db.select({ date: attendances.attendanceDate, scheduleId: attendances.shiftId, status: attendances.status, checkIn: attendances.checkIn, checkOut: attendances.checkOut, breakStart: attendances.breakStart, breakEnd: attendances.breakEnd })
       .from(attendances).where(and(eq(attendances.companyId, companyId), eq(attendances.employeeId, employee.id), gte(attendances.attendanceDate, start), lte(attendances.attendanceDate, end))),
     db.select({ startDate: leaveRequests.startDate, endDate: leaveRequests.endDate, paid: leaveRequests.paid }).from(leaveRequests)
@@ -107,11 +112,10 @@ export async function calculatePayslip(companyId: string, employee: EmployeeRow,
       .where(and(eq(overtimeRequests.companyId, companyId), eq(overtimeRequests.employeeId, employee.id), eq(overtimeRequests.status, "approved"), gte(overtimeRequests.overtimeDate, start), lte(overtimeRequests.overtimeDate, end))),
     db.select({ name: employeeSalaryComponents.name, type: employeeSalaryComponents.type, unit: employeeSalaryComponents.unit, amount: employeeSalaryComponents.amount })
       .from(employeeSalaryComponents).where(and(eq(employeeSalaryComponents.companyId, companyId), eq(employeeSalaryComponents.employeeId, employee.id))).orderBy(asc(employeeSalaryComponents.name)),
-    getPayrollRules(companyId),
     db.select({ timezone: companies.timezone }).from(companies).where(eq(companies.id, companyId)).limit(1),
   ]);
   const planFor = await schedulePlanner(companyId, employee.department, attendanceRows.map((row) => row.scheduleId).filter((id): id is string => Boolean(id)));
-  // Alpa only counts days that are over: from joining (or the 1st) up to yesterday; today may still check in.
+  // Alpa only counts days that are over: from joining (or the period start) up to yesterday; today may still check in.
   const today = dateInTimeZone(company?.timezone ?? "Asia/Jakarta");
   const absentFrom = employee.joinedAt > start ? employee.joinedAt : start;
 
@@ -126,10 +130,13 @@ async function finalSnapshot(companyId: string, employee: EmployeeRow, year: num
   if (!payroll) return null;
   const items = await db.select().from(payrollItems).where(eq(payrollItems.payrollId, payroll.id)).orderBy(asc(payrollItems.createdAt));
   const toLine = (item: typeof items[number]): PayslipLine => ({ name: item.name, quantity: item.quantity, unit: item.salaryType, rate: item.rate, amount: item.totalAmount });
+  // Older locked slips have no stored dates: they were calculated over the calendar month.
+  const fallback = payrollPeriod(year, month, 1);
   const summary = Object.fromEntries(summaryKeys.map((key) => [key, items.find((item) => item.category === "summary" && item.name === key)?.quantity ?? 0])) as PayslipSummary;
   return {
     employee: { id: employee.id, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, department: employee.department },
-    year, month, basis: (payroll.salaryType as SalaryBasis) ?? "monthly", baseRate: payroll.rate, summary,
+    year, month, periodStart: payroll.periodStart ?? fallback.start, periodEnd: payroll.periodEnd ?? fallback.end,
+    basis: (payroll.salaryType as SalaryBasis) ?? "monthly", baseRate: payroll.rate, summary,
     earnings: items.filter((item) => item.category === "compensation").map(toLine),
     deductions: items.filter((item) => item.category === "deduction").map(toLine),
     grossPay: payroll.compensationAmount, totalDeductions: payroll.deductionAmount, netPay: payroll.totalAmount,
@@ -159,7 +166,7 @@ export async function finalizePayslips(companyId: string, employeeIds: string[],
     const slip = await calculatePayslip(companyId, employee, year, month);
     await db.transaction(async (tx) => {
       const [payroll] = await tx.insert(payrolls).values({
-        companyId, employeeId, year, month, salaryType: slip.basis, quantity: 1, rate: slip.baseRate,
+        companyId, employeeId, year, month, periodStart: slip.periodStart, periodEnd: slip.periodEnd, salaryType: slip.basis, quantity: 1, rate: slip.baseRate,
         compensationAmount: slip.grossPay, deductionAmount: slip.totalDeductions, totalAmount: slip.netPay, status: FINAL, createdBy: userId,
       }).returning({ id: payrolls.id });
       const lines = [
@@ -185,9 +192,13 @@ export async function unlockPayslip(companyId: string, employeeId: string, year:
 
 /** Locked (published) payslip periods of one employee, newest first. Drafts are not shown to staff. */
 export async function listFinalPeriods(companyId: string, employeeId: string) {
-  return db.select({ year: payrolls.year, month: payrolls.month, netPay: payrolls.totalAmount, finalizedAt: payrolls.updatedAt }).from(payrolls)
+  const rows = await db.select({ year: payrolls.year, month: payrolls.month, netPay: payrolls.totalAmount, finalizedAt: payrolls.updatedAt, periodStart: payrolls.periodStart, periodEnd: payrolls.periodEnd }).from(payrolls)
     .where(and(eq(payrolls.companyId, companyId), eq(payrolls.employeeId, employeeId), eq(payrolls.status, FINAL)))
     .orderBy(desc(payrolls.year), desc(payrolls.month));
+  return rows.map((row) => {
+    const fallback = payrollPeriod(row.year, row.month, 1);
+    return { ...row, periodStart: row.periodStart ?? fallback.start, periodEnd: row.periodEnd ?? fallback.end };
+  });
 }
 
 /** The locked payslip of one employee for a month, or null while it is still a draft. */

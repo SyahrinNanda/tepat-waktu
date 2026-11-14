@@ -3,25 +3,30 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { FileText, Lock, Search, Settings2 } from "lucide-react";
+import { CalendarRange, ChevronDown, Download, FileSpreadsheet, FileText, Lock, Printer, Search, Settings2 } from "lucide-react";
 import { confirmAction } from "@/components/confirm-dialog";
 import { finalizePayslipsAction } from "@/features/payslips/server/actions";
 import type { Payslip } from "@/features/payslips/server/payslip-service";
+import { matchesPayslipQuery } from "@/features/payslips/payslip-query";
+import { formatPeriodRange } from "@/features/payslips/payroll-period";
 
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const basisLabels = { hourly: "Per Jam", daily: "Per Hari", monthly: "Per Bulan" } as const;
 const rupiah = (value: number) => `Rp ${new Intl.NumberFormat("id-ID").format(value)}`;
 
-export function PayslipList({ slips, year, month, years }: { slips: Payslip[]; year: number; month: number; years: number[] }) {
+export function PayslipList({ slips, year, month, years, periodStart, periodEnd, periodStartDay }: { slips: Payslip[]; year: number; month: number; years: number[]; periodStart: string; periodEnd: string; periodStartDay: number }) {
+  const range = formatPeriodRange(periodStart, periodEnd);
   const router = useRouter();
   const [query, setQuery] = useState(""), [selected, setSelected] = useState<string[]>([]), [error, setError] = useState(""), [pending, start] = useTransition();
-  const filtered = useMemo(() => slips.filter((slip) => `${slip.employee.name} ${slip.employee.employeeCode} ${slip.employee.department}`.toLowerCase().includes(query.toLowerCase())), [slips, query]);
+  const filtered = useMemo(() => slips.filter((slip) => matchesPayslipQuery(slip, query)), [slips, query]);
+  // Downloads hold the same employees as the list (period + search).
+  const exportQuery = new URLSearchParams({ year: String(year), month: String(month), ...(query.trim() ? { q: query.trim() } : {}) }).toString();
   const drafts = filtered.filter((slip) => slip.status === "draft");
   const totals = filtered.reduce((sum, slip) => ({ gross: sum.gross + slip.grossPay, deductions: sum.deductions + slip.totalDeductions, net: sum.net + slip.netPay }), { gross: 0, deductions: 0, net: 0 });
 
   function changePeriod(nextYear: number, nextMonth: number) { setSelected([]); router.push(`/dashboard/karyawan/slip-gaji?year=${nextYear}&month=${nextMonth}`); }
   async function finalize(ids: string[]) {
-    if (!ids.length || !await confirmAction(`Kunci ${ids.length} slip gaji ${monthNames[month - 1]} ${year}? Slip yang dikunci tidak berubah walau gaji, kehadiran, atau izin diubah kemudian.`, "Kunci Slip Gaji")) return;
+    if (!ids.length || !await confirmAction(`Kunci ${ids.length} slip gaji ${monthNames[month - 1]} ${year} (${range})? Slip yang dikunci tidak berubah walau gaji, kehadiran, atau izin diubah kemudian.`, "Kunci Slip Gaji")) return;
     setError("");
     start(async () => {
       try { await finalizePayslipsAction({ employeeIds: ids, year, month }); setSelected([]); router.refresh(); }
@@ -43,11 +48,19 @@ export function PayslipList({ slips, year, month, years }: { slips: Payslip[]; y
         <select value={month} onChange={(event) => changePeriod(year, Number(event.target.value))} aria-label="Bulan">{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select>
         <select value={year} onChange={(event) => changePeriod(Number(event.target.value), month)} aria-label="Tahun">{years.map((item) => <option key={item}>{item}</option>)}</select>
         <span/>
+        <details className="payslip-export">
+          <summary className="btn btn-outline btn-compact"><Download size={15}/> Unduh Semua <ChevronDown size={14}/></summary>
+          <div className="payslip-export-menu" role="menu">
+            <a role="menuitem" href={`/api/payslips/export?${exportQuery}`} aria-disabled={!filtered.length} onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")}><FileSpreadsheet size={16}/><span><strong>Excel (.xlsx)</strong><small>Rincian per karyawan + total, dan sheet rekap</small></span></a>
+            <a role="menuitem" href={`/dashboard/karyawan/slip-gaji/cetak?${exportQuery}&print=1`} target="_blank" rel="noopener" aria-disabled={!filtered.length} onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")}><Printer size={16}/><span><strong>PDF</strong><small>Satu slip per halaman, rekap total di akhir</small></span></a>
+          </div>
+        </details>
         <Link className="btn btn-outline btn-compact" href="/dashboard/karyawan/slip-gaji/pengaturan"><Settings2 size={15}/> Pengaturan Perhitungan</Link>
         <button className="btn btn-primary btn-compact" disabled={pending || !(selected.length || drafts.length)} onClick={() => finalize(selected.length ? selected : drafts.map((slip) => slip.employee.id))}>
           <Lock size={15}/> {pending ? "Mengunci..." : selected.length ? `Kunci ${selected.length} Slip` : "Kunci Semua Draft"}
         </button>
       </div>
+      <div className="payslip-period-note"><CalendarRange size={15}/><span>Periode <strong>{monthNames[month - 1]} {year}</strong>: {range}</span>{periodStartDay > 1 && <small>Periode gaji perusahaan dimulai tanggal {periodStartDay}. Nama periode mengikuti bulan tanggal mulai.</small>}</div>
       {error && <div className="announcement-inline-error">{error}</div>}
       <div className="table-scroll"><table className="data-table payslip-table"><thead><tr>
         <th><input type="checkbox" aria-label="Pilih semua draft" checked={drafts.length > 0 && drafts.every((slip) => selected.includes(slip.employee.id))} onChange={(event) => setSelected(event.target.checked ? drafts.map((slip) => slip.employee.id) : [])}/></th>

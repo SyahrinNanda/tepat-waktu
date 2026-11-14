@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Calendar,
+  Camera,
   Inbox,
   Loader2,
   MapPin,
@@ -13,6 +14,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { CAMERA_SELFIE_SOURCE, VisitSelfieCamera } from "@/features/visits/components/visit-selfie-camera";
 import { VisitDatePopover } from "@/features/visits/components/visit-date-popover";
 import type { VisitEmployeeOption, VisitRow } from "@/features/visits/types";
 
@@ -21,9 +23,11 @@ type Props = {
   employees: VisitEmployeeOption[];
   today: string;
   canWrite: boolean;
+  /** Everyone except company admins must take the selfie with the live camera (no upload). */
+  selfieCameraOnly?: boolean;
 };
 
-export function VisitListManager({ initialRows, employees, today, canWrite }: Props) {
+export function VisitListManager({ initialRows, employees, today, canWrite, selfieCameraOnly = false }: Props) {
   const [rows, setRows] = useState<VisitRow[]>(initialRows);
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState("");
@@ -54,6 +58,8 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
   const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
   const selfieInputRef = useRef<HTMLInputElement>(null);
+  const [selfieFromCamera, setSelfieFromCamera] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const [att1File, setAtt1File] = useState<File | null>(null);
   const [att1Preview, setAtt1Preview] = useState<string | null>(null);
@@ -178,6 +184,7 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
     setFormNote("");
     setSelfieFile(null);
     setSelfiePreview(null);
+    setSelfieFromCamera(false);
     setAtt1File(null);
     setAtt1Preview(null);
     setAtt2File(null);
@@ -206,6 +213,10 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
       setError("Lokasi outlet wajib diisi.");
       return;
     }
+    if (selfieCameraOnly && !(selfieFile && selfieFromCamera)) {
+      setError("Foto selfie wajib diambil langsung dari kamera.");
+      return;
+    }
 
     setSaving(true);
     setError("");
@@ -217,6 +228,7 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
     if (formNote) formData.append("note", formNote);
 
     if (selfieFile) formData.append("selfie", selfieFile);
+    if (selfieFile && selfieFromCamera) formData.append("selfieSource", CAMERA_SELFIE_SOURCE);
     if (att1File) formData.append("attachment1", att1File);
     if (att2File) formData.append("attachment2", att2File);
     if (att3File) formData.append("attachment3", att3File);
@@ -587,16 +599,28 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
                                 onClick={() => {
                                   setSelfieFile(null);
                                   setSelfiePreview(null);
+                                  setSelfieFromCamera(false);
                                 }}
                               >
                                 <X size={14} /> Hapus
                               </button>
                             </div>
                           </div>
+                        ) : selfieCameraOnly ? (
+                          <>
+                            <Camera size={32} className="visit-upload-icon" />
+                            <p className="visit-upload-text">Foto selfie wajib diambil langsung dari kamera</p>
+                            <button type="button" className="visit-btn-cari" onClick={() => setCameraOpen(true)}>
+                              Buka Kamera
+                            </button>
+                          </>
                         ) : (
                           <>
                             <Upload size={32} className="visit-upload-icon" />
                             <p className="visit-upload-text">Upload foto selfie karyawan</p>
+                            <button type="button" className="visit-btn-cari" onClick={() => setCameraOpen(true)}>
+                              Buka Kamera
+                            </button>
                             <button
                               type="button"
                               className="visit-btn-cari"
@@ -614,6 +638,7 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
                                 if (f) {
                                   setSelfieFile(f);
                                   setSelfiePreview(URL.createObjectURL(f));
+                                  setSelfieFromCamera(false);
                                 }
                               }}
                             />
@@ -788,6 +813,17 @@ export function VisitListManager({ initialRows, employees, today, canWrite }: Pr
             </form>
           </div>
         </div>
+      )}
+      {cameraOpen && (
+        <VisitSelfieCamera
+          onClose={() => setCameraOpen(false)}
+          onCapture={(file, url) => {
+            setSelfieFile(file);
+            setSelfiePreview(url);
+            setSelfieFromCamera(true);
+            setCameraOpen(false);
+          }}
+        />
       )}
     </>
   );

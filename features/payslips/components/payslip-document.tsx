@@ -9,6 +9,7 @@ import { confirmAction } from "@/components/confirm-dialog";
 import { finalizePayslipsAction, unlockPayslipAction } from "@/features/payslips/server/actions";
 import type { Payslip, PayslipLine } from "@/features/payslips/server/payslip-service";
 import { formatDuration } from "@/features/payslips/server/payslip-calculation";
+import { formatPeriodRange } from "@/features/payslips/payroll-period";
 
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const basisLabels = { hourly: "Per Jam", daily: "Per Hari", monthly: "Per Bulan" } as const;
@@ -19,8 +20,7 @@ const rupiah = (value: number) => `Rp ${new Intl.NumberFormat("id-ID").format(va
 export function PayslipDocument({ slip, companyName, mode = "manage", backHref }: { slip: Payslip; companyName: string; mode?: "manage" | "self"; backHref?: string }) {
   const router = useRouter();
   const [error, setError] = useState(""), [pending, start] = useTransition();
-  const period = `${monthNames[slip.month - 1]} ${slip.year}`;
-  const { summary } = slip;
+  const period = `${monthNames[slip.month - 1]} ${slip.year} (${formatPeriodRange(slip.periodStart, slip.periodEnd)})`;
 
   async function toggleLock() {
     const locking = slip.status === "draft";
@@ -46,9 +46,20 @@ export function PayslipDocument({ slip, companyName, mode = "manage", backHref }
       <button className="btn btn-primary btn-compact" onClick={() => window.print()}><Printer size={15}/> Cetak / PDF</button>
     </div>
     {error && <div className="announcement-inline-error no-print">{error}</div>}
+    <PayslipSheet slip={slip} companyName={companyName}/>
+  </>;
+}
+
+/** The payslip itself (no controls): used by the single slip page and the combined print of every slip. */
+export function PayslipSheet({ slip, companyName }: { slip: Payslip; companyName: string }) {
+  const period = `${monthNames[slip.month - 1]} ${slip.year}`;
+  const { summary } = slip;
+  // The dates always show: with a custom period start, "Oktober" may run 26 Okt – 25 Nov.
+  const range = formatPeriodRange(slip.periodStart, slip.periodEnd);
+  return (
     <article className="payslip-doc">
       <header className="payslip-doc-head">
-        <div><span className="payslip-doc-kicker">Slip Gaji</span><h1>{companyName}</h1><p>Periode {period}</p></div>
+        <div><span className="payslip-doc-kicker">Slip Gaji</span><h1>{companyName}</h1><p>Periode {period} · {range}</p></div>
         <span className={`status-pill ${slip.status === "final" ? "green" : "orange"}`}><i/>{slip.status === "final" ? "Terkunci" : "Draft — dapat berubah"}</span>
       </header>
       <section className="payslip-doc-info">
@@ -73,12 +84,12 @@ export function PayslipDocument({ slip, companyName, mode = "manage", backHref }
       <footer className="payslip-doc-net"><span>Gaji Bersih Diterima</span><strong>{rupiah(slip.netPay)}</strong></footer>
       <p className="payslip-doc-note">
         {slip.basis === "monthly"
-          ? "Hari kerja mengikuti jadwal kerja divisi. Izin/cuti tidak dibayar dipotong sebesar gaji pokok dibagi jumlah hari kerja bulan ini; alpa dan terlambat dipotong sesuai pengaturan perhitungan gaji perusahaan."
+          ? `Hari kerja mengikuti jadwal kerja divisi. Izin/cuti tidak dibayar dipotong sebesar gaji pokok dibagi jumlah hari kerja periode ini (${range}); alpa dan terlambat dipotong sesuai pengaturan perhitungan gaji perusahaan.`
           : "Upah dihitung dari kehadiran nyata. Izin/cuti dibayar tetap diupah, sedangkan izin tidak dibayar dan alpa tidak diupah."}
         {" "}Jam kerja sudah dikurangi jam istirahat; hari yang lupa check-out dihitung sampai jam pulang jadwal. Komponen per hari mengikuti hari hadir, dan komponen per jam mengikuti jam kerja.
       </p>
     </article>
-  </>;
+  );
 }
 
 function Info({ label, value }: { label: string; value: string }) { return <div><small>{label}</small><strong>{value || "—"}</strong></div>; }

@@ -19,6 +19,8 @@ export const leaveInputSchema = z.object({
   endDate: z.iso.date(),
   reason: z.string().trim().min(3).max(500),
   paid: z.boolean().optional(),
+  /** Asset id from /api/feature-uploads. Required for a new request; on edit, omitted = keep the current file. */
+  attachmentAssetId: z.uuid().nullish(),
 })
   .refine((value) => value.endDate >= value.startDate, { message: "Tanggal selesai tidak boleh sebelum tanggal mulai." })
   .refine((value) => value.type !== "special" || !!value.specialLeaveTypeId, { message: "Pilih jenis cuti khusus." });

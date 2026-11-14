@@ -98,3 +98,20 @@
     padding-bottom: 8px !important;
   }
 }
+
+/* ---------- Attendance camera: always fits one screen, never scrolls ---------- */
+/* The check-in / check-out button must be visible without scrolling, so the live
+ * video shrinks to the space left between the header and the footer. */
+.camera-backdrop { overflow: hidden !important; align-items: center !important; }
+.visit-camera-backdrop { z-index: 1200; }
+.camera-dialog { max-height: calc(100dvh - 2 * clamp(8px, 3vh, 28px)) !important; overflow: hidden !important; }
+.camera-dialog > :is(header, footer, .camera-meta, .camera-error) { flex: 0 0 auto; }
+.camera-dialog .camera-viewport { flex: 1 1 auto; min-height: 0; }
+/* Dark behind the live view so no white strip shows between the video and the footer. */
+.camera-dialog:has(> .camera-viewport) { background: #272422; }
+.camera-dialog .attendance-success { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+@media (max-width: 740px) {
+  .camera-backdrop { padding: 0 !important; }
+  .camera-dialog { width: 100% !important; height: 100dvh !important; max-height: 100dvh !important; margin: 0 !important; border-radius: 0 !important; }
+  .camera-dialog .camera-viewport { aspect-ratio: auto; }
+}

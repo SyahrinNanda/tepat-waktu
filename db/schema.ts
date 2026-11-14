@@ -479,6 +479,9 @@ export const payrolls = pgTable("payrolls", {
   compensationAmount: bigint("compensation_amount", { mode: "number" }).default(0).notNull(),
   deductionAmount: bigint("deduction_amount", { mode: "number" }).default(0).notNull(),
   totalAmount: bigint("total_amount", { mode: "number" }).default(0).notNull(),
+  /** Dates the locked slip covered (the company's payroll period at locking). Null on older rows = calendar month. */
+  periodStart: date("period_start"),
+  periodEnd: date("period_end"),
   status: text("status").default("New").notNull(),
   createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -515,6 +518,8 @@ export const payrollItems = pgTable("payroll_items", {
  * - late: "none" | "per_day" (amount x late days) | "per_hour" (amount x started hours late, per day)
  *   | "per_minute" (amount x minutes after start time);
  * - absent (alpa, monthly salaries): "daily_rate" (base salary / working days) | "fixed" | "none".
+ * - period: payslips run from `periodStartDay` (1–28) of a month to the day before it next month,
+ *   named after the starting month; 1 = calendar month.
  */
 export const payrollSettings = pgTable("payroll_settings", {
   companyId: uuid("company_id").primaryKey().references(() => companies.id, { onDelete: "cascade" }),
@@ -524,6 +529,7 @@ export const payrollSettings = pgTable("payroll_settings", {
   lateDeductionAmount: bigint("late_deduction_amount", { mode: "number" }).default(0).notNull(),
   absentDeductionMode: text("absent_deduction_mode").default("daily_rate").notNull(),
   absentDeductionAmount: bigint("absent_deduction_amount", { mode: "number" }).default(0).notNull(),
+  periodStartDay: integer("period_start_day").default(1).notNull(),
   updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -639,6 +645,8 @@ export const leaveRequests = pgTable(
     reason: text("reason").notNull(),
     status: leaveStatus("status").default("pending").notNull(),
     paid: boolean("paid").default(true).notNull(),
+    /** Supporting file (surat dokter, undangan, ...). Required for new requests; older rows may have none. */
+    attachmentAssetId: uuid("attachment_asset_id").references(() => fileAssets.id, { onDelete: "set null" }),
     reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -657,6 +665,8 @@ export const overtimeRequests = pgTable(
     endTime: time("end_time").notNull(),
     durationMinutes: integer("duration_minutes").notNull(),
     description: text("description").notNull(),
+    /** Optional supporting file (surat tugas, foto pekerjaan, ...). */
+    attachmentAssetId: uuid("attachment_asset_id").references(() => fileAssets.id, { onDelete: "set null" }),
     status: leaveStatus("status").default("pending").notNull(),
     reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),

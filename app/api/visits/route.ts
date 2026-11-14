@@ -55,6 +55,11 @@ export async function POST(request: Request) {
   // Handle selfie
   const selfieFile = form.get("selfie");
   const selfie = selfieFile instanceof File && selfieFile.size > 0 ? selfieFile : null;
+  // Only company admins (owner counts as admin) may upload a selfie from a file; everyone else
+  // must take it with the live camera in the visit form.
+  if (!selfieUploadAllowed(context.role) && (!selfie || form.get("selfieSource") !== "camera")) {
+    return Response.json({ error: "Foto selfie wajib diambil langsung dari kamera." }, { status: 400 });
+  }
 
   // Handle attachments
   const attachments: (File | null)[] = [];
@@ -102,4 +107,8 @@ async function ownEmployee(companyId: string, userId: string) {
   const [row] = await db.select({ id: employees.id }).from(employees)
     .where(and(eq(employees.companyId, companyId), eq(employees.userId, userId), eq(employees.status, "active"))).limit(1);
   return row?.id;
+}
+
+function selfieUploadAllowed(role: string) {
+  return role === "admin" || role === "owner";
 }

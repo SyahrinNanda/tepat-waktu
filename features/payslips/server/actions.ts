@@ -33,7 +33,7 @@ export async function unlockPayslipAction(input: { employeeId: string; year: num
   return { count };
 }
 
-/** Saves the company's payslip rules (break, late and alpa deductions). Locked slips keep their numbers. */
+/** Saves the company's payslip rules (period, break, late and alpa deductions). Locked slips keep their numbers. */
 export async function savePayrollRulesAction(input: unknown): Promise<{ ok: boolean; error?: string }> {
   const context = await payslipContext();
   const parsed = payrollRulesSchema.safeParse(input);

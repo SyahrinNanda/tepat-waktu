@@ -16,11 +16,11 @@ export default async function Page() {
     const [own] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode }).from(employees)
       .where(and(eq(employees.companyId, context.companyId), eq(employees.userId, context.session.user.id), eq(employees.status, "active"))).limit(1);
     const rows = own ? await listVisits(context.companyId, undefined, undefined, own.id) : [];
-    return <VisitListManager initialRows={rows} employees={own ? [own] : []} today={today} canWrite={Boolean(own)}/>;
+    return <VisitListManager initialRows={rows} employees={own ? [own] : []} today={today} canWrite={Boolean(own)} selfieCameraOnly/>;
   }
   const [rows, employeeRows] = await Promise.all([
     listVisits(context.companyId),
     db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode }).from(employees).where(eq(employees.companyId, context.companyId)).orderBy(asc(employees.name)),
   ]);
-  return <VisitListManager initialRows={rows} employees={employeeRows} today={today} canWrite={["owner", "admin", "general_manager", "hrd", "manager"].includes(context.role)}/>;
+  return <VisitListManager initialRows={rows} employees={employeeRows} today={today} canWrite={["owner", "admin", "general_manager", "hrd", "manager"].includes(context.role)} selfieCameraOnly={!["owner", "admin"].includes(context.role)}/>;
 }

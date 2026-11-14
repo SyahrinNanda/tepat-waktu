@@ -8,6 +8,7 @@ import { employees } from "@/db/schema";
 import { PayslipDocument } from "@/features/payslips/components/payslip-document";
 import { getFinalPayslip, listFinalPeriods } from "@/features/payslips/server/payslip-service";
 import { requireCompanyRole } from "@/lib/current-company";
+import { formatPeriodRange } from "@/features/payslips/payroll-period";
 
 export const metadata: Metadata = { title: "Slip Gaji Saya" };
 type Props = { searchParams: Promise<{ year?: string; month?: string }> };
@@ -42,7 +43,7 @@ export default async function Page({ searchParams }: Props) {
         : !periods.length ? <div className="empty-state">Belum ada slip gaji yang diterbitkan. Slip muncul di sini setelah HRD mengunci slip gaji bulanan.</div>
         : <div className="table-scroll"><table className="data-table payslip-table"><thead><tr><th>Periode</th><th>Gaji Bersih</th><th>Diterbitkan</th><th>Aksi</th></tr></thead>
           <tbody>{periods.map((period) => <tr key={`${period.year}-${period.month}`}>
-            <td><strong>{monthNames[period.month - 1]} {period.year}</strong></td>
+            <td><strong>{monthNames[period.month - 1]} {period.year}</strong><small>{formatPeriodRange(period.periodStart, period.periodEnd)}</small></td>
             <td><strong>{rupiah(period.netPay)}</strong></td>
             <td>{day.format(period.finalizedAt)}</td>
             <td><Link className="btn btn-outline btn-xs" href={`/dashboard/karyawan/slip-gaji-saya?year=${period.year}&month=${period.month}`}><FileText size={13}/> Lihat Slip</Link></td>

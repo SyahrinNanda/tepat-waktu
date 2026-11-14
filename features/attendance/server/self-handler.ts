@@ -18,6 +18,8 @@ const payloadSchema = z.object({
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
   accuracyMeters: z.coerce.number().min(0).max(100_000).optional(),
+  /** Shift chosen before the photo (divisions with several shifts). */
+  scheduleId: z.uuid().optional(),
 });
 
 export async function GET(request: Request) {
@@ -53,6 +55,7 @@ export async function POST(request: Request) {
       latitude: parsed.latitude,
       longitude: parsed.longitude,
       accuracyMeters: parsed.accuracyMeters,
+      scheduleId: parsed.scheduleId ?? null,
       ...requestMetadata(request),
       photo: uploaded,
     });

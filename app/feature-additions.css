@@ -236,3 +236,99 @@
 .annual-balance-card dd{margin:3px 0 0;color:#292724;font-size:12.5px;font-weight:700}
 .annual-balance-card p{grid-column:1/-1;margin:0;color:#8a5a12;font-size:11.5px}
 @media(max-width:900px){.annual-balance-card{grid-template-columns:1fr}.annual-balance-card dl{grid-template-columns:repeat(2,minmax(0,1fr))}.leave-report-reset{margin-left:0}.leave-entitlement-info div{grid-template-columns:1fr}}
+/* Shift picker: first step of check-in for a division with several shifts */
+.shift-picker{flex:1 1 auto;min-height:0;overflow-y:auto;padding:18px 18px 8px;display:grid;gap:14px;align-content:start;background:#fff}
+.shift-picker-intro{margin:0;padding:11px 13px;color:#6c4a12;background:#fffaf1;border:1px solid #fde7c2;border-radius:10px;font-size:12px;line-height:1.55}
+.shift-picker-list{display:grid;gap:10px}
+.shift-picker-option{padding:14px;display:flex;align-items:center;gap:12px;border:1.5px solid #e7e6e5;border-radius:12px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s}
+.shift-picker-option:hover{border-color:#fbc35f}
+.shift-picker-option.selected{border-color:#f59d05;background:#fffaf1;box-shadow:0 6px 16px #faa30e1f}
+.shift-picker-option input{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:#f59d05}
+.shift-picker-main{min-width:0;flex:1;display:grid;gap:4px}
+.shift-picker-main strong{display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:#292724;font-size:14px}
+.shift-picker-main em{padding:2px 7px;color:#b05c07;background:#fff1d6;border-radius:999px;font-size:10px;font-style:normal;font-weight:700}
+.shift-picker-main small{display:flex;align-items:center;gap:5px;color:#8a8580;font-size:11.5px}
+.shift-picker-status{flex:0 0 auto;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.shift-picker-status.ontime{color:#167a46;background:#e7f7ee}
+.shift-picker-status.late{color:#b42318;background:#fdecea}
+.camera-dialog > footer .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+@media(max-width:420px){.shift-picker{padding:14px 12px 6px}.shift-picker-option{padding:12px;flex-wrap:wrap}.shift-picker-status{margin-left:30px}}
+
+/* ---------- Slip gaji: unduh semua (Excel / PDF gabungan) ---------- */
+@page payslip-bundle { size: A4; margin: 12mm; }
+.payslip-bundle { page: payslip-bundle; }
+.payslip-card .payslip-toolbar { grid-template-columns: minmax(180px, 1fr) 140px 100px auto auto auto; }
+.payslip-card .payslip-toolbar > span { display: none; }
+.payslip-card .payslip-toolbar > a, .payslip-card .payslip-toolbar > button, .payslip-export > summary { white-space: nowrap; }
+.payslip-export { position: relative; }
+.payslip-export > summary { list-style: none; cursor: pointer; white-space: nowrap; }
+.payslip-export > summary::-webkit-details-marker { display: none; }
+.payslip-export[open] > summary { border-color: var(--primary); }
+.payslip-export-menu { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: 300px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: 0 14px 34px rgba(38, 34, 30, .14); }
+.payslip-export-menu a { padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; color: var(--ink); text-decoration: none; border-radius: 10px; }
+.payslip-export-menu a:hover { background: var(--cream); }
+.payslip-export-menu a > svg { margin-top: 2px; flex: none; color: var(--primary-ink); }
+.payslip-export-menu strong { display: block; font-size: 13.5px; }
+.payslip-export-menu small { display: block; margin-top: 2px; color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+.payslip-export-menu a[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+
+.payslip-bundle-meta { flex: 1; color: var(--muted); font-size: 13px; font-weight: 600; }
+.payslip-bundle { display: grid; gap: 22px; }
+.payslip-recap-table { width: 100%; margin-top: 18px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.payslip-recap-table th { padding: 9px 10px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-align: left; text-transform: uppercase; background: var(--cream); }
+.payslip-recap-table td { padding: 9px 10px; color: var(--ink); border-bottom: 1px dashed var(--line); vertical-align: top; }
+.payslip-recap-table td small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+.payslip-recap-table th:nth-child(n+5), .payslip-recap-table td:nth-child(n+5) { text-align: right; white-space: nowrap; }
+.payslip-recap-table tfoot td { padding: 12px 10px; font-weight: 800; border-top: 2px solid var(--ink); border-bottom: 0; }
+
+@media (max-width: 1280px) {
+  .payslip-card .payslip-toolbar { grid-template-columns: minmax(200px, 1fr) 150px 110px; }
+  .payslip-toolbar > span { display: none; }
+  .payslip-toolbar > .payslip-export, .payslip-toolbar > a, .payslip-toolbar > button { justify-self: start; }
+}
+@media (max-width: 980px) {
+  .payslip-card .payslip-toolbar { grid-template-columns: 1fr 1fr; }
+  .payslip-card .payslip-toolbar > .payslip-export, .payslip-card .payslip-toolbar > a, .payslip-card .payslip-toolbar > button { justify-self: stretch; }
+  .payslip-toolbar > .payslip-export { grid-column: 1 / -1; }
+  .payslip-toolbar > .payslip-export > summary { width: 100%; justify-content: center; }
+  .payslip-export-menu { left: 0; right: auto; width: min(300px, 100%); }
+  .payslip-recap-table { font-size: 12px; }
+}
+@media print {
+  .payslip-bundle { display: block; }
+  .payslip-bundle-page { break-after: page; page-break-after: always; }
+  /* One A4 page per slip: a little smaller than on screen so the note stays on the same page. */
+  html:has(.payslip-bundle), body:has(.payslip-bundle), body:has(.payslip-bundle) .app-shell, body:has(.payslip-bundle) .content { background: #fff !important; }
+  .payslip-bundle .payslip-doc { zoom: .86; }
+  .payslip-bundle-recap { zoom: 1 !important; }
+  .payslip-bundle-recap { break-inside: auto; }
+  .payslip-recap-table tr { break-inside: avoid; }
+  .payslip-recap-table th, .payslip-recap-table tfoot td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* Lampiran on Izin/Cuti and Lembur requests (request-attachment.tsx). */
+.request-attachment-field > span { display: flex; align-items: baseline; gap: 5px; }
+.request-attachment-field .required-mark { color: #c32a36; font-style: normal; font-weight: 800; }
+.request-attachment-field > span small { color: #8f8b86; font-size: 11px; font-weight: 500; }
+.leave-modal-grid .request-attachment-field input[type=file], .request-attachment-field input[type=file] { width: 100%; height: auto; min-height: 41px; padding: 8px 10px; color: #413d3a; background: #fffaf2; border: 1px dashed #e9b65a; border-radius: 6px; font: inherit; font-size: 12px; cursor: pointer; }
+.request-attachment-field input[type=file]::file-selector-button { margin-right: 10px; padding: 6px 11px; color: #fff; background: #f39c07; border: 0; border-radius: 4px; font-weight: 700; cursor: pointer; }
+.request-attachment-hint { color: #8a857f; font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.request-attachment-link { display: inline-flex; align-items: center; gap: 4px; max-width: 190px; color: #b06404; font-weight: 700; text-decoration: none; vertical-align: middle; }
+.request-attachment-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.request-attachment-link:hover { text-decoration: underline; }
+.request-attachment-none { color: #a7a39e; }
+
+/* Payroll period (payroll-period.ts): note on the payslip list, preview and warning in the settings. */
+.payslip-period-note { margin: 12px 0 2px; padding: 9px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; color: #4a4540; background: #fff8ea; border: 1px solid #f4d9a6; border-radius: 8px; font-size: 12.5px; }
+.payslip-period-note svg { flex: 0 0 auto; color: #c77a05; }
+.payslip-period-note small { flex-basis: 100%; padding-left: 24px; color: #8a847d; font-size: 11px; }
+.payroll-period-preview { align-self: end; min-height: 44px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; background: #fbfaf8; border: 1px dashed #e2ddd5; border-radius: 8px; }
+.payroll-period-preview > svg { flex: 0 0 auto; color: #c77a05; }
+.payroll-period-preview > div { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.payroll-period-preview span { display: flex; flex-direction: column; line-height: 1.3; }
+.payroll-period-preview small { color: #8a847d; font-size: 10.5px; }
+.payroll-period-preview strong { font-size: 12.5px; }
+.payroll-period-preview em { color: #5b554f; font-size: 11.5px; font-style: normal; }
+.payroll-period-warning { margin-top: 10px; padding: 10px 12px; display: flex; gap: 9px; color: #7a4a00; background: #fff4dc; border: 1px solid #f1c46b; border-radius: 8px; font-size: 12px; line-height: 1.5; }
+.payroll-period-warning svg { flex: 0 0 auto; margin-top: 2px; color: #c77a05; }
+.payslip-table td strong + small { display: block; color: #8a847d; font-size: 11px; font-weight: 500; }
