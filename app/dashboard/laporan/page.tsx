@@ -3,12 +3,13 @@ import { and, count, eq, gte, sql } from "drizzle-orm";
 import { BarChart3, CalendarCheck, Clock3, UserRoundX } from "lucide-react";
 import { db } from "@/db";
 import { attendances, employees } from "@/db/schema";
-import { dateInTimeZone, requireCompany } from "@/lib/current-company";
+import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
 
 export const metadata: Metadata = { title: "Laporan" };
 
 export default async function ReportsPage() {
-  const context = await requireCompany();
+  // Company-wide figures: management only, like the other report pages.
+  const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
   const today = dateInTimeZone(context.timezone);
   // 30-day window ending today in the company zone; plain calendar math, no fixed UTC offset.
   const start = new Date(`${today}T00:00:00Z`); start.setUTCDate(start.getUTCDate() - 29);

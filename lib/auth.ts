@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { expo } from "@better-auth/expo";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { twoFactor } from "better-auth/plugins";
@@ -94,6 +95,7 @@ export const auth = betterAuth({
   plugins: [
     // "OTP Login" (Pengaturan → Users): users with user.twoFactorEnabled get a 6-digit code by email
     // after the password step. TOTP apps are not offered.
+    expo(),
     twoFactor({
       issuer: "TepatWaktu",
       totpOptions: { disable: true },
@@ -104,7 +106,7 @@ export const auth = betterAuth({
       },
     }),
   ],
-  trustedOrigins: [...new Set([...configuredOrigins, ...developmentOrigins])],
+  trustedOrigins: [...new Set([...configuredOrigins, ...developmentOrigins, "tepatwaktu://"])],
   // Login rate limiting keys on the client IP. Read it from the header our proxy sets (see
   // lib/client-ip.ts), not the client-controlled left-most X-Forwarded-For entry.
   advanced: { ipAddress: { ipAddressHeaders: [(process.env.CLIENT_IP_HEADER || "x-real-ip").toLowerCase()] } },

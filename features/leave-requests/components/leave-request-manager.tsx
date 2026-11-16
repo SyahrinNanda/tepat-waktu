@@ -4,7 +4,7 @@ import { CalendarPlus, Download, FileText, Filter, Pencil, Plus, RotateCcw, Sear
 import { MasterShell } from "@/features/master-data/shifts/components/shift-manager";
 import { LocationModal } from "@/features/master-data/shared/location-modal";
 import { confirmAction } from "@/components/confirm-dialog";
-import { leaveDays, leaveLabel, leaveTypeLabels, type LeaveType } from "@/features/leave-requests/server/schemas";
+import { leaveDays, leaveLabel, leaveTypeLabels, type LeaveType } from "@/features/leave-requests/leave-types";
 import { describeKind, SpecialLeaveTypesModal, type SpecialLeaveKind } from "./special-leave-types-modal";
 import type { AnnualLeaveBalance } from "@/features/leave-requests/annual-leave";
 import { AttachmentField, AttachmentLink, rowAttachment, useAttachmentUploader } from "@/features/employee-requests/components/request-attachment";

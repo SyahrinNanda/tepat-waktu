@@ -46,6 +46,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
   } catch (error) {
     if (error instanceof AttendanceError) return NextResponse.json({ message: error.message }, { status: error.status });
+    // The record exists but its object is gone from storage: a missing file, not a server fault.
+    if ((error as { name?: string })?.name === "NoSuchKey") return NextResponse.json({ message: "File tidak ditemukan di penyimpanan." }, { status: 404 });
     console.error("Private file download error", error);
     return NextResponse.json({ message: "File belum dapat dimuat." }, { status: 500 });
   }

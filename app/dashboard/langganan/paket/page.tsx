@@ -13,6 +13,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const context = await requireCompany({ allowExpired: true });
   // Only the company admin renews; other members whose access ended go to the locked page.
   if (context.subscription.state === "expired" && !context.isSuperAdmin && context.role !== "admin" && context.role !== "owner") redirect(SUBSCRIPTION_LOCKED_PATH);
+  // Invoices and plans are the admin's business (the menu shows Langganan to admins only).
+  if (context.role !== "admin" && context.role !== "owner") redirect("/dashboard");
   const { plan } = await searchParams;
   const canManage = context.role === "admin" || context.role === "owner";
   const [plans, requests] = await Promise.all([

@@ -279,8 +279,12 @@ async function seedCompanyData(c, admin, employee) {
   d.announcementImageId = ann.imageAssetId;
   d.featureAdminId = must(await api(admin, "POST", "/api/feature-records", { json: { module: "karyawan/laporan-cuti", fields: { Catatan: `ZZISO${L} admin record` } } }), "feature record (admin)").record.id;
   d.featureEmpId = must(await api(employee, "POST", "/api/feature-records", { json: { module: "pengajuan/izin-cuti", fields: { Alasan: `ZZISO${L} employee record` } } }), "feature record (employee)").record.id;
-  d.leaveId = must(await api(employee, "POST", "/api/leave-requests", { json: leavePayload(c.employee.employeeId, `ZZISO${L} leave reason`) }), "leave request").row.id;
-  d.leaveId2 = must(await api(employee, "POST", "/api/leave-requests", { json: leavePayload(c.employee.employeeId, `ZZISO${L} leave reason 2`) }), "leave request 2").row.id;
+  // Leave requests need an attachment uploaded first by the person who files them.
+  const attach = async (who) => must(await api(who, "POST", "/api/feature-uploads", { form: { module: "pengajuan/izin-cuti", file: new Blob([PNG], { type: "image/png" }) } }), "leave attachment").id;
+  d.leaveId = must(await api(employee, "POST", "/api/leave-requests", { json: leavePayload(c.employee.employeeId, `ZZISO${L} leave reason`, await attach(employee)) }), "leave request").row.id;
+  d.leaveId2 = must(await api(employee, "POST", "/api/leave-requests", { json: leavePayload(c.employee.employeeId, `ZZISO${L} leave reason 2`, await attach(employee)) }), "leave request 2").row.id;
+  d.adminAttachmentId = await attach(admin);
+  d.employeeAttachmentId = await attach(employee);
   d.overtimeId = must(await api(employee, "POST", "/api/overtime-requests", { json: overtimePayload(c.employee.employeeId, `ZZISO${L} overtime`) }), "overtime request").row.id;
   d.overtimeId2 = must(await api(employee, "POST", "/api/overtime-requests", { json: overtimePayload(c.employee.employeeId, `ZZISO${L} overtime 2`) }), "overtime request 2").row.id;
   d.attendanceId = must(await api(admin, "POST", "/api/attendance/admin", { form: { employeeId: c.employee.employeeId, attendanceDate: today, checkInTime: "08:00", checkOutTime: "17:00", shiftId: d.shiftId, checkInLocationId: d.locationId, checkOutLocationId: d.locationId, status: "present", note: `ZZISO${L} attendance note` } }), "attendance").attendanceId;
@@ -300,8 +304,8 @@ function weekDays(start, end) {
 function locationPayload(name) {
   return { name, type: "branch", address: "Jl. ZZISO Test No. 1", latitude: -8.65, longitude: 115.21, radiusMeters: 100, active: true };
 }
-function leavePayload(employeeId, reason) {
-  return { employeeId, type: "permission", startDate: shiftDate(today, 7), endDate: shiftDate(today, 8), reason };
+function leavePayload(employeeId, reason, attachmentAssetId) {
+  return { employeeId, type: "permission", startDate: shiftDate(today, 7), endDate: shiftDate(today, 8), reason, ...(attachmentAssetId ? { attachmentAssetId } : {}) };
 }
 function overtimePayload(employeeId, description) {
   return { employeeId, overtimeDate: shiftDate(today, 3), durationMinutes: 60, description };
@@ -419,7 +423,8 @@ async function main() {
       // The bulk endpoint answers 200 with the rows it touched; only an empty result is a denial.
       return ok(res.status) && Array.isArray(res.json?.rows) && res.json.rows.length === 0 ? { ...res, status: 404 } : res;
     }, () => snapshotQuery(`select id, status from leave_requests where id = any($1) order by id`, [[b.leaveId, b.leaveId2]]));
-    await denied("POST /api/leave-requests with B employeeId (A-admin)", () => api(aAdmin, "POST", "/api/leave-requests", { json: leavePayload(B.employee.employeeId, "ZZISOA leave for B employee") }), () => snapshotQuery(`select id from leave_requests where employee_id = $1 order by id`, [B.employee.employeeId]));
+    await denied("POST /api/leave-requests with B employeeId (A-admin)", () => api(aAdmin, "POST", "/api/leave-requests", { json: leavePayload(B.employee.employeeId, "ZZISOA leave for B employee", a.adminAttachmentId) }), () => snapshotQuery(`select id from leave_requests where employee_id = $1 order by id`, [B.employee.employeeId]));
+    await denied("POST /api/leave-requests with B's attachment (A-employee)", () => api(aEmp, "POST", "/api/leave-requests", { json: leavePayload(A.employee.employeeId, "ZZISOA leave with B file", b.employeeAttachmentId) }), () => snapshotQuery(`select id, owner_employee_id from file_assets where id = $1`, [b.employeeAttachmentId]));
     await denied("PATCH /api/leave-requests/[B] edit (A-employee)", () => api(aEmp, "PATCH", `/api/leave-requests/${b.leaveId}`, { json: leavePayload(A.employee.employeeId, "ZZISOA hacked leave") }), snap("leave_requests", b.leaveId));
     await denied("DELETE /api/leave-requests/[B] (A-employee)", () => api(aEmp, "DELETE", `/api/leave-requests/${b.leaveId}`), snap("leave_requests", b.leaveId));
     await noLeak("GET /api/leave-requests (A-admin)", () => api(aAdmin, "GET", `/api/leave-requests?companyId=${B.id}`, { cookie: superadminCookie }));

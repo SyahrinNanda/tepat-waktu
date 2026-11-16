@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { LocationModal } from "@/features/master-data/shared/location-modal";
 import { confirmAction } from "@/components/confirm-dialog";
-import { SPECIAL_LEAVE_SUGGESTIONS } from "@/features/leave-requests/server/schemas";
+import { SPECIAL_LEAVE_SUGGESTIONS } from "@/features/leave-requests/leave-types";
 
 export type SpecialLeaveKind = { id: string; name: string; durationDays: number | null; paid: boolean };
 type Draft = { name: string; durationDays: string; paid: boolean };

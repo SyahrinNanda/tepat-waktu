@@ -6,32 +6,27 @@ import type { NextConfig } from "next";
 const MIDTRANS = "https://app.midtrans.com https://app.sandbox.midtrans.com https://api.midtrans.com https://api.sandbox.midtrans.com https://*.midtrans.com";
 const MAP_TILES = "https://tile.openstreetmap.org";
 
-/**
- * Enforced policy: only rules that cannot break a page (no iframing by other sites, no plugins,
- * no <base> hijack, forms only to us/Midtrans). No upgrade-insecure-requests: it would also rewrite
- * http://localhost in development; HSTS already keeps production on https.
- */
-const enforcedCsp = [
-  "frame-ancestors 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  `form-action 'self' ${MIDTRANS}`,
-].join("; ");
+// `next dev` needs eval (fast refresh) and a websocket; production gets neither.
+const isDev = process.env.NODE_ENV !== "production";
 
 /**
- * Full allow-list, report-only for now: the browser console lists anything it would block, so the
- * list can be checked on production (payment, map, camera) before it is enforced.
+ * Content-Security-Policy: the browser only runs, loads and frames what is listed here.
+ * - 'unsafe-inline' scripts: Next.js inlines its bootstrap scripts (no nonce setup).
+ * - No 'unsafe-eval' in production: nothing in the client bundle needs eval. Keep zod (which probes
+ *   eval) out of client components; see features/leave-requests/leave-types.ts.
+ * - No upgrade-insecure-requests: it would also rewrite http://localhost; HSTS keeps production on https.
  */
-const reportOnlyCsp = [
+const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${MIDTRANS}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${MIDTRANS}`,
   `style-src 'self' 'unsafe-inline' ${MIDTRANS}`,
   `img-src 'self' data: blob: ${MAP_TILES} ${MIDTRANS}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${MIDTRANS}`,
+  `connect-src 'self'${isDev ? " ws: wss:" : ""} ${MIDTRANS}`,
   `frame-src 'self' ${MIDTRANS}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
+  "manifest-src 'self'",
   "frame-ancestors 'self'",
   "object-src 'none'",
   "base-uri 'self'",
@@ -48,8 +43,7 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(self), geolocation=(self), microphone=(), payment=(self), usb=(), browsing-topics=()" },
   // Midtrans may open a popup (e-wallet, 3-D Secure); "allow-popups" keeps that working.
   { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
-  { key: "Content-Security-Policy", value: enforcedCsp },
-  { key: "Content-Security-Policy-Report-Only", value: reportOnlyCsp },
+  { key: "Content-Security-Policy", value: contentSecurityPolicy },
 ];
 
 const nextConfig: NextConfig = {

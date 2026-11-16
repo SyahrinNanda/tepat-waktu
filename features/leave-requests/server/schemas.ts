@@ -1,15 +1,8 @@
 import { z } from "zod";
+import { LEAVE_TYPES, type LeaveType } from "@/features/leave-requests/leave-types";
 
-export const LEAVE_TYPES = ["annual", "sick", "permission", "special"] as const;
-export type LeaveType = (typeof LEAVE_TYPES)[number];
-
-export const leaveTypeLabels: Record<LeaveType, string> = { annual: "Cuti Tahunan", sick: "Sakit", permission: "Izin", special: "Cuti Khusus" };
-
-/** "Cuti Khusus · Menikah" for special leave, otherwise the category label. */
-export function leaveLabel(type: string, specialName?: string | null) {
-  const base = leaveTypeLabels[type as LeaveType] ?? type;
-  return type === "special" && specialName ? `${base} · ${specialName}` : base;
-}
+// Labels and helpers live in leave-types.ts (no zod, safe for client components); re-exported for server code.
+export { LEAVE_TYPES, leaveDays, leaveLabel, leaveTypeLabels, SPECIAL_LEAVE_SUGGESTIONS, type LeaveType } from "@/features/leave-requests/leave-types";
 
 export const leaveInputSchema = z.object({
   employeeId: z.uuid(),
@@ -74,22 +67,3 @@ export function resolveLeavePaid(input: { type: LeaveType; paid?: boolean }, can
   return canReview && typeof input.paid === "boolean" ? input.paid : defaultLeavePaid(input.type, specialPaid);
 }
 
-export function leaveDays(start: string, end: string) {
-  return Math.floor((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86_400_000) + 1;
-}
-
-/**
- * Common kinds under Indonesian labor law (UU 13/2003 ps. 82 & 93), offered as one-click suggestions.
- * Durations are working days; Melahirkan (3 bulan) and Keguguran (1,5 bulan) assume a 5-day week, so a
- * company working 6 days a week should raise them.
- */
-export const SPECIAL_LEAVE_SUGGESTIONS: { name: string; durationDays: number }[] = [
-  { name: "Menikah", durationDays: 3 },
-  { name: "Menikahkan Anak", durationDays: 2 },
-  { name: "Khitanan / Baptis Anak", durationDays: 2 },
-  { name: "Istri Melahirkan / Keguguran", durationDays: 2 },
-  { name: "Melahirkan", durationDays: 65 },
-  { name: "Keguguran", durationDays: 33 },
-  { name: "Berduka (Keluarga Inti)", durationDays: 2 },
-  { name: "Berduka (Anggota Keluarga Serumah)", durationDays: 1 },
-];
