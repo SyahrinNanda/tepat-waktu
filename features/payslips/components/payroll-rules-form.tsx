@@ -46,11 +46,11 @@ export function PayrollRulesForm({ initial, latestFinal, today }: { initial: Pay
     <form className="module-card payroll-rules" onSubmit={save}>
       <section>
         <h2>Periode Penggajian</h2>
-        <p>Tanggal mulai periode slip gaji. Bawaan tanggal 1 (tanggal 1 sampai akhir bulan). Nama periode mengikuti bulan tanggal mulai: dengan tanggal 26, slip &quot;Oktober&quot; menghitung 26 Oktober – 25 November.</p>
+        <p>Tanggal mulai setiap periode slip gaji. Nama periode mengikuti bulan tanggal mulai.</p>
         <div className="payroll-rules-grid">
           <label className="employee-field">Periode dimulai tanggal
             <select value={rules.periodStartDay} onChange={(event) => set("periodStartDay", Number(event.target.value))}>
-              {Array.from({ length: MAX_PERIOD_START_DAY }, (_, index) => index + 1).map((day) => <option key={day} value={day}>{day === 1 ? "Tanggal 1 (default: 1 – akhir bulan)" : `Tanggal ${day} (s.d. tanggal ${day - 1} bulan berikutnya)`}</option>)}
+              {Array.from({ length: MAX_PERIOD_START_DAY }, (_, index) => index + 1).map((day) => <option key={day} value={day}>{day === 1 ? "Tanggal 1 (default)" : `Tanggal ${day}`}</option>)}
             </select>
           </label>
           <div className="payroll-period-preview">
@@ -63,7 +63,6 @@ export function PayrollRulesForm({ initial, latestFinal, today }: { initial: Pay
             ? <>Tanggal <strong>{shortDate(transition.from)} – {shortDate(transition.to)}</strong> sudah masuk slip terkunci <strong>{transition.finalLabel}</strong>, dan akan terhitung lagi di slip <strong>{transition.nextLabel}</strong> ({transition.nextRange}). Periksa lembur dan potongan di tanggal tersebut agar tidak dibayar atau dipotong dua kali.</>
             : <>Tanggal <strong>{shortDate(transition.from)} – {shortDate(transition.to)}</strong> tidak masuk slip mana pun: slip terkunci terakhir (<strong>{transition.finalLabel}</strong>) berakhir {shortDate(latestFinal!.end)}, sedangkan slip <strong>{transition.nextLabel}</strong> dimulai {shortDate(addDays(transition.to, 1))}. Hitung tanggal tersebut secara manual bila perlu.</>}
         </span></div>}
-        <small>Mulai tanggal 1–28 agar setiap bulan (termasuk Februari) punya tanggal mulai. Perubahan langsung berlaku untuk slip draft; slip yang sudah terkunci tidak dihitung ulang.</small>
       </section>
 
       <section>
