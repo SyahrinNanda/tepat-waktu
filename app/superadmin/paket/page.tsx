@@ -35,7 +35,7 @@ export default async function Page() {
     <>
       <header className="product-page-header">
         <div>
-          <span className="breadcrumb">Kehadiran Super Admin Panel</span>
+          <span className="breadcrumb">Panel Super Admin</span>
           <h1>DAFTAR PAKET & HARGA</h1>
           <p>
             Kelola daftar paket langganan, tarif bulanan, batas kapasitas karyawan, serta status ketersediaan paket.

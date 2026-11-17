@@ -332,3 +332,38 @@
 .payroll-period-warning { margin-top: 10px; padding: 10px 12px; display: flex; gap: 9px; color: #7a4a00; background: #fff4dc; border: 1px solid #f1c46b; border-radius: 8px; font-size: 12px; line-height: 1.5; }
 .payroll-period-warning svg { flex: 0 0 auto; margin-top: 2px; color: #c77a05; }
 .payslip-table td strong + small { display: block; color: #8a847d; font-size: 11px; font-weight: 500; }
+
+/* After-login company announcement popup */
+.announcement-popup-backdrop{position:fixed;inset:0;z-index:1350;padding:16px;display:flex;align-items:center;justify-content:center;background:rgba(22,20,19,.55)}
+.announcement-popup{width:min(520px,100%);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;overflow:hidden;background:#fff;border-radius:14px;box-shadow:0 22px 65px rgba(22,20,19,.28)}
+.announcement-popup>header{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between}
+.announcement-popup-kicker{display:inline-flex;align-items:center;gap:7px;color:#b05c07;font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.announcement-popup>header>button{width:34px;height:34px;display:grid;place-items:center;color:#8a8884;background:transparent;border:0;border-radius:8px;cursor:pointer}
+.announcement-popup>header>button:hover{background:#f6f4f1;color:#2e2c29}
+.announcement-popup-image{width:100%;height:auto;max-height:220px;object-fit:cover;display:block}
+.announcement-popup-body{padding:14px 20px 4px;overflow-y:auto}
+.announcement-popup-body h2{margin:0 0 4px;color:#2e2c29;font-size:18px;line-height:1.35}
+.announcement-popup-body small{color:#8a8884;font-size:11.5px}
+.announcement-popup-body p{margin:12px 0;color:#4b4742;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.announcement-popup>footer{padding:12px 20px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid #efece8}
+.announcement-popup>footer>div{display:flex;gap:8px;margin-left:auto}
+.announcement-popup-check{display:inline-flex;align-items:center;gap:8px;color:#4b4742;font-size:12.5px;cursor:pointer}
+.announcement-popup-check input{width:16px;height:16px;accent-color:#f7a20f}
+
+/* Top-bar user chip opens the profile page */
+a.topbar-user{color:inherit;text-decoration:none;border-radius:10px;padding-top:3px;padding-bottom:3px;padding-right:6px;transition:background .15s}
+a.topbar-user:hover{background:#fff4e0}
+a.topbar-user:focus-visible{outline:2px solid #f7a20f;outline-offset:2px}
+
+/* Camera dialog: failure shown inside the viewport; other errors as a full-width strip */
+.camera-failed svg{color:#ff9b93}
+.camera-failed strong{font-size:14px}
+.camera-failed small{max-width:300px;padding:0 16px;color:#f1dcda;font-size:12px;line-height:1.55}
+.camera-dialog .camera-error.dialog-error{width:auto;margin:10px 14px 0;padding:10px 12px;color:#ffd9d6;background:rgba(229,72,77,.16);border:1px solid rgba(255,140,133,.45);border-radius:10px;font-size:12px;line-height:1.5}
+
+/* Salary batch edit: what the batch replaces */
+.salary-batch-warning{margin:12px 0 0;padding:10px 12px;color:#8a4b00;background:#fff6e5;border:1px solid #f6d6a0;border-radius:8px;font-size:12px;line-height:1.55}
+
+/* Salary list page-size buttons: the chosen size is highlighted */
+.salary-footer button{cursor:pointer}
+.salary-footer button.active{color:#fff;background:var(--primary);border-color:var(--primary)}

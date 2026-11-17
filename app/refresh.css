@@ -1050,6 +1050,9 @@ td.retention-actions form { gap: 0; }
 .sidebar .nav-group[open] > summary, .sidebar .nav-group.active > summary, .sidebar .nav-group summary:hover,
 .sidebar .nav-item:hover, .sidebar .nav-child:hover,
 .superadmin-sidebar .nav-item:hover { color: #fff; }
+/* The open page sits on a white pill: keep its label dark while hovered (white-on-white otherwise). */
+.sidebar .nav-child.active, .sidebar .nav-child.active:hover, .sidebar .nav-item.active:hover,
+.superadmin-sidebar .nav-item.active:hover { color: var(--charcoal); text-shadow: none; }
 .login-portal-story h2, .login-portal-story p, .login-story-kicker, .login-story-brand > span, .login-story-foot,
 .subscription-hero h1, .subscription-hero h2, .subscription-hero strong, .subscription-meta strong, .usage-panel strong,
 .subscription-upgrade-card > strong, .subscription-upgrade-card > p,

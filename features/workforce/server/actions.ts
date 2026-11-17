@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { employeeDocuments, employees, fileAssets, leaveRequests, workSchedules } from "@/db/schema";
+import { companyMembers, employeeDocuments, employees, fileAssets, leaveRequests, session, workSchedules } from "@/db/schema";
 import { requireCompany, requireCompanyRole } from "@/lib/current-company";
 import { deletePrivateObject, putPrivateObject } from "@/lib/object-storage";
 import { compressUpload, storedFileName, type ImageProfile } from "@/lib/file-compression";
@@ -145,8 +145,17 @@ export async function deleteEmployee(employeeId: string) {
     .where(and(eq(fileAssets.companyId, context.companyId), eq(fileAssets.ownerEmployeeId, id)));
   const deleted = await db.delete(employees)
     .where(and(eq(employees.id, id), eq(employees.companyId, context.companyId)))
-    .returning({ id: employees.id });
+    .returning({ id: employees.id, userId: employees.userId });
   if (!deleted.length) throw new Error("Karyawan tidak ditemukan.");
+  // The person loses access too: without this the deleted employee could still sign in and use the
+  // company's pages. Admin/owner accounts (and the signed-in user) are managed on the User Login page.
+  const userId = deleted[0].userId;
+  if (userId && userId !== context.session.user.id) {
+    const removed = await db.delete(companyMembers)
+      .where(and(eq(companyMembers.companyId, context.companyId), eq(companyMembers.userId, userId), inArray(companyMembers.role, ["employee", "manager", "hrd", "general_manager"])))
+      .returning({ id: companyMembers.id });
+    if (removed.length) await db.delete(session).where(eq(session.userId, userId));
+  }
   if (assets.length) await db.delete(fileAssets).where(inArray(fileAssets.id, assets.map((asset) => asset.id)));
   await Promise.allSettled(assets.map((asset) => deletePrivateObject(asset.bucket, asset.key)));
   revalidatePath("/dashboard/karyawan");

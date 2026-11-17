@@ -85,7 +85,7 @@ function DateRangePicker({ from, to, today, onApply }: { from: string; to: strin
       <span><CalendarDays size={15}/></span>{from ? `${shortDate(from)}  –  ${shortDate(to)}` : <em>Filter Tanggal</em>}
     </button>
     {open && <div className="employee-date-range-pop">
-      <ul>{presets.map(([label, start, end]) => <li key={label}><button type="button" className={from === start && to === end ? "active" : ""} onClick={() => pick(start, end)}>{label}</button></li>)}<li><button type="button" className="custom">Custom Range</button></li></ul>
+      <ul>{presets.map(([label, start, end]) => <li key={label}><button type="button" className={from === start && to === end ? "active" : ""} onClick={() => pick(start, end)}>{label}</button></li>)}<li><button type="button" className="custom" onClick={() => box.current?.querySelector<HTMLInputElement>(".employee-date-range-custom input")?.focus()}>Custom Range</button></li></ul>
       <div className="employee-date-range-custom">
         <label>Dari Tanggal<input type="date" value={draftFrom} max={draftTo || undefined} onChange={(event) => setDraftFrom(event.target.value)}/></label>
         <label>Sampai Tanggal<input type="date" value={draftTo} min={draftFrom || undefined} onChange={(event) => setDraftTo(event.target.value)}/></label>

@@ -2,9 +2,10 @@
 /* eslint-disable @next/next/no-img-element -- pratinjau kamera memakai data URL sementara */
 
 import Link from "next/link";
+import { dataUrlToFile } from "@/lib/data-url";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { Camera, Check, CheckCircle2, Clock3, LoaderCircle, LocateFixed, LogIn, LogOut, RefreshCw, X } from "lucide-react";
+import { Camera, CameraOff, Check, CheckCircle2, Clock3, LoaderCircle, LocateFixed, LogIn, LogOut, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ShiftPicker } from "@/features/attendance/components/shift-picker";
 import type { ShiftOption } from "@/features/attendance/shift-time";
@@ -213,7 +214,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
       form.set("action", action);
       form.set("clientCapturedAt", new Date().toISOString());
       if (action === "check_in" && shiftId) form.set("scheduleId", shiftId);
-      if (photo && !withoutPhoto) form.set("photo", new File([await (await fetch(photo)).blob()], `${action}-${Date.now()}.jpg`, { type: "image/jpeg" }));
+      if (photo && !withoutPhoto) form.set("photo", dataUrlToFile(photo, `${action}-${Date.now()}.jpg`));
       if (coordinates) {
         form.set("latitude", String(coordinates.latitude));
         form.set("longitude", String(coordinates.longitude));
@@ -298,11 +299,11 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
     {phase !== "ready" ? <div className="camera-backdrop" role="dialog" aria-modal="true" aria-label="Ambil foto kehadiran"><section className="camera-dialog">
       <header><div><span className="eyebrow">{actionLabel(action).toUpperCase()}{chosenShift && phase !== "shift" ? ` · ${chosenShift.name.toUpperCase()}` : ""}</span><h2>{phase === "success" ? "Kehadiran berhasil dicatat" : phase === "shift" ? "Pilih shift kerja hari ini" : "Foto langsung dari kamera"}</h2></div><button onClick={closeCamera} aria-label="Tutup"><X size={20} /></button></header>
       {phase === "shift" ? <ShiftPicker shifts={shifts} value={shiftId} nowTime={nowTime} onChange={setShiftId} /> : null}
-      {phase === "camera" ? <div className="camera-viewport"><video ref={videoRef} autoPlay playsInline muted /><span className="live-badge">● LIVE</span>{!cameraReady ? <div className="camera-loading"><LoaderCircle className="spin" size={28} /><strong>{cameraStarting ? "Meminta akses kamera…" : "Menyiapkan pratinjau…"}</strong><small>Pastikan izin kamera pada browser sudah aktif.</small></div> : null}</div> : null}
+      {phase === "camera" ? <div className="camera-viewport"><video ref={videoRef} autoPlay playsInline muted />{cameraFailed ? null : <span className="live-badge">● LIVE</span>}{!cameraReady ? cameraFailed ? <div className="camera-loading camera-failed" role="alert"><CameraOff size={30} /><strong>Kamera tidak dapat dibuka</strong><small>{error || "Periksa izin kamera pada browser, lalu coba lagi."}</small></div> : <div className="camera-loading"><LoaderCircle className="spin" size={28} /><strong>{cameraStarting ? "Meminta akses kamera…" : "Menyiapkan pratinjau…"}</strong><small>Pastikan izin kamera pada browser sudah aktif.</small></div> : null}</div> : null}
       {phase === "preview" ? <div className="camera-viewport preview"><img src={photo} alt="Pratinjau foto kehadiran" /></div> : null}
       {phase === "success" ? <div className="attendance-success"><span><Check size={34} /></span><h3>{actionLabel(action)} tercatat</h3><p>{time}{companyName ? ` · ${companyName}` : ""}</p><small>Data kehadiran telah disimpan dengan aman.</small></div> : null}
       {phase !== "success" && phase !== "shift" ? <div className="camera-meta"><span><Clock3 size={15} /> {time}</span><span><LocateFixed size={15} /> {location}</span></div> : null}
-      {error && phase !== "success" ? <div className="camera-error dialog-error" role="alert">{error}</div> : null}
+      {error && phase !== "success" && !(phase === "camera" && cameraFailed) ? <div className="camera-error dialog-error" role="alert">{error}</div> : null}
       <footer>{phase === "shift" ? <button className="btn btn-primary btn-block" disabled={!shiftId} onClick={() => void openCamera("check_in")}><Camera size={18} /> {shiftId ? "Lanjut Ambil Foto" : "Pilih shift terlebih dahulu"}</button> : null}{phase === "camera" ? cameraFailed ? <button className="btn btn-primary btn-block" onClick={() => void openCamera(action)}><RefreshCw size={17} /> Coba Akses Kamera Lagi</button> : <button className="btn btn-primary btn-block" disabled={!cameraReady} onClick={capturePhoto}>{cameraReady ? <Camera size={18} /> : <LoaderCircle className="spin" size={18} />} {cameraReady ? "Ambil Foto Sekarang" : "Menyiapkan Kamera"}</button> : null}{phase === "preview" ? <><button className="btn btn-outline" disabled={submitting} onClick={() => void openCamera(action)}><RefreshCw size={16} /> Foto Ulang</button><button className="btn btn-primary" disabled={submitting} onClick={() => void confirmAttendance()}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `Konfirmasi ${actionLabel(action)}`}</button></> : null}{phase === "success" ? <button className="btn btn-primary btn-block" onClick={closeCamera}>Selesai</button> : null}{phase === "camera" && !requirePhoto ? <button className="btn btn-outline btn-block" disabled={submitting} onClick={() => { stopCamera(); void confirmAttendance(true); }}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `${actionLabel(action)} tanpa foto`}</button> : null}</footer>
     </section></div> : null}
   </div>;

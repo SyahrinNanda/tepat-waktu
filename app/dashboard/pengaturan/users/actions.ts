@@ -619,6 +619,8 @@ export async function deleteCompanyUserAction(input: {
           ),
         );
     });
+    // Access is gone with the membership; also end the user's open sessions on every device.
+    await revokeUserSessions(member.userId);
 
     revalidatePath("/dashboard/pengaturan/users");
     return { ok: true, message: "User berhasil dihapus." };

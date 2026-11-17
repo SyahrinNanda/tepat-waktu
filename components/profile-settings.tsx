@@ -143,7 +143,13 @@ export function ProfileSettings({
         revokeOtherSessions: true,
       });
       if (result.error) {
-        setNotice({ type: "error", text: result.error.message ?? "Password gagal diganti." });
+        const code = result.error.code;
+        const text = code === "INVALID_PASSWORD" ? "Password lama salah."
+          : code === "PASSWORD_TOO_SHORT" ? "Password baru terlalu pendek."
+          : code === "PASSWORD_TOO_LONG" ? "Password baru terlalu panjang."
+          : result.error.status === 429 ? "Terlalu banyak percobaan. Coba lagi beberapa saat."
+          : "Password gagal diganti. Coba lagi.";
+        setNotice({ type: "error", text });
         return;
       }
       setCurrentPassword("");
@@ -166,7 +172,7 @@ export function ProfileSettings({
   return (
     <div className="profile-page">
       <header className="profile-page-header">
-        <small>Kehadiran Admin Panel</small>
+        <small>Panel Admin</small>
         <h1>PROFILE</h1>
         <nav aria-label="Breadcrumb">
           <a href="/dashboard">Beranda</a><span>/</span><span>Settings</span><span>/</span><span>Profile</span>

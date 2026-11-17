@@ -20,7 +20,7 @@ const configuredOrigins = [process.env.BETTER_AUTH_URL, process.env.NEXT_PUBLIC_
 );
 const developmentOrigins =
   process.env.NODE_ENV === "development"
-    ? ["http://localhost:*", "http://127.0.0.1:*"]
+    ? ["http://localhost:*", "http://127.0.0.1:*", "http://192.168.*.*:*", "exp://", "exp://**"]
     : [];
 
 /**

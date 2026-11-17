@@ -26,7 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   ]);
   const requestRows = requests.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
   return <div className="subscription-reference-page">
-    <header className="subscription-reference-header"><small>TepatWaktu Admin Panel</small><h1>DAFTAR PAKET</h1><nav><span>Beranda</span><b>/</b><span>Langganan</span><b>/</b><strong>Daftar Paket</strong></nav></header>
+    <header className="subscription-reference-header"><small>Panel Admin</small><h1>DAFTAR PAKET</h1><nav><span>Beranda</span><b>/</b><span>Langganan</span><b>/</b><strong>Daftar Paket</strong></nav></header>
     <PlanSelector plans={plans} currentPlanCode={context.plan} canManage={canManage} initialPlanId={plan}>
       <CustomPlanCard canManage={canManage} requests={requestRows} />
     </PlanSelector>

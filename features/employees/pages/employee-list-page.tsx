@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { and, asc, eq, ilike, or } from "drizzle-orm";
-import { Ellipsis, Filter, Plus, Search } from "lucide-react";
+import { Filter, Plus, Search } from "lucide-react";
 import { db } from "@/db";
 import { employeeDocuments, employees } from "@/db/schema";
 import { EmployeeListTable } from "@/features/employees/components/employee-list-table";
@@ -38,14 +38,13 @@ export default async function Page({ searchParams }: Props) {
     return { ...rest, account: accounts.get(row.id) ?? "none" };
   });
   return <>
-    <div className="master-page-head"><span>Kehadiran Admin Panel</span><h1>Daftar Karyawan</h1></div>
+    <div className="master-page-head"><span>Panel Admin</span><h1>Daftar Karyawan</h1></div>
     <section className="employee-list-card">
       <form className="employee-list-toolbar" method="get">
         <div className="master-search"><Search size={16}/><input name="q" defaultValue={query} placeholder="Nama Karyawan..."/></div>
         <select name="status" defaultValue={status ?? ""} aria-label="Status karyawan"><option value="">Semua Status</option><option value="active">Aktif</option><option value="inactive">Nonaktif</option></select>
         <button className="location-filter-button" type="submit"><Filter size={19}/> Filter</button><span/>
         {canManage && <Link className="btn btn-primary" href="/dashboard/karyawan/tambah"><Plus size={17}/> Tambah</Link>}
-        <button className="master-reset" type="button" aria-label="Menu lainnya"><Ellipsis size={19}/></button>
       </form>
       <EmployeeListTable rows={tableRows} canManage={canManage}/>
       <div className="employee-list-footer">menampilkan {rows.length} data.</div>

@@ -3,7 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Megaphone, ScrollText, TicketPercent, AlarmClock, BarChart3, Filter, Bell, Building2, CreditCard, ExternalLink, LayoutDashboard, LogOut, Menu, MessageCircle, Settings, Tags, Users, Video, X, UserX } from "lucide-react";
+import { Megaphone, ScrollText, TicketPercent, AlarmClock, BarChart3, Filter, Building2, CreditCard, ExternalLink, LayoutDashboard, LogOut, Menu, MessageCircle, Settings, Tags, Users, Video, X, UserX } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
 import { Logo } from "./logo";
@@ -104,7 +104,7 @@ export function SuperAdminShell({
               <Menu size={21} />
             </button>
             <div className="topbar-company">
-              <small>Kehadiran Super Admin Panel</small>
+              <small>Panel Super Admin</small>
               <strong>TepatWaktu Platform Console</strong>
             </div>
           </div>
@@ -128,10 +128,6 @@ export function SuperAdminShell({
             >
               <MessageCircle size={14} style={{ color: "#22c55e" }} /> Customer Service <ExternalLink size={11} style={{ opacity: 0.6 }} />
             </a>
-            <button className="icon-button notification-button" aria-label="Notifikasi">
-              <Bell size={19} />
-              <i />
-            </button>
             <span className="role-pill superadmin-role">Super Admin</span>
             <div className="topbar-user" title={userEmail}>
               <span className="avatar">

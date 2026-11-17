@@ -107,26 +107,21 @@ export function MonthlyAttendanceManager({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleApplyFilter = () => {
+  // Every filter applies as soon as it changes; `next` carries the value React state has not stored yet.
+  type FilterValues = { year: number; month: number; query: string; locationId: string; division: string; shiftId: string };
+  const handleApplyFilter = (next: Partial<FilterValues> = {}) => {
+    const values: FilterValues = { year, month, query, locationId: selectedLocation, division: selectedDivision, shiftId: selectedShift, ...next };
     const params = new URLSearchParams(searchParams.toString());
-    params.set("year", String(year));
-    params.set("month", String(month));
-    if (query) params.set("q", query);
-    else params.delete("q");
-
-    if (selectedLocation) params.set("locationId", selectedLocation);
-    else params.delete("locationId");
-
-    if (selectedDivision) params.set("division", selectedDivision);
-    else params.delete("division");
-
-    if (selectedShift) params.set("shiftId", selectedShift);
-    else params.delete("shiftId");
-
+    params.set("year", String(values.year));
+    params.set("month", String(values.month));
+    const optional: [string, string][] = [["q", values.query.trim()], ["locationId", values.locationId], ["division", values.division], ["shiftId", values.shiftId]];
+    for (const [key, value] of optional) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
     startTransition(() => {
       router.push(`?${params.toString()}`);
     });
-    setFilterPanelOpen(false);
   };
 
   const handleReset = () => {
@@ -215,7 +210,7 @@ export function MonthlyAttendanceManager({
     <div className="monthly-attendance-container">
       {/* Header Eyebrow, Title & Breadcrumb matching Gambar 1 */}
       <header className="monthly-attendance-header">
-        <div className="monthly-attendance-eyebrow">Kehadiran Admin Panel</div>
+        <div className="monthly-attendance-eyebrow">Panel Admin</div>
         <div className="monthly-attendance-title-row">
           <h1 className="monthly-attendance-title">LAPORAN KEHADIRAN BULANAN</h1>
           <nav className="monthly-attendance-breadcrumb">
@@ -223,7 +218,7 @@ export function MonthlyAttendanceManager({
             <span className="breadcrumb-separator">/</span>
             <Link href="/dashboard/presensi/harian">Kehadiran</Link>
             <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-current">Laporan Laporan Kehadiran Bulanan</span>
+            <span className="breadcrumb-current">Laporan Kehadiran Bulanan</span>
           </nav>
         </div>
       </header>
@@ -260,7 +255,7 @@ export function MonthlyAttendanceManager({
               <button
                 type="button"
                 className="monthly-search-clear"
-                onClick={() => setQuery("")}
+                onClick={() => { setQuery(""); handleApplyFilter({ query: "" }); }}
                 title="Hapus pencarian"
               >
                 <X size={13} />
@@ -272,7 +267,7 @@ export function MonthlyAttendanceManager({
           <div className="monthly-month-wrap">
             <select
               value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
+              onChange={(e) => { setMonth(Number(e.target.value)); handleApplyFilter({ month: Number(e.target.value) }); }}
               className="monthly-select-month"
             >
               {MONTH_NAMES.map((name, idx) => (
@@ -287,7 +282,7 @@ export function MonthlyAttendanceManager({
           <div className="monthly-year-wrap">
             <select
               value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
+              onChange={(e) => { setYear(Number(e.target.value)); handleApplyFilter({ year: Number(e.target.value) }); }}
               className="monthly-select-year"
             >
               {yearOptions.map((y) => (
@@ -302,8 +297,8 @@ export function MonthlyAttendanceManager({
           <button
             type="button"
             className={`monthly-action-btn monthly-filter-btn ${filterPanelOpen ? "active" : ""}`}
-            onClick={() => filterPanelOpen ? handleApplyFilter() : setFilterPanelOpen(true)}
-            title={filterPanelOpen ? "Terapkan dan Tutup Filter" : "Buka Filter"}
+            onClick={() => setFilterPanelOpen((open) => !open)}
+            title={filterPanelOpen ? "Tutup Filter" : "Buka Filter"}
             aria-expanded={filterPanelOpen}
             aria-controls="monthly-advanced-filters"
           >
@@ -370,7 +365,7 @@ export function MonthlyAttendanceManager({
             <label className="monthly-field-label">Lokasi</label>
             <select
               value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
+              onChange={(e) => { setSelectedLocation(e.target.value); handleApplyFilter({ locationId: e.target.value }); }}
               className="monthly-select-dropdown"
             >
               <option value="">Pilih Lokasi</option>
@@ -387,7 +382,7 @@ export function MonthlyAttendanceManager({
             <label className="monthly-field-label">Divisi</label>
             <select
               value={selectedDivision}
-              onChange={(e) => setSelectedDivision(e.target.value)}
+              onChange={(e) => { setSelectedDivision(e.target.value); handleApplyFilter({ division: e.target.value }); }}
               className="monthly-select-dropdown"
             >
               <option value="">Pilih Divisi</option>
@@ -404,7 +399,7 @@ export function MonthlyAttendanceManager({
             <label className="monthly-field-label">Jadwal Kerja</label>
             <select
               value={selectedShift}
-              onChange={(e) => setSelectedShift(e.target.value)}
+              onChange={(e) => { setSelectedShift(e.target.value); handleApplyFilter({ shiftId: e.target.value }); }}
               className="monthly-select-dropdown"
             >
               <option value="">Pilih Jadwal Kerja</option>

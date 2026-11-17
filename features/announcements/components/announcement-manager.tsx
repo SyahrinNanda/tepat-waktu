@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
-import { Bold, ImagePlus, Italic, Pencil, Plus, Redo2, RotateCcw, Search, Strikethrough, Trash2, Underline, Undo2, X } from "lucide-react";
+import { ImagePlus, Pencil, Plus, RotateCcw, Search, Trash2, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Announcement = { id: string; imageAssetId: string | null; title: string; summary: string; content: string; status: string; createdAt: string; updatedAt: string };
@@ -38,7 +38,7 @@ export function AnnouncementManager({ initialRows, canManage }: { initialRows: A
   }
 
   return <>
-    <div className="announcement-page-head"><span>Kehadiran Admin Panel</span><h1>Daftar Pemberitahuan</h1></div>
+    <div className="announcement-page-head"><span>Panel Admin</span><h1>Daftar Pemberitahuan</h1></div>
     <section className="announcement-card">
       <div className="announcement-toolbar">
         <div className="announcement-search"><Search size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari judul pemberitahuan ..." /></div>
@@ -67,7 +67,7 @@ function AnnouncementModal({ initial, busy, error, onClose, onSubmit }: { initia
         <button className="announcement-upload" type="button" onClick={() => inputRef.current?.click()}>{preview ? <Image src={preview} alt="Pratinjau gambar" fill sizes="310px" unoptimized /> : <><ImagePlus size={31} /><span>Upload gambar pemberitahuan</span><b>Cari Gambar</b></>}</button>
         <label className="announcement-field"><span>Judul Pemberitahuan</span><input name="title" defaultValue={initial?.title ?? ""} placeholder="Ketik judul pemberitahuan disini" required maxLength={160} /></label>
         <label className="announcement-field"><span>Deskripsi Singkat Pemberitahuan</span><input name="summary" defaultValue={initial?.summary ?? ""} placeholder="Ketik deskripsi singkat disini" required maxLength={320} /></label>
-        <label className="announcement-field"><span>Deskripsi Pemberitahuan</span><div className="announcement-editor"><div className="announcement-editor-tools"><button type="button"><Undo2 size={15} /></button><button type="button"><Redo2 size={15} /></button><button type="button"><Bold size={15} /></button><button type="button"><Italic size={15} /></button><button type="button"><Underline size={15} /></button><button type="button"><Strikethrough size={15} /></button><span>Styles</span><span>Format</span></div><textarea name="content" defaultValue={initial?.content ?? ""} required maxLength={30000} aria-label="Deskripsi pemberitahuan" /></div></label>
+        <label className="announcement-field"><span>Deskripsi Pemberitahuan</span><div className="announcement-editor"><textarea name="content" defaultValue={initial?.content ?? ""} required maxLength={30000} aria-label="Deskripsi pemberitahuan" /></div></label>
         {error ? <div className="announcement-inline-error">{error}</div> : null}
       </div>
       <footer><button className="btn btn-outline btn-sm" type="button" onClick={onClose} disabled={busy}>Batalkan</button><button className="btn btn-primary btn-sm" type="submit" disabled={busy}>{busy ? "Menyimpan..." : "Simpan"}</button></footer>

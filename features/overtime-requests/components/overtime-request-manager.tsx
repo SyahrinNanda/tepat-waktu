@@ -11,7 +11,7 @@ export type OvertimeRow = { id: string; employeeId: string; name: string; employ
 const statusLabels: Record<Status, string> = { pending: "Menunggu", approved: "Disetujui", rejected: "Ditolak" };
 
 export function OvertimeRequestManager({ initialRows, employees, canReview, today }: { initialRows: OvertimeRow[]; employees: EmployeeOption[]; canReview: boolean; today: string }) {
-  const [rows, setRows] = useState(initialRows), [query, setQuery] = useState(""), [month, setMonth] = useState(today.slice(5, 7)), [year, setYear] = useState(today.slice(0, 4)), [status, setStatus] = useState<Status | "">("pending"), [showFilters, setShowFilters] = useState(true);
+  const [rows, setRows] = useState(initialRows), [query, setQuery] = useState(""), [month, setMonth] = useState(""), [year, setYear] = useState(""), [status, setStatus] = useState<Status | "">("pending"), [showFilters, setShowFilters] = useState(true);
   const [editing, setEditing] = useState<OvertimeRow | null | undefined>(), [employeeId, setEmployeeId] = useState(""), [selectedIds, setSelectedIds] = useState<string[]>([]), [deleteTarget, setDeleteTarget] = useState<OvertimeRow | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const uploadAttachment = useAttachmentUploader("pengajuan/lembur");

@@ -64,20 +64,39 @@ export async function resetUserPassword(formData: FormData) {
   revalidatePath("/superadmin/users");
 }
 
-export async function deleteUserAccount(formData: FormData) {
+export type DeleteUserResult = { ok: true } | { ok: false; error: string };
+
+/** Postgres error code of a (possibly drizzle-wrapped) query error. */
+function pgErrorCode(error: unknown) {
+  const source = typeof error === "object" && error && "cause" in error && error.cause ? error.cause : error;
+  return typeof source === "object" && source && "code" in source ? String(source.code) : undefined;
+}
+
+export async function deleteUserAccount(formData: FormData): Promise<DeleteUserResult> {
   const currentSession = await requireSuperAdmin();
   const userId = z.string().parse(formData.get("userId"));
 
   if (userId === currentSession.user.id) {
-    throw new Error("Anda tidak dapat menghapus akun Anda sendiri.");
+    return { ok: false, error: "Anda tidak dapat menghapus akun Anda sendiri." };
   }
 
   const [target] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId)).limit(1);
-  // Logged first: the entry keeps the email after the account row is gone.
-  await recordAudit(currentSession, { action: "user.delete", summary: `Menghapus akun ${target?.email ?? userId}`, metadata: { userId, email: target?.email } });
-  await db.delete(user).where(eq(user.id, userId));
+  if (!target) return { ok: false, error: "Akun tidak ditemukan atau sudah dihapus." };
+  try {
+    await db.delete(user).where(eq(user.id, userId));
+  } catch (error) {
+    // Invoices, visits, announcements, files and attendance entries keep a required link to the
+    // person who made them, so such an account cannot be removed without losing company records.
+    if (pgErrorCode(error) === "23503") {
+      return { ok: false, error: "Akun ini tidak dapat dihapus karena masih tercatat pada data perusahaan (misalnya invoice langganan, kunjungan, pengumuman, atau file). Nonaktifkan akun ini agar tidak bisa login." };
+    }
+    throw error;
+  }
+  // The email was read before the row was deleted, so the entry still names the account.
+  await recordAudit(currentSession, { action: "user.delete", summary: `Menghapus akun ${target.email}`, metadata: { userId, email: target.email } });
   revalidatePath("/superadmin/users");
   revalidatePath("/superadmin");
+  return { ok: true };
 }
 
 

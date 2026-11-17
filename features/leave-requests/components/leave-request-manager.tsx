@@ -20,7 +20,7 @@ export function LeaveRequestManager({ initialRows, employees, canReview, special
   const [annualPreview, setAnnualPreview] = useState<AnnualPreview | null>(null);
   const [kinds, setKinds] = useState(specialTypes), [managingKinds, setManagingKinds] = useState(false), [formType, setFormType] = useState<LeaveType>("annual"), [specialId, setSpecialId] = useState("");
   const [startDate, setStartDate] = useState(today), [endDate, setEndDate] = useState(today), [preview, setPreview] = useState<Preview | null>(null), [kindFilter, setKindFilter] = useState("");
-  const [rows, setRows] = useState(initialRows), [query, setQuery] = useState(""), [month, setMonth] = useState(today.slice(5, 7)), [year, setYear] = useState(today.slice(0, 4)), [status, setStatus] = useState<LeaveStatus | "">("pending"), [editing, setEditing] = useState<LeaveRow | null | undefined>();
+  const [rows, setRows] = useState(initialRows), [query, setQuery] = useState(""), [month, setMonth] = useState(""), [year, setYear] = useState(""), [status, setStatus] = useState<LeaveStatus | "">("pending"), [editing, setEditing] = useState<LeaveRow | null | undefined>();
   const [showFilters, setShowFilters] = useState(true);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const uploadAttachment = useAttachmentUploader("pengajuan/izin-cuti");

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { KeyRound, RotateCcw, Search, Shield, ShieldAlert, Trash2, UserCheck, X } from "lucide-react";
+import { confirmAction } from "@/components/confirm-dialog";
 import { deleteUserAccount, resetUserPassword, setMemberStatus, updateUserPlatformRole } from "./actions";
 
 export type UserRow = {
@@ -101,7 +102,12 @@ export function UserManagementTable({
     setNotice(null);
     try {
       const form = new FormData(e.currentTarget);
-      await deleteUserAccount(form);
+      const result = await deleteUserAccount(form);
+      if (!result.ok) {
+        setNotice({ type: "error", text: result.error });
+        setDeleteModalUser(null);
+        return;
+      }
       setNotice({ type: "success", text: `Akun ${deleteModalUser.name} berhasil dihapus.` });
       setDeleteModalUser(null);
     } catch (err) {
@@ -268,7 +274,12 @@ export function UserManagementTable({
                           className="btn btn-sm btn-outline"
                           title={u.memberActive ? "Nonaktifkan: user langsung keluar dan tidak bisa login" : "Aktifkan kembali"}
                           onClick={(event) => {
-                            if (u.memberActive && !window.confirm(`Nonaktifkan ${u.email}? User langsung keluar dari semua perangkat dan tidak bisa login.`)) event.preventDefault();
+                            if (!u.memberActive) return;
+                            event.preventDefault();
+                            const form = event.currentTarget.form;
+                            void confirmAction(`Nonaktifkan ${u.email}? User langsung keluar dari semua perangkat dan tidak bisa login.`, "Nonaktifkan Akun?", "Ya, Nonaktifkan").then((confirmed) => {
+                              if (confirmed) form?.requestSubmit();
+                            });
                           }}
                         >
                           {u.memberActive ? "Nonaktifkan" : "Aktifkan"}

@@ -148,6 +148,8 @@ export async function fetchMonthlyAttendanceSummary({
 
   for (const emp of employeeRows) {
     const records = attendanceMap.get(emp.id) || [];
+    // A location or schedule filter lists only the people who attended there / on that schedule.
+    if ((locationId || shiftId) && records.length === 0) continue;
 
     let presensiCount = 0;
     let izinCutiCount = 0;

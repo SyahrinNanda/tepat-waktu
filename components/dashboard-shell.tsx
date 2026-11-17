@@ -33,6 +33,9 @@ import { leaveCompany } from "@/app/superadmin/actions";
 import { Logo } from "./logo";
 import { FloatingMenuLayer } from "./floating-menu-layer";
 
+// Tutorial and Customer Service buttons in the top bar: hidden for now, flip to true to bring them back.
+const SHOW_SUPPORT_LINKS = false;
+
 type NavItem = {
   href: string;
   label: string;
@@ -98,8 +101,8 @@ const groups: NavGroup[] = [
     base: "/dashboard/presensi",
     children: [
       { href: "/dashboard/presensi/check-in", label: "Check-in / Check-out", roles: ["general_manager", "hrd", "manager", "employee"] },
-      { href: "/dashboard/presensi/riwayat", label: "Riwayat", roles: ["admin", "general_manager", "hrd", "manager", "employee"] },
       { href: "/dashboard/presensi/harian", label: "Kehadiran", roles: managementRoles },
+      { href: "/dashboard/presensi/riwayat", label: "Riwayat", roles: ["admin", "general_manager", "hrd", "manager", "employee"] },
       { href: "/dashboard/presensi/bulanan", label: "Laporan Bulanan", roles: managementRoles },
     ],
   },
@@ -257,7 +260,7 @@ export function DashboardShell({
               <Menu size={21} />
             </button>
             <div className="topbar-company">
-              <small>{isSuperAdmin ? "Superadmin · Mode Perusahaan" : "Kehadiran Admin Panel"}</small>
+              <small>{isSuperAdmin ? "Superadmin · Mode Perusahaan" : "Panel Admin"}</small>
               <strong>{companyName}</strong>
             </div>
           </div>
@@ -270,14 +273,16 @@ export function DashboardShell({
                 </button>
               </form>
             ) : null}
-            <button className="support-link"><FileText size={14} /> Tutorial</button>
-            <button className="support-link"><MessageCircleQuestion size={14} /> Customer Service</button>
+            {SHOW_SUPPORT_LINKS ? <>
+              <button className="support-link"><FileText size={14} /> Tutorial</button>
+              <button className="support-link"><MessageCircleQuestion size={14} /> Customer Service</button>
+            </> : null}
             <NotificationBell subscription={subscription ?? undefined} canRenew={canRenew} />
             <span className="role-pill">{isSuperAdmin ? "Super Admin" : roleLabels[normalizedRole] ?? role}</span>
-            <div className="topbar-user" title={userEmail}>
+            <Link href="/dashboard/pengaturan/profile" className="topbar-user" title="Buka profil" aria-label={`Profil ${userName}`}>
               <span className="avatar">{initials}</span>
               <span><strong>{userName}</strong><small>{userEmail}</small></span>
-            </div>
+            </Link>
             <button className="icon-button" onClick={logout} title="Keluar" aria-label="Keluar"><LogOut size={18} /></button>
           </div>
         </header>

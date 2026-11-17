@@ -1,14 +1,5 @@
-import type { Metadata } from "next";
-import { FeatureDetailPage } from "@/features/generic-modules/components/product-module-page";
+import { redirect } from "next/navigation";
 
-type Props = { params: Promise<{ id: string }> };
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  return { title: `Detail Kunjungan · ${decodeURIComponent(id)}` };
-}
-
-export default async function Page({ params }: Props) {
-  const { id } = await params;
-  return <FeatureDetailPage module="kunjungan" id={decodeURIComponent(id)} />;
-}
+// Visits open in a modal on the list; this old detail route read the generic records table and showed
+// "Data tidak ditemukan" for real visits, so it now leads back to the list.
+export default function Page() { redirect("/dashboard/kunjungan"); }

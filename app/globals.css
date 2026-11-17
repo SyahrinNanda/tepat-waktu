@@ -2845,7 +2845,7 @@ body { font-size: 15px; line-height: 1.5; }
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fccb77;
+  background: var(--primary);
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -2855,7 +2855,7 @@ body { font-size: 15px; line-height: 1.5; }
   transition: all 0.15s;
 }
 .visit-report-export-btn:hover {
-  background: #fcbe55; color: #fff;
+  background: var(--primary-dark); color: #fff;
 }
 .visit-report-export-btn:disabled {
   opacity: 0.6;

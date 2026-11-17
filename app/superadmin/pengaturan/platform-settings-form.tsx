@@ -17,6 +17,36 @@ import { savePlatformSettings } from "./actions";
 
 type SettingsMap = Record<string, string>;
 
+// Values the form shows for settings that were never saved. They seed the form state so that
+// saving submits what is on screen; otherwise unsaved switches shown as ON were stored as "false".
+const DEFAULT_SETTINGS: SettingsMap = {
+  greetingText: "Hallo ✌️ $nama",
+  quoteText: "Ayo Kerja Optimal 😂",
+  showMenuIstirahat: "true",
+  showMenuLaporan: "true",
+  showMenuKunjungan: "true",
+  showMenuTugas: "true",
+  showMenuLembur: "true",
+  showMenuIzin: "true",
+  accessVerification: "false",
+  platformName: "TepatWaktu",
+  platformTagline: "Sistem Manajemen Kehadiran & HR Terintegrasi",
+  supportEmail: "support@tepatwaktu.id",
+  supportPhone: "+62 812-4000-8800",
+  helpdeskUrl: "https://bantuan.tepatwaktu.id",
+  defaultTimezone: "Asia/Makassar",
+  defaultGraceMinutes: "15",
+  defaultGeofenceRadius: "50",
+  maxUploadSizeMb: "5",
+  logRetentionDays: "365",
+  allowedFileTypes: "image/jpeg,image/png,image/webp,application/pdf",
+  sessionDurationDays: "7",
+  openRegistration: "true",
+  maintenanceMode: "false",
+  globalNoticeActive: "false",
+  globalNoticeText: "",
+};
+
 export function PlatformSettingsForm({ initialSettings }: { initialSettings: SettingsMap }) {
   const [activeTab, setActiveTab] = useState<
     "mobile" | "general" | "attendance" | "storage" | "security" | "broadcast"
@@ -24,7 +54,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const [settings, setSettings] = useState<SettingsMap>(initialSettings);
+  const [settings, setSettings] = useState<SettingsMap>(() => ({ ...DEFAULT_SETTINGS, ...initialSettings }));
 
   function handleChange(key: string, value: string) {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -105,7 +135,7 @@ export function PlatformSettingsForm({ initialSettings }: { initialSettings: Set
         {activeTab === "mobile" && (
           <div>
             <div className="settings-section-head">
-              <h3>Pengaturan Kata Kata Sapaan</h3>
+              <h3>Pengaturan Kata-kata Sapaan</h3>
             </div>
 
             <div className="info-alert-box">

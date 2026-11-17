@@ -263,7 +263,7 @@ export function RolesManager({ initialRoles }: Props) {
             fontWeight: 500,
           }}
         >
-          Kehadiran Admin Panel
+          Panel Admin
         </div>
         <h1
           style={{

@@ -260,7 +260,7 @@ export function VisitListManager({ initialRows, employees, today, canWrite, self
   return (
     <>
       <header className="visit-page-head">
-        <small>Kehadiran Admin Panel</small>
+        <small>Panel Admin</small>
         <h1>Daftar Kunjungan</h1>
       </header>
 

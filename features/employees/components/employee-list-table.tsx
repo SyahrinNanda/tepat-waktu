@@ -45,7 +45,7 @@ export function EmployeeListTable({ rows, canManage }: { rows: EmployeeListRow[]
         <td><details className="employee-action-menu"><summary aria-label={`Aksi ${row.name}`}><Ellipsis size={19}/></summary><div data-float-menu><Link href={`/dashboard/karyawan/${row.id}` as Route}>Detail</Link>{canManage && <Link href={`/dashboard/karyawan/${row.id}/edit` as Route}>Edit</Link>}{canManage && <button type="button" onClick={() => setDeleteTarget(row)}>Hapus</button>}</div></details></td>
       </tr>)}
     </tbody></table></div>
-    <ConfirmDialog open={Boolean(deleteTarget)} title="Hapus Karyawan?" message={`Data ${deleteTarget?.name ?? "karyawan"} beserta riwayat terkait akan dihapus permanen.`} busy={busy} onCancel={() => setDeleteTarget(null)} onConfirm={remove}/>
+    <ConfirmDialog open={Boolean(deleteTarget)} title="Hapus Karyawan?" message={`Data ${deleteTarget?.name ?? "karyawan"} beserta riwayat terkait akan dihapus permanen, dan akses login-nya ke perusahaan ini dicabut.`} busy={busy} onCancel={() => setDeleteTarget(null)} onConfirm={remove}/>
   </>;
 }
 

@@ -58,7 +58,7 @@ export function AplikasiSettingsForm({
             fontWeight: 500,
           }}
         >
-          Kehadiran Admin Panel
+          Panel Admin
         </div>
         <h1
           style={{
@@ -121,7 +121,7 @@ export function AplikasiSettingsForm({
           padding: "28px 32px",
         }}
       >
-        {/* Section 1: Pengaturan Kata Kata Sapaan */}
+        {/* Section 1: Pengaturan Kata-kata Sapaan */}
         <div style={{ marginBottom: "32px" }}>
           <h2
             style={{
@@ -131,7 +131,7 @@ export function AplikasiSettingsForm({
               margin: "0 0 16px 0",
             }}
           >
-            Pengaturan Kata Kata Sapaan
+            Pengaturan Kata-kata Sapaan
           </h2>
 
           {/* Info Banner */}

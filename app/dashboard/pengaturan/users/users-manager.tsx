@@ -385,7 +385,7 @@ export function UsersManager({ initialUsers, currentUserId, viewerIsSuperAdmin =
               fontWeight: 500,
             }}
           >
-            Kehadiran Admin Panel
+            Panel Admin
           </div>
           <h1
             style={{

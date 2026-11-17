@@ -48,7 +48,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   const activeOrder = orders.find((order) => order.status === "active" && order.planCode === currentPlan.code);
 
   return <div className="subscription-reference-page">
-    <header className="subscription-reference-header"><small>TepatWaktu Admin Panel</small><h1>LANGGANAN</h1><nav><span>Beranda</span><b>/</b><strong>Langganan</strong></nav></header>
+    <header className="subscription-reference-header"><small>Panel Admin</small><h1>LANGGANAN</h1><nav><span>Beranda</span><b>/</b><strong>Langganan</strong></nav></header>
     <SubscriptionManager
       companyName={context.companyName}
       timezone={context.timezone}

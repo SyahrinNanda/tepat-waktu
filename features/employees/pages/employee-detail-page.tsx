@@ -53,7 +53,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const deviceRows = tab === "device" ? await employeeDevices(context.companyId, employee.id, employee.userId) : [];
   const tabHref = (key: string) => `/dashboard/karyawan/${employee.id}?${new URLSearchParams({ ...(key === "kehadiran" ? {} : { tab: key }), month: String(month), year: String(year) }).toString()}` as Route;
   return <>
-    <div className="master-page-head"><span>Kehadiran Admin Panel</span><h1>DETAIL KARYAWAN</h1><p>Beranda / Karyawan / Detail Karyawan</p></div>
+    <div className="master-page-head"><span>Panel Admin</span><h1>DETAIL KARYAWAN</h1><p>Beranda / Karyawan / Detail Karyawan</p></div>
     <EmployeeAccountCard employeeId={employee.id} status={accountStatus} loginEmail={loginAccount?.email ?? null} employeeEmail={employee.email} canManage={canManage}
       initialNotice={employeeAccountMessage(query.akun, loginAccount?.email ?? employee.email)} />
     <section className="employee-detail-profile">

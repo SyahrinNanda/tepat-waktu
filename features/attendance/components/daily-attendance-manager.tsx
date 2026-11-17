@@ -305,7 +305,7 @@ export function DailyAttendanceManager({
     <div className="daily-attendance-container">
       {/* Header Eyebrow & Title matching Gambar 1 */}
       <header className="daily-attendance-header">
-        <div className="daily-attendance-eyebrow">KEHADIRAN ADMIN PANEL</div>
+        <div className="daily-attendance-eyebrow">Panel Admin</div>
         <div className="daily-attendance-title-row">
           <h1 className="daily-attendance-title">Kehadiran</h1>
           <nav className="daily-attendance-breadcrumb">

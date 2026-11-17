@@ -41,7 +41,7 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
   }
 
   return <>
-    <div className="master-page-head leave-report-head"><span>TepatWaktu Admin Panel</span><h1>Laporan Cuti</h1></div>
+    <div className="master-page-head leave-report-head"><span>Panel Admin</span><h1>Laporan Cuti</h1></div>
     <section className="leave-report-card">
       <div className="leave-report-bar">
         <div className="master-search"><Search size={15}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nama Karyawan..."/></div>
