@@ -153,6 +153,7 @@ export async function fetchMonthlyAttendanceSummary({
 
     let presensiCount = 0;
     let izinCutiCount = 0;
+    let alpaCount = 0;
     let terlambatMinutes = 0;
     let jamKerjaMinutes = 0;
     let jamAktualMinutes = 0;
@@ -221,8 +222,11 @@ export async function fetchMonthlyAttendanceSummary({
             }
           }
         }
-      } else if (rec.status === "leave" || rec.status === "absent") {
+      } else if (rec.status === "leave") {
         izinCutiCount += 1;
+      } else if (rec.status === "absent") {
+        // Alpa is reported on its own so it is never mistaken for permitted leave.
+        alpaCount += 1;
       }
     }
 
@@ -241,6 +245,7 @@ export async function fetchMonthlyAttendanceSummary({
       locationName: null,
       presensiCount,
       izinCutiCount,
+      alpaCount,
       terlambatMinutes,
       jamKerjaMinutes,
       jamAktualMinutes,
@@ -303,6 +308,7 @@ export async function exportMonthlyAttendanceExcel(request: Request) {
     { header: "Nama Karyawan", key: "employeeName", width: 28 },
     { header: "Jumlah Kehadiran", key: "presensiCount", width: 18 },
     { header: "Jumlah Izin/Cuti", key: "izinCutiCount", width: 18 },
+    { header: "Jumlah Alpa", key: "alpaCount", width: 14 },
     { header: "Jumlah Waktu Terlambat", key: "terlambat", width: 25 },
     { header: "Jumlah Jam Kerja", key: "jamKerja", width: 22 },
     { header: "Jumlah Jam Aktual", key: "jamAktual", width: 22 },
@@ -317,6 +323,7 @@ export async function exportMonthlyAttendanceExcel(request: Request) {
       employeeName: item.employeeName,
       presensiCount: `${item.presensiCount} hari`,
       izinCutiCount: `${item.izinCutiCount} hari`,
+      alpaCount: `${item.alpaCount} hari`,
       terlambat: formatMinutesExcel(item.terlambatMinutes),
       jamKerja: formatMinutesExcel(item.jamKerjaMinutes),
       jamAktual: formatMinutesExcel(item.jamAktualMinutes),

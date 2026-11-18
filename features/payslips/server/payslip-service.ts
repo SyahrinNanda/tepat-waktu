@@ -2,7 +2,7 @@ import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { dateInTimeZone } from "@/lib/current-company";
 import { payrollPeriod } from "@/features/payslips/payroll-period";
-import { buildPayslip, weekday, type DayPlan, type Payslip, type PayslipLine, type PayslipSummary, type SalaryBasis } from "./payslip-calculation";
+import { buildPayslip, DEFAULT_EMPLOYEE_RULE, weekday, type DayPlan, type EmployeeAttendanceRule, type Payslip, type PayslipLine, type PayslipSummary, type SalaryBasis } from "./payslip-calculation";
 import { getPayrollRules } from "./payroll-settings";
 import {
   attendances,
@@ -22,7 +22,7 @@ import {
 
 const FINAL = "Final";
 
-type EmployeeRow = Payslip["employee"] & { baseSalary: number; overtimeRate: number; salaryBasis: SalaryBasis; joinedAt: string };
+type EmployeeRow = Payslip["employee"] & { baseSalary: number; overtimeRate: number; salaryBasis: SalaryBasis; joinedAt: string; attendanceRule: EmployeeAttendanceRule };
 export type { Payslip, PayslipLine, PayslipSummary, SalaryBasis };
 
 const DAY_NAMES = ["senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "minggu"];
@@ -90,10 +90,18 @@ async function loadEmployee(companyId: string, employeeId: string): Promise<Empl
   const [row] = await db.select({
     id: employees.id, name: employees.name, employeeCode: employees.employeeCode, position: employees.position, department: employees.department, joinedAt: employees.joinedAt,
     baseSalary: employeeSalaryProfiles.baseSalary, overtimeRate: employeeSalaryProfiles.overtimeRate, salaryBasis: employeeSalaryProfiles.salaryBasis,
+    absentRule: employeeSalaryProfiles.absentRule, absentManualAmount: employeeSalaryProfiles.absentManualAmount,
+    lateRule: employeeSalaryProfiles.lateRule, lateMode: employeeSalaryProfiles.lateMode, lateAmount: employeeSalaryProfiles.lateAmount,
   }).from(employees).leftJoin(employeeSalaryProfiles, eq(employeeSalaryProfiles.employeeId, employees.id))
     .where(and(eq(employees.id, employeeId), eq(employees.companyId, companyId))).limit(1);
   if (!row) return null;
-  return { ...row, baseSalary: row.baseSalary ?? 0, overtimeRate: row.overtimeRate ?? 0, salaryBasis: row.salaryBasis ?? "monthly" };
+  const { absentRule, absentManualAmount, lateRule, lateMode, lateAmount, ...rest } = row;
+  // No salary profile yet (left join): follow the company rules.
+  const attendanceRule: EmployeeAttendanceRule = {
+    absentRule: absentRule ?? DEFAULT_EMPLOYEE_RULE.absentRule, absentManualAmount: absentManualAmount ?? 0,
+    lateRule: lateRule ?? DEFAULT_EMPLOYEE_RULE.lateRule, lateMode: lateMode ?? DEFAULT_EMPLOYEE_RULE.lateMode, lateAmount: lateAmount ?? 0,
+  };
+  return { ...rest, baseSalary: rest.baseSalary ?? 0, overtimeRate: rest.overtimeRate ?? 0, salaryBasis: rest.salaryBasis ?? "monthly", attendanceRule };
 }
 
 /**

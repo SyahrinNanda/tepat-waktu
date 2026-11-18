@@ -55,7 +55,7 @@ export function PayslipList({ slips, year, month, years, periodStart, periodEnd,
             <a role="menuitem" href={`/dashboard/karyawan/slip-gaji/cetak?${exportQuery}&print=1`} target="_blank" rel="noopener" aria-disabled={!filtered.length} onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")}><Printer size={16}/><span><strong>PDF</strong><small>Satu slip per halaman, rekap total di akhir</small></span></a>
           </div>
         </details>
-        <Link className="btn btn-outline btn-compact" href="/dashboard/karyawan/slip-gaji/pengaturan"><Settings2 size={15}/> Pengaturan Perhitungan</Link>
+        <Link className="btn btn-outline btn-compact" href="/dashboard/master/perhitungan-gaji"><Settings2 size={15}/> Pengaturan Perhitungan</Link>
         <button className="btn btn-primary btn-compact" disabled={pending || !(selected.length || drafts.length)} onClick={() => finalize(selected.length ? selected : drafts.map((slip) => slip.employee.id))}>
           <Lock size={15}/> {pending ? "Mengunci..." : selected.length ? `Kunci ${selected.length} Slip` : "Kunci Semua Draft"}
         </button>

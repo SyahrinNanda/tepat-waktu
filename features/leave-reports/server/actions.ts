@@ -13,6 +13,7 @@ export type LeaveActionResult = { ok: true } | { ok: false; error: string };
 function refresh() {
   revalidatePath("/dashboard/karyawan/laporan-cuti");
   revalidatePath("/dashboard/pengajuan/izin-cuti");
+  revalidatePath("/dashboard/master/aturan-cuti");
 }
 
 /**

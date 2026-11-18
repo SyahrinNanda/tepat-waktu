@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { Route } from "next";
 import { useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CalendarRange, CircleUserRound, Download, Ellipsis, RotateCcw, Save, Search, Settings2 } from "lucide-react";
 import { LocationModal } from "@/features/master-data/shared/location-modal";
-import { saveLeaveEntitlement, saveLeaveRules, type LeaveActionResult } from "@/features/leave-reports/server/actions";
+import { saveLeaveEntitlement, type LeaveActionResult } from "@/features/leave-reports/server/actions";
 import { describeLeaveRules, shiftDate, type AnnualLeaveBalance, type AnnualLeaveRules } from "@/features/leave-requests/annual-leave";
 
 export type LeaveTally = { times: number; days: number };
@@ -24,7 +25,7 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
   const router = useRouter(), pathname = usePathname();
   const [query, setQuery] = useState(""), [statusFilter, setStatusFilter] = useState<"" | "active" | "inactive">("active");
   const [draftFrom, setDraftFrom] = useState(from), [draftTo, setDraftTo] = useState(to);
-  const [editing, setEditing] = useState<LeaveReportRow | null>(null), [editingRules, setEditingRules] = useState(false);
+  const [editing, setEditing] = useState<LeaveReportRow | null>(null);
   const rows = useMemo(() => initialRows.filter((row) => (!statusFilter || row.status === statusFilter) && `${row.name} ${row.email} ${row.employeeCode}`.toLowerCase().includes(query.toLowerCase())), [initialRows, query, statusFilter]);
   const year = today.slice(0, 4), monthStart = `${today.slice(0, 8)}01`;
   const monthEnd = shiftDate(`${new Date(Date.UTC(Number(year), Number(today.slice(5, 7)), 1)).toISOString().slice(0, 10)}`, -1);
@@ -47,7 +48,7 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
         <div className="master-search"><Search size={15}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nama Karyawan..."/></div>
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} aria-label="Status karyawan"><option value="active">Karyawan Aktif</option><option value="inactive">Belum Aktif</option><option value="">Semua Karyawan</option></select>
         <span className="leave-report-spacer"/>
-        {canManage && <button type="button" className="btn btn-outline leave-report-action" onClick={() => setEditingRules(true)}><Settings2 size={15}/> Aturan Cuti</button>}
+        {canManage && <Link className="btn btn-outline leave-report-action" href="/dashboard/master/aturan-cuti"><Settings2 size={15}/> Aturan Cuti</Link>}
         <button type="button" className="btn btn-primary leave-report-action" onClick={exportCsv}><Download size={15}/> Ekspor Excel</button>
       </div>
       <form className="leave-report-range" onSubmit={(event) => { event.preventDefault(); if (draftFrom && draftTo) apply(draftFrom <= draftTo ? draftFrom : draftTo, draftFrom <= draftTo ? draftTo : draftFrom); }}>
@@ -89,7 +90,6 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
       <footer>menampilkan {rows.length} dari {initialRows.length} data. Jumlah hari dihitung dalam hari kerja sesuai jadwal divisi karyawan.</footer>
     </section>
     {editing && <EntitlementModal row={editing} rules={rules} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); router.refresh(); }}/>}
-    {editingRules && <RulesModal rules={rules} onClose={() => setEditingRules(false)} onSaved={() => { setEditingRules(false); router.refresh(); }}/>}
   </>;
 }
 
@@ -130,32 +130,6 @@ function EntitlementModal({ row, rules, onClose, onSaved }: { row: LeaveReportRo
         <button type="button" className="btn btn-outline btn-sm" onClick={onClose}>Batal</button>
         <button className="btn btn-primary btn-sm" disabled={pending || days === "" || value < 0}><Save size={14}/> {pending ? "Menyimpan..." : "Simpan"}</button>
       </footer>
-    </form>
-  </LocationModal>;
-}
-
-function RulesModal({ rules, onClose, onSaved }: { rules: AnnualLeaveRules; onClose: () => void; onSaved: () => void }) {
-  const [days, setDays] = useState(String(rules.days)), [eligibility, setEligibility] = useState(rules.eligibility);
-  const [carryOver, setCarryOver] = useState(rules.carryOver), [carryOverMax, setCarryOverMax] = useState(rules.carryOverMax ? String(rules.carryOverMax) : "");
-  const { error, pending, run } = useAction();
-  return <LocationModal title="Aturan Cuti Tahunan" onClose={onClose}>
-    <form className="leave-rules-form" onSubmit={(event) => { event.preventDefault(); run(() => saveLeaveRules({ days: Number(days), eligibility, carryOver, carryOverMax: carryOver && carryOverMax.trim() ? Number(carryOverMax) : null }), onSaved); }}>
-      <div className="leave-modal-body">
-      <p className="leave-rules-intro">Setiap karyawan punya periode cuti sendiri yang dimulai dari <strong>tanggal bergabung</strong>. Jatah direset otomatis setiap ulang tahun kerjanya. Contoh: bergabung 15 Maret, maka periodenya 15 Maret – 14 Maret tahun berikutnya. Cuti dihitung dalam <strong>hari kerja</strong> sesuai jadwal divisi.</p>
-      <label>Jatah cuti per periode (hari kerja)<input type="number" min={0} max={60} value={days} onChange={(event) => setDays(event.target.value)} required/></label>
-      <fieldset><legend>Karyawan baru mulai berhak cuti</legend>
-        <label className="leave-rules-option"><input type="radio" name="eligibility" checked={eligibility === "immediate"} onChange={() => setEligibility("immediate")}/><span><strong>Langsung sejak tanggal bergabung</strong><small>Jatah penuh tersedia sejak hari pertama bekerja.</small></span></label>
-        <label className="leave-rules-option"><input type="radio" name="eligibility" checked={eligibility === "after_one_year"} onChange={() => setEligibility("after_one_year")}/><span><strong>Setelah 12 bulan kerja</strong><small>Sesuai UU Ketenagakerjaan: tahun pertama belum ada jatah cuti tahunan.</small></span></label>
-      </fieldset>
-      <fieldset><legend>Sisa cuti saat periode direset</legend>
-        <label className="leave-rules-option"><input type="radio" name="carry" checked={!carryOver} onChange={() => setCarryOver(false)}/><span><strong>Hangus</strong><small>Periode baru mulai dari jatah penuh lagi.</small></span></label>
-        <label className="leave-rules-option"><input type="radio" name="carry" checked={carryOver} onChange={() => setCarryOver(true)}/><span><strong>Dibawa ke periode berikutnya</strong><small>Sisa ditambahkan ke jatah periode baru.</small></span></label>
-        {carryOver && <label className="leave-rules-max">Maksimal sisa yang dibawa (hari kerja)<input type="number" min={1} max={60} value={carryOverMax} placeholder="Kosong = tanpa batas" onChange={(event) => setCarryOverMax(event.target.value)}/></label>}
-      </fieldset>
-      <p className="drawer-help">Perubahan berlaku langsung untuk semua karyawan, termasuk perhitungan sisa cuti periode berjalan. Jatah khusus per karyawan (Ubah Jatah Periode Ini) tetap dipakai.</p>
-      {error && <div className="announcement-inline-error">{error}</div>}
-      </div>
-      <footer><button type="button" className="btn btn-outline btn-sm" onClick={onClose}>Batal</button><button className="btn btn-primary btn-sm" disabled={pending || days === ""}><Save size={14}/> {pending ? "Menyimpan..." : "Simpan Aturan"}</button></footer>
     </form>
   </LocationModal>;
 }

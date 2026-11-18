@@ -9,7 +9,8 @@ export type MonthlyEmployeeSummary = {
   locationName: string | null;
   // Counters
   presensiCount: number; // Jumlah kehadiran (present / late)
-  izinCutiCount: number; // Jumlah izin/cuti (leave / absent)
+  izinCutiCount: number; // Jumlah izin/cuti (leave)
+  alpaCount: number; // Jumlah alpa yang tercatat (status Alpa)
   terlambatMinutes: number; // Total menit terlambat
   jamKerjaMinutes: number; // Total jam kerja reguler
   jamAktualMinutes: number; // Total jam aktual kerja

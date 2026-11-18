@@ -454,6 +454,7 @@ export function MonthlyAttendanceManager({
                     <th className="th-nama">Nama</th>
                     <th className="th-center">Kehadiran</th>
                     <th className="th-center">Izin/Cuti</th>
+                    <th className="th-center">Alpa</th>
                     <th className="th-center">Terlambat</th>
                     <th className="th-center">Jam Kerja</th>
                     <th className="th-center">Jam Aktual</th>
@@ -490,6 +491,7 @@ export function MonthlyAttendanceManager({
 
                       {/* Izin/Cuti */}
                       <td className="td-center">{row.izinCutiCount}</td>
+                      <td className="td-center">{row.alpaCount}</td>
 
                       {/* Terlambat */}
                       <td className="td-center">

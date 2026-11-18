@@ -13,6 +13,8 @@ export default async function Page() {
     db.select({
       id: employees.id, name: employees.name, email: employees.email, department: employees.department, position: employees.position,
       photoAssetId: employeeDocuments.assetId, baseSalary: employeeSalaryProfiles.baseSalary, overtimeRate: employeeSalaryProfiles.overtimeRate, salaryBasis: employeeSalaryProfiles.salaryBasis,
+      absentRule: employeeSalaryProfiles.absentRule, absentManualAmount: employeeSalaryProfiles.absentManualAmount,
+      lateRule: employeeSalaryProfiles.lateRule, lateMode: employeeSalaryProfiles.lateMode, lateAmount: employeeSalaryProfiles.lateAmount,
     }).from(employees)
       .leftJoin(employeeDocuments, and(eq(employeeDocuments.employeeId, employees.id), eq(employeeDocuments.kind, "profile_photo")))
       .leftJoin(employeeSalaryProfiles, eq(employeeSalaryProfiles.employeeId, employees.id))
@@ -26,7 +28,9 @@ export default async function Page() {
   const rows = team.map((employee) => {
     const employeeComponents = byEmployee.get(employee.id) ?? [];
     const serialize = (type: "compensation" | "deduction") => employeeComponents.filter((item) => item.type === type).map(({ id, name, unit, amount }) => ({ id, name, unit, amount }));
-    return { ...employee, baseSalary: employee.baseSalary ?? 0, overtimeRate: employee.overtimeRate ?? 0, salaryBasis: employee.salaryBasis ?? "monthly", compensations: serialize("compensation"), deductions: serialize("deduction") };
+    return { ...employee, baseSalary: employee.baseSalary ?? 0, overtimeRate: employee.overtimeRate ?? 0, salaryBasis: employee.salaryBasis ?? "monthly",
+      attendanceRule: { absentRule: employee.absentRule ?? "company", absentManualAmount: employee.absentManualAmount ?? 0, lateRule: employee.lateRule ?? "company", lateMode: employee.lateMode ?? "per_day", lateAmount: employee.lateAmount ?? 0 },
+      compensations: serialize("compensation"), deductions: serialize("deduction") };
   });
   return <SalaryManager initialRows={rows} divisions={divisionRows}/>;
 }

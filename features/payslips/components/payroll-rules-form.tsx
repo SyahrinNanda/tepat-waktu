@@ -42,7 +42,7 @@ export function PayrollRulesForm({ initial, latestFinal, today }: { initial: Pay
   const transition = periodTransition(latestFinal, rules.periodStartDay);
 
   return <>
-    <div className="master-page-head"><span>Karyawan</span><h1>Pengaturan Perhitungan Gaji</h1><p>Beranda / Karyawan / Slip Gaji / Pengaturan</p></div>
+    <div className="master-page-head"><span>Master Data</span><h1>Pengaturan Perhitungan Gaji</h1><p>Beranda / Master Data / Perhitungan Gaji · berlaku untuk semua karyawan, kecuali yang diatur khusus di Gaji Karyawan (Alpa &amp; Terlambat)</p></div>
     <form className="module-card payroll-rules" onSubmit={save}>
       <section>
         <h2>Periode Penggajian</h2>
@@ -118,7 +118,7 @@ export function PayrollRulesForm({ initial, latestFinal, today }: { initial: Pay
 
       {message && <div className={message.ok ? "payroll-rules-ok" : "announcement-inline-error"}>{message.text}</div>}
       <div className="payroll-rules-actions">
-        <Link className="btn btn-outline" href="/dashboard/karyawan/slip-gaji"><ArrowLeft size={15}/> Kembali</Link>
+        <Link className="btn btn-outline" href="/dashboard/karyawan/slip-gaji"><ArrowLeft size={15}/> Ke Slip Gaji</Link>
         <button className="btn btn-primary" disabled={pending}><Save size={15}/> {pending ? "Menyimpan..." : "Simpan Pengaturan"}</button>
       </div>
     </form>

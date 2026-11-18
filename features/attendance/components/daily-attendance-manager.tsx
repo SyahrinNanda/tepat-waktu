@@ -34,6 +34,8 @@ export type EmployeeOption = {
   employeeCode: string | null;
   department: string | null;
   position?: string | null;
+  /** Irregular days off (Gaji Karyawan → Alpa: "Hanya alpa manual"): an empty past day shows as Libur. */
+  manualAbsence?: boolean;
 };
 
 export type ShiftOption = {
@@ -78,6 +80,8 @@ export type DailyAttendanceRecord = {
 
 type Props = {
   initialDate: string;
+  /** Today in the company's time zone. */
+  today?: string;
   employees: EmployeeOption[];
   shifts: ShiftOption[];
   locations: LocationOption[];
@@ -87,6 +91,7 @@ type Props = {
 
 export function DailyAttendanceManager({
   initialDate,
+  today,
   employees,
   shifts,
   locations,
@@ -164,6 +169,8 @@ export function DailyAttendanceManager({
       handleDateChange(today);
     }
   };
+
+  const manualAbsenceIds = useMemo(() => new Set(employees.filter((emp) => emp.manualAbsence).map((emp) => emp.id)), [employees]);
 
   // Merge active employees with daily records to represent both registered & unregistered attendance
   const combinedRows = useMemo(() => {
@@ -682,7 +689,7 @@ export function DailyAttendanceManager({
                           )}
                         </td>
                         <td className="daily-col-status">
-                          <StatusBadgeView status={row.status} hasRecord={Boolean(row.id)} />
+                          <StatusBadgeView status={row.status} hasRecord={Boolean(row.id)} dayOff={!row.id && Boolean(today && date < today) && manualAbsenceIds.has(row.employeeId)} />
                         </td>
                         <td className="daily-col-actions text-right">
                           <div className="daily-actions-group">
@@ -1321,7 +1328,8 @@ function AttendanceModal({
 // =========================================================================
 // Helpers & Subcomponents
 // =========================================================================
-function StatusBadgeView({ status, hasRecord }: { status: string; hasRecord: boolean }) {
+function StatusBadgeView({ status, hasRecord, dayOff = false }: { status: string; hasRecord: boolean; dayOff?: boolean }) {
+  if (dayOff) return <span className="status-pill status-dayoff" title="Aturan alpa manual: hari tanpa presensi dianggap libur">Libur</span>;
   if (!hasRecord) {
     return <span className="status-pill status-unrecorded">Belum Tercatat</span>;
   }

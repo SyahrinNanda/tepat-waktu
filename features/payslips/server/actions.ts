@@ -40,5 +40,6 @@ export async function savePayrollRulesAction(input: unknown): Promise<{ ok: bool
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Pengaturan tidak valid." };
   await savePayrollRules(context.companyId, parsed.data, context.session.user.id);
   revalidatePath("/dashboard/karyawan/slip-gaji", "layout");
+  revalidatePath("/dashboard/master/perhitungan-gaji");
   return { ok: true };
 }

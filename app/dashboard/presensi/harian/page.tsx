@@ -7,6 +7,7 @@ import {
   attendanceLocations,
   attendances,
   divisions,
+  employeeSalaryProfiles,
   employees,
   workSchedules,
 } from "@/db/schema";
@@ -51,8 +52,10 @@ export default async function Page({ searchParams }: Props) {
         employeeCode: employees.employeeCode,
         department: employees.department,
         position: employees.position,
+        absentRule: employeeSalaryProfiles.absentRule,
       })
       .from(employees)
+      .leftJoin(employeeSalaryProfiles, eq(employeeSalaryProfiles.employeeId, employees.id))
       .where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active")))
       .orderBy(asc(employees.name)),
 
@@ -179,7 +182,9 @@ export default async function Page({ searchParams }: Props) {
   return (
     <DailyAttendanceManager
       initialDate={date}
-      employees={employeesList}
+      today={dateInTimeZone(context.timezone)}
+      // "Hanya alpa manual" staff: a past day without attendance is a day off, not a missing record.
+      employees={employeesList.map(({ absentRule, ...employee }) => ({ ...employee, manualAbsence: absentRule === "manual_only" }))}
       shifts={shiftsList}
       locations={locationsList}
       divisions={divisionsList}

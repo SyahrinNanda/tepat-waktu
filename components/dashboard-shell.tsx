@@ -70,6 +70,8 @@ const groups: NavGroup[] = [
       { href: "/dashboard/master/divisi", label: "Divisi", roles: hrRoles },
       { href: "/dashboard/master/jabatan", label: "Jabatan", roles: hrRoles },
       { href: "/dashboard/master/lokasi-presensi", label: "Lokasi Kerja", roles: hrRoles },
+      { href: "/dashboard/master/perhitungan-gaji", label: "Perhitungan Gaji", roles: hrRoles },
+      { href: "/dashboard/master/aturan-cuti", label: "Aturan Cuti", roles: hrRoles },
     ],
   },
   {

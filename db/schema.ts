@@ -386,6 +386,14 @@ export const employeeSalaryProfiles = pgTable("employee_salary_profiles", {
   baseSalary: bigint("base_salary", { mode: "number" }).default(0).notNull(),
   overtimeRate: bigint("overtime_rate", { mode: "number" }).default(0).notNull(),
   salaryBasis: payrollCalculation("salary_basis").default("monthly").notNull(),
+  /** "company" = follow payroll_settings; "manual_only" = only attendance marked Alpa counts, empty days are days off. */
+  absentRule: text("absent_rule").$type<"company" | "manual_only">().default("company").notNull(),
+  /** Rp per manual alpa day when absentRule is "manual_only" (0 = no deduction). */
+  absentManualAmount: bigint("absent_manual_amount", { mode: "number" }).default(0).notNull(),
+  /** "company" = follow payroll_settings; "none" = never deducted; "custom" = lateMode/lateAmount below. */
+  lateRule: text("late_rule").$type<"company" | "none" | "custom">().default("company").notNull(),
+  lateMode: text("late_mode").$type<"per_minute" | "per_hour" | "per_day">().default("per_day").notNull(),
+  lateAmount: bigint("late_amount", { mode: "number" }).default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [

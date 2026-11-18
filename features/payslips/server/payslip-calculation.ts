@@ -55,10 +55,36 @@ export const DEFAULT_PAYROLL_RULES: PayrollRules = {
   breakMinutes: 60, breakMinWorkMinutes: 240, lateDeductionMode: "none", lateDeductionAmount: 0, absentDeductionMode: "daily_rate", absentDeductionAmount: 0, periodStartDay: 1,
 };
 
+/**
+ * An employee's own alpa/late rule (Daftar Gaji Karyawan). "company" follows the company's PayrollRules.
+ * absentRule "manual_only" is for staff whose days off change every week: a day without attendance is a
+ * day off (Libur), and only attendance marked Alpa counts, deducted at absentManualAmount per day.
+ */
+export type EmployeeAttendanceRule = {
+  absentRule: "company" | "manual_only";
+  absentManualAmount: number;
+  lateRule: "company" | "none" | "custom";
+  lateMode: "per_minute" | "per_hour" | "per_day";
+  lateAmount: number;
+};
+export const DEFAULT_EMPLOYEE_RULE: EmployeeAttendanceRule = { absentRule: "company", absentManualAmount: 0, lateRule: "company", lateMode: "per_day", lateAmount: 0 };
+
+/** The company rules with the employee's own alpa/late choices applied. */
+export function effectiveRules(rules: PayrollRules, rule: EmployeeAttendanceRule = DEFAULT_EMPLOYEE_RULE): PayrollRules {
+  const result = { ...rules };
+  if (rule.absentRule === "manual_only") {
+    result.absentDeductionMode = rule.absentManualAmount > 0 ? "fixed" : "none";
+    result.absentDeductionAmount = rule.absentManualAmount;
+  }
+  if (rule.lateRule === "none") { result.lateDeductionMode = "none"; result.lateDeductionAmount = 0; }
+  if (rule.lateRule === "custom") { result.lateDeductionMode = rule.lateMode; result.lateDeductionAmount = rule.lateAmount; }
+  return result;
+}
+
 /** Scheduled hours of one day ("HH:MM:SS"), or null on a day off. */
 export type DayPlan = { start: string; end: string } | null;
 
-export type CalculationEmployee = Payslip["employee"] & { baseSalary: number; overtimeRate: number; salaryBasis: SalaryBasis };
+export type CalculationEmployee = Payslip["employee"] & { baseSalary: number; overtimeRate: number; salaryBasis: SalaryBasis; attendanceRule?: EmployeeAttendanceRule };
 export type CalculationInput = {
   employee: CalculationEmployee;
   year: number;
@@ -127,12 +153,17 @@ export function formatDuration(hours: number) {
 
 export const round2 = (value: number) => Math.round(value * 100) / 100;
 
-export function buildPayslip({ employee, year, month, planFor, rules, absentFrom, absentBefore, attendanceRows, leaveRows, overtimeRows, components }: CalculationInput): Payslip {
+export function buildPayslip({ employee, year, month, planFor, rules: companyRules, absentFrom, absentBefore, attendanceRows, leaveRows, overtimeRows, components }: CalculationInput): Payslip {
+  const rules = effectiveRules(companyRules, employee.attendanceRule);
+  // Staff with irregular days off: the division schedule does not say which days they work.
+  const manualAbsence = employee.attendanceRule?.absentRule === "manual_only";
   const { start: periodStart, end: periodEnd, dates } = payrollPeriod(year, month, rules.periodStartDay);
   const workingDates = dates.filter((date) => planFor(date, null));
+  // Their approved leave counts on any day of the period, since any day may be one of their working days.
+  const leaveDates = manualAbsence ? dates : workingDates;
   const leaveByDate = new Map<string, boolean>();
   for (const leave of leaveRows) {
-    for (const date of workingDates) if (date >= leave.startDate && date <= leave.endDate) leaveByDate.set(date, leaveByDate.get(date) === true || leave.paid);
+    for (const date of leaveDates) if (date >= leave.startDate && date <= leave.endDate) leaveByDate.set(date, leaveByDate.get(date) === true || leave.paid);
   }
   const paidLeaveDates = [...leaveByDate].filter(([, paid]) => paid).map(([date]) => date);
   const unpaidLeaveDays = [...leaveByDate.values()].filter((paid) => !paid).length;
@@ -170,7 +201,8 @@ export function buildPayslip({ employee, year, month, planFor, rules, absentFrom
     }
   }
   // A past working day with no check-in and no approved leave is alpa, just like one marked "Alpa".
-  for (const date of workingDates) {
+  // For "manual_only" staff such a day is a day off: only days marked Alpa count.
+  if (!manualAbsence) for (const date of workingDates) {
     if (date >= absentFrom && date < absentBefore && !recordedDates.has(date) && !leaveByDate.has(date)) absentDays++;
   }
 
@@ -178,7 +210,8 @@ export function buildPayslip({ employee, year, month, planFor, rules, absentFrom
   // (80 minutes x Rp 30.000 must be Rp 40.000, not 1,33 x Rp 30.000 = Rp 39.900.)
   const exactWorkedHours = workedMinutes / 60;
   const exactOvertimeHours = overtimeRows.reduce((total, row) => total + row.minutes, 0) / 60;
-  const exactPaidLeaveHours = paidLeaveDates.reduce((total, date) => total + plannedMinutes(planFor(date, null), rules), 0) / 60;
+  // A paid leave day off the division schedule (manual_only staff) is paid as the standard 8-hour day.
+  const exactPaidLeaveHours = paidLeaveDates.reduce((total, date) => total + (plannedMinutes(planFor(date, null), rules) || (manualAbsence ? 480 : 0)), 0) / 60;
   const workedHours = round2(exactWorkedHours);
   const overtimeHours = round2(exactOvertimeHours);
   const paidLeaveHours = round2(exactPaidLeaveHours);

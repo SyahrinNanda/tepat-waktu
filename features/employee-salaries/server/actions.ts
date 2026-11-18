@@ -45,4 +45,32 @@ export async function saveSalaryBatch(input: { divisionId: string; baseSalary: n
   revalidatePath("/dashboard/karyawan/gaji"); return { ok: true, count: team.length };
 }
 
+const attendanceRuleSchema = z.object({
+  employeeId: z.uuid(),
+  absentRule: z.enum(["company", "manual_only"]),
+  absentManualAmount: money,
+  lateRule: z.enum(["company", "none", "custom"]),
+  lateMode: z.enum(["per_minute", "per_hour", "per_day"]),
+  lateAmount: money,
+});
+
+/** Saves one employee's own alpa/late rule. Batch edit by division never touches these columns. */
+export async function saveAttendanceRule(input: z.input<typeof attendanceRuleSchema>) {
+  const parsed = attendanceRuleSchema.parse(input);
+  const context = await salaryContext(parsed.employeeId);
+  const { employeeId, ...rule } = parsed;
+  // Amounts only matter for the option that uses them; store 0 otherwise so the row stays unambiguous.
+  const values = {
+    ...rule,
+    absentManualAmount: rule.absentRule === "manual_only" ? rule.absentManualAmount : 0,
+    lateAmount: rule.lateRule === "custom" ? rule.lateAmount : 0,
+  };
+  await db.insert(employeeSalaryProfiles).values({ companyId: context.companyId, employeeId, ...values })
+    .onConflictDoUpdate({ target: employeeSalaryProfiles.employeeId, set: { ...values, updatedAt: new Date() } });
+  revalidateSalary(employeeId);
+  revalidatePath("/dashboard/karyawan/slip-gaji");
+  revalidatePath("/dashboard/presensi/harian");
+  return { ok: true };
+}
+
 function revalidateSalary(employeeId: string) { revalidatePath("/dashboard/karyawan/gaji"); revalidatePath(`/dashboard/karyawan/gaji/${employeeId}`); }
