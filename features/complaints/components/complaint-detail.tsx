@@ -12,7 +12,7 @@ import { ComplaintStatusPill } from "./complaint-lists";
 type Detail = (HandlerComplaint & { view: "handler" }) | (ReporterComplaint & { view: "reporter" });
 const formatDate = (value: Date | string) => new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(value));
 
-export function ComplaintDetail({ complaint, justCreated }: { complaint: Detail; justCreated: boolean }) {
+export function ComplaintDetail({ complaint, justCreated, readOnly = false }: { complaint: Detail; justCreated: boolean; readOnly?: boolean }) {
   return <>
     <div className="payslip-actions"><Link className="btn btn-outline btn-compact" href="/dashboard/karyawan/keluhan"><ArrowLeft size={15}/> Kembali</Link></div>
     {justCreated && <div className="complaint-success"><CheckCircle2 size={20}/><div><strong>Laporan terkirim dengan kode {complaint.ticketCode}</strong><span>Simpan kode ini. Anda bisa memantau status dan tanggapan penangan di halaman ini kapan saja.</span></div></div>}
@@ -32,9 +32,20 @@ export function ComplaintDetail({ complaint, justCreated }: { complaint: Detail;
           {complaint.responseNote ? <><p>{complaint.responseNote}</p>{complaint.handledAt && <small>Diperbarui {formatDate(complaint.handledAt)}</small>}</> : <p className="muted">Belum ada tanggapan. Laporan Anda akan ditinjau oleh Admin atau HRD.</p>}
         </section>}
       </article>
-      {complaint.view === "handler" && <HandlerPanel complaint={complaint}/>}
+      {complaint.view === "handler" && (readOnly ? <ReadOnlyPanel complaint={complaint}/> : <HandlerPanel complaint={complaint}/>)}
     </section>
   </>;
+}
+
+/** Super Admin view: the handling state without any controls. */
+function ReadOnlyPanel({ complaint }: { complaint: HandlerComplaint }) {
+  return <aside className="detail-side"><section className="module-card detail-action-card complaint-handle">
+    <span className="eyebrow">Penanganan · hanya lihat</span><h2>Tindak lanjut</h2>
+    <div className="detail-field"><small>Status</small><strong><ComplaintStatusPill status={complaint.status}/></strong></div>
+    <div className="detail-field"><small>Tanggapan untuk pelapor</small><strong>{complaint.responseNote || "—"}</strong></div>
+    <div className="detail-field"><small><Lock size={12}/> Catatan internal</small><strong>{complaint.internalNote || "—"}</strong></div>
+    <p className="drawer-help">Super Admin hanya dapat melihat. Status dan tanggapan diubah oleh Admin atau HRD perusahaan.</p>
+  </section></aside>;
 }
 
 function HandlerPanel({ complaint }: { complaint: HandlerComplaint }) {

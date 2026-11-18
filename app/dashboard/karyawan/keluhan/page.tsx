@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { ComplaintCharts } from "@/features/complaints/components/complaint-charts";
 import { ComplaintHeader, ComplaintTable, OwnComplaintList } from "@/features/complaints/components/complaint-lists";
 import { complaintContext, complaintStats, listCompanyComplaints, listOwnComplaints } from "@/features/complaints/server/complaint-service";
@@ -9,8 +8,7 @@ export const metadata: Metadata = { title: "Keluhan Karyawan" };
 
 export default async function Page() {
   const context = await complaintContext();
-  if (context.isSuperAdmin) redirect("/dashboard");
-  if (!context.canHandle) {
+  if (!context.canView) {
     const rows = await listOwnComplaints(context.companyId, context.reporterKey);
     return <>
       <ComplaintHeader title="Keluhan Karyawan" description="Laporkan perlakuan tidak pantas di tempat kerja secara aman. Anda boleh melapor tanpa nama."/>
@@ -20,8 +18,8 @@ export default async function Page() {
   const rows = await listCompanyComplaints(context.companyId);
   const stats = complaintStats(rows, dateInTimeZone(context.timezone));
   return <>
-    <ComplaintHeader title="Keluhan Karyawan" description="Rekap dan penanganan laporan keluhan. Hanya Admin dan HRD yang dapat membuka halaman ini."/>
+    <ComplaintHeader title="Keluhan Karyawan" readOnly={!context.canHandle} description={context.canHandle ? "Rekap dan penanganan laporan keluhan. Hanya Admin dan HRD yang dapat membuka halaman ini." : "Mode Super Admin: hanya melihat. Penanganan laporan dilakukan oleh Admin dan HRD perusahaan."}/>
     <ComplaintCharts stats={stats}/>
-    <ComplaintTable rows={rows}/>
+    <ComplaintTable rows={rows} readOnly={!context.canHandle}/>
   </>;
 }

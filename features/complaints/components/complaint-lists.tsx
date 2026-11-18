@@ -9,10 +9,10 @@ import { ComplaintForm } from "./complaint-form";
 
 const formatDate = (value: Date | string) => new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
 
-export function ComplaintHeader({ title, description }: { title: string; description: string }) {
+export function ComplaintHeader({ title, description, readOnly = false }: { title: string; description: string; readOnly?: boolean }) {
   const [open, setOpen] = useState(false);
   return <>
-    <header className="product-page-header"><div><span className="breadcrumb">Beranda / Karyawan / Keluhan Karyawan</span><h1>{title}</h1><p>{description}</p></div><button className="btn btn-primary btn-compact" onClick={() => setOpen(true)}><Megaphone size={15}/> Buat Laporan</button></header>
+    <header className="product-page-header"><div><span className="breadcrumb">Beranda / Karyawan / Keluhan Karyawan</span><h1>{title}</h1><p>{description}</p></div>{!readOnly && <button className="btn btn-primary btn-compact" onClick={() => setOpen(true)}><Megaphone size={15}/> Buat Laporan</button>}</header>
     {open && <ComplaintForm onClose={() => setOpen(false)}/>}
   </>;
 }
@@ -21,7 +21,7 @@ export function ComplaintStatusPill({ status }: { status: keyof typeof statusLab
   return <span className={`status-pill ${statusTone[status]}`}><i/>{statusLabels[status]}</span>;
 }
 
-export function ComplaintTable({ rows }: { rows: HandlerComplaint[] }) {
+export function ComplaintTable({ rows, readOnly = false }: { rows: HandlerComplaint[]; readOnly?: boolean }) {
   const [query, setQuery] = useState(""), [category, setCategory] = useState(""), [status, setStatus] = useState("");
   const filtered = useMemo(() => rows.filter((row) =>
     `${row.ticketCode} ${row.title} ${row.reporterName ?? ""}`.toLowerCase().includes(query.toLowerCase())
@@ -41,7 +41,7 @@ export function ComplaintTable({ rows }: { rows: HandlerComplaint[] }) {
       <td className="complaint-title-cell">{row.title}</td>
       <td>{row.anonymous ? <span className="complaint-anon-tag"><EyeOff size={13}/> Anonim</span> : row.reporterName}</td>
       <td><ComplaintStatusPill status={row.status}/></td>
-      <td><Link className="btn btn-outline btn-xs" href={`/dashboard/karyawan/keluhan/${row.id}`}>Tangani <ChevronRight size={13}/></Link></td>
+      <td><Link className="btn btn-outline btn-xs" href={`/dashboard/karyawan/keluhan/${row.id}`}>{readOnly ? "Lihat" : "Tangani"} <ChevronRight size={13}/></Link></td>
     </tr>)}</tbody></table></div> : <div className="empty-state tenant-empty"><Inbox size={28}/><strong>Tidak ada laporan</strong><span>{rows.length ? "Tidak ada laporan yang cocok dengan filter." : "Belum ada keluhan yang dilaporkan."}</span></div>}
   </section>;
 }

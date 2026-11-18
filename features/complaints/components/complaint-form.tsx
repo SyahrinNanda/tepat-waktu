@@ -45,7 +45,7 @@ export function ComplaintForm({ onClose }: { onClose: () => void }) {
             <label className="field"><span className="field-label">Tanggal kejadian</span><input className="input" type="date" name="incidentDate"/></label>
             <label className="field"><span className="field-label">Lokasi kejadian</span><input className="input" name="incidentLocation" maxLength={200} placeholder="Contoh: Ruang rapat lantai 2"/></label>
           </div>
-          <label className="field"><span className="field-label">Pihak yang terlibat</span><input className="input" name="involvedParties" maxLength={500} placeholder="Nama, jabatan, atau ciri pihak terlibat dan saksi (opsional)"/></label>
+          <label className="field"><span className="field-label">Pihak yang terlibat</span><input className="input" name="involvedParties" maxLength={500} placeholder="Nama, divisi, atau ciri pihak terlibat dan saksi (opsional)"/></label>
           {anonymous && <p className="complaint-hint">Tips: kalau ingin tetap anonim, hindari menulis detail yang hanya diketahui Anda sendiri.</p>}
           {error && <div className="announcement-inline-error" role="alert">{error}</div>}
         </div>

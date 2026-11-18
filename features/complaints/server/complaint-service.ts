@@ -10,7 +10,9 @@ export async function complaintContext() {
   const context = await requireCompany();
   const role = context.role === "owner" ? "admin" : context.role;
   const canHandle = !context.isSuperAdmin && (role === "admin" || role === "hrd");
-  return { ...context, role, canHandle, reporterKey: reporterKey(context.companyId, context.session.user.id) };
+  // Super Admin may look into a tenant's complaints (read-only): it never handles or files reports.
+  const canView = canHandle || context.isSuperAdmin;
+  return { ...context, role, canHandle, canView, reporterKey: reporterKey(context.companyId, context.session.user.id) };
 }
 
 /** One-way key: the reporter can find their own reports; handlers cannot turn it back into a person. */
@@ -43,7 +45,7 @@ export function listCompanyComplaints(companyId: string) {
 
 /** Handlers get the full record; a reporter only gets their own report, without internal notes. */
 export async function getComplaint(id: string, context: Awaited<ReturnType<typeof complaintContext>>) {
-  if (context.canHandle) {
+  if (context.canView) {
     const [row] = await db.select(handlerColumns).from(employeeComplaints).where(and(eq(employeeComplaints.id, id), eq(employeeComplaints.companyId, context.companyId))).limit(1);
     return row ? { ...row, view: "handler" as const } : null;
   }
