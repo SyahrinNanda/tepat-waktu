@@ -224,7 +224,7 @@ async function cleanup() {
     // RESTRICT foreign keys first (visits->employees, *->user, divisions->work_schedules, events->file_assets)
     await db.query(`delete from visits where company_id in ${companies} or created_by in ${users}`);
     await db.query(`delete from attendance_events where company_id in ${companies} or recorded_by in ${users}`);
-    await db.query(`delete from divisions where company_id in ${companies}`);
+    await db.query(`delete from job_positions where company_id in ${companies}`);
     await db.query(`delete from announcements where company_id in ${companies} or created_by in ${users}`);
     await db.query(`delete from feature_records where company_id in ${companies} or created_by in ${users}`);
     await db.query(`delete from file_assets where company_id in ${companies} or uploaded_by in ${users}`);
@@ -255,7 +255,7 @@ async function createCompany(letter) {
     );
     await db.query(`insert into company_members (company_id, user_id, role) values ($1, $2, $3)`, [company.id, userId, role]);
     const { rows: [emp] } = await db.query(
-      `insert into employees (company_id, employee_code, name, email, department, position, joined_at, user_id)
+      `insert into employees (company_id, employee_code, name, email, position, department, joined_at, user_id)
        values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
       [company.id, `ZZISO${letter}-${role.toUpperCase()}`, name, email, `ZZISO${letter} Dept`, `ZZISO${letter} Staff`, "2025-01-01", userId],
     );
@@ -271,8 +271,8 @@ async function seedCompanyData(c, admin, employee) {
   const shift = must(await api(admin, "POST", "/api/master/shifts", { json: { name: `ZZISO${L} Shift`, graceMinutes: 10, active: true } }), "shift");
   d.shiftId = shift.row.id;
   must(await api(admin, "PUT", "/api/master/work-hours", { json: { scheduleId: d.shiftId, days: weekDays("08:00", "17:00") } }), "work-hours");
-  d.divisionId = must(await api(admin, "POST", "/api/master/divisions", { json: { name: `ZZISO${L} Division`, scheduleId: d.shiftId, active: true } }), "division").row.id;
-  d.positionId = must(await api(admin, "POST", "/api/master/positions", { json: { name: `ZZISO${L} Position`, active: true } }), "position").row.id;
+  d.positionId = must(await api(admin, "POST", "/api/master/positions", { json: { name: `ZZISO${L} Position`, scheduleId: d.shiftId, active: true } }), "position").row.id;
+  d.divisionId = must(await api(admin, "POST", "/api/master/divisions", { json: { name: `ZZISO${L} Division`, active: true } }), "department").row.id;
   d.locationId = must(await api(admin, "POST", "/api/master/attendance-locations", { json: locationPayload(`ZZISO${L} Location`) }), "attendance location").row.id;
   const ann = must(await api(admin, "POST", "/api/announcements", { form: { title: `ZZISO${L} Announcement`, summary: `ZZISO${L} summary`, content: `ZZISO${L} content`, image: new Blob([PNG], { type: "image/png" }) } }), "announcement").row;
   d.announcementId = ann.id;
@@ -342,8 +342,8 @@ async function main() {
     const superadminCookie = `tepatwaktu_superadmin_company=${B.id}`;
 
     console.log("\n== Positive controls (A on A's own data) ==");
-    await allowed("PATCH /api/master/divisions/[A]", () => api(aAdmin, "PATCH", `/api/master/divisions/${a.divisionId}`, { json: { name: "ZZISOA Division Edited", scheduleId: a.shiftId, active: true } }));
-    await allowed("PATCH /api/master/positions/[A]", () => api(aAdmin, "PATCH", `/api/master/positions/${a.positionId}`, { json: { name: "ZZISOA Position Edited", active: true } }));
+    await allowed("PATCH /api/master/positions/[A]", () => api(aAdmin, "PATCH", `/api/master/positions/${a.positionId}`, { json: { name: "ZZISOA Position Edited", scheduleId: a.shiftId, active: true } }));
+    await allowed("PATCH /api/master/divisions/[A]", () => api(aAdmin, "PATCH", `/api/master/divisions/${a.divisionId}`, { json: { name: "ZZISOA Division Edited", active: true } }));
     await allowed("PATCH /api/master/shifts/[A]", () => api(aAdmin, "PATCH", `/api/master/shifts/${a.shiftId}`, { json: { name: "ZZISOA Shift Edited", graceMinutes: 5, active: true } }));
     await allowed("PATCH /api/master/attendance-locations/[A]", () => api(aAdmin, "PATCH", `/api/master/attendance-locations/${a.locationId}`, { json: locationPayload("ZZISOA Location Edited") }));
     await allowed("GET /api/master/work-hours?scheduleId=[A]", () => api(aAdmin, "GET", `/api/master/work-hours?scheduleId=${a.shiftId}`), (r) => (r.json?.rows?.length === 7 ? null : "expected 7 days"));
@@ -364,15 +364,15 @@ async function main() {
     if (a.visitFileId) await allowed("GET /api/files/[A visit photo]", () => api(aAdmin, "GET", `/api/files/${a.visitFileId}`));
     await allowed("GET /api/visits lists A's visit", () => api(aAdmin, "GET", "/api/visits"), (r) => (r.text.includes("ZZISOA Outlet") ? null : "A's own visit missing"));
     await allowed("GET /api/attendance/admin/export lists A's attendance", () => api(aAdmin, "GET", `/api/attendance/admin/export?date=${today}`), (r) => (r.text.includes("ZZISOA Employee") ? null : "A's own attendance missing"));
-    await allowed("GET /api/master/divisions lists A's division", () => api(aAdmin, "GET", "/api/master/divisions"), (r) => (r.text.includes("ZZISOA Division") ? null : "A's division missing"));
+    await allowed("GET /api/master/positions lists A's position", () => api(aAdmin, "GET", "/api/master/positions"), (r) => (r.text.includes("ZZISOA Position") ? null : "A's position missing"));
 
     console.log("\n== Master data: A-admin on B's ids ==");
-    await denied("PATCH /api/master/divisions/[B] (A-admin)", () => api(aAdmin, "PATCH", `/api/master/divisions/${b.divisionId}`, { json: { name: "ZZISOA Hacked Division", scheduleId: a.shiftId, active: false } }), snap("divisions", b.divisionId));
-    await denied("DELETE /api/master/divisions/[B] (A-admin)", () => api(aAdmin, "DELETE", `/api/master/divisions/${b.divisionId}`), snap("divisions", b.divisionId));
-    await denied("POST /api/master/divisions with B scheduleId (A-admin)", () => api(aAdmin, "POST", "/api/master/divisions", { json: { name: "ZZISOA Div On B Shift", scheduleId: b.shiftId, active: true } }), () => snapshotQuery(`select id from divisions where schedule_id = $1 order by id`, [b.shiftId]));
-    await denied("PATCH /api/master/divisions/[A] with B scheduleId (A-admin)", () => api(aAdmin, "PATCH", `/api/master/divisions/${a.divisionId}`, { json: { name: "ZZISOA Division Edited", scheduleId: b.shiftId, active: true } }), () => snapshotQuery(`select id from divisions where schedule_id = $1 order by id`, [b.shiftId]));
-    await denied("PATCH /api/master/positions/[B] (A-admin)", () => api(aAdmin, "PATCH", `/api/master/positions/${b.positionId}`, { json: { name: "ZZISOA Hacked Position", active: false } }), snap("job_positions", b.positionId));
+    await denied("PATCH /api/master/positions/[B] (A-admin)", () => api(aAdmin, "PATCH", `/api/master/positions/${b.positionId}`, { json: { name: "ZZISOA Hacked Position", scheduleId: a.shiftId, active: false } }), snap("job_positions", b.positionId));
     await denied("DELETE /api/master/positions/[B] (A-admin)", () => api(aAdmin, "DELETE", `/api/master/positions/${b.positionId}`), snap("job_positions", b.positionId));
+    await denied("POST /api/master/positions with B scheduleId (A-admin)", () => api(aAdmin, "POST", "/api/master/positions", { json: { name: "ZZISOA Div On B Shift", scheduleId: b.shiftId, active: true } }), () => snapshotQuery(`select id from job_positions where schedule_id = $1 order by id`, [b.shiftId]));
+    await denied("PATCH /api/master/positions/[A] with B scheduleId (A-admin)", () => api(aAdmin, "PATCH", `/api/master/positions/${a.positionId}`, { json: { name: "ZZISOA Position Edited", scheduleId: b.shiftId, active: true } }), () => snapshotQuery(`select id from job_positions where schedule_id = $1 order by id`, [b.shiftId]));
+    await denied("PATCH /api/master/divisions/[B] (A-admin)", () => api(aAdmin, "PATCH", `/api/master/divisions/${b.divisionId}`, { json: { name: "ZZISOA Hacked Division", active: false } }), snap("divisions", b.divisionId));
+    await denied("DELETE /api/master/divisions/[B] (A-admin)", () => api(aAdmin, "DELETE", `/api/master/divisions/${b.divisionId}`), snap("divisions", b.divisionId));
     await denied("PATCH /api/master/shifts/[B] (A-admin)", () => api(aAdmin, "PATCH", `/api/master/shifts/${b.shiftId}`, { json: { name: "ZZISOA Hacked Shift", graceMinutes: 99, active: false } }), snap("work_schedules", b.shiftId));
     await denied("DELETE /api/master/shifts/[B] (A-admin)", () => api(aAdmin, "DELETE", `/api/master/shifts/${b.shiftId}`), snap("work_schedules", b.shiftId));
     await denied("PATCH /api/master/attendance-locations/[B] (A-admin)", () => api(aAdmin, "PATCH", `/api/master/attendance-locations/${b.locationId}`, { json: locationPayload("ZZISOA Hacked Location") }), snap("attendance_locations", b.locationId));
@@ -380,11 +380,11 @@ async function main() {
     await denied("GET /api/master/work-hours?scheduleId=[B] (A-admin)", () => api(aAdmin, "GET", `/api/master/work-hours?scheduleId=${b.shiftId}`), daysSnap(b.shiftId));
     await denied("PUT /api/master/work-hours scheduleId=[B] (A-admin)", () => api(aAdmin, "PUT", "/api/master/work-hours", { json: { scheduleId: b.shiftId, days: weekDays("01:00", "02:00") } }), daysSnap(b.shiftId));
     await denied("DELETE /api/master/work-hours?scheduleId=[B] (A-admin)", () => api(aAdmin, "DELETE", `/api/master/work-hours?scheduleId=${b.shiftId}`), daysSnap(b.shiftId));
-    for (const path of ["/api/master/divisions", "/api/master/positions", "/api/master/shifts", "/api/master/attendance-locations"]) {
+    for (const path of ["/api/master/positions", "/api/master/divisions", "/api/master/shifts", "/api/master/attendance-locations"]) {
       await noLeak(`GET ${path} (A-admin)`, () => api(aAdmin, "GET", path));
       await noLeak(`GET ${path}?companyId=B + superadmin company cookie (A-admin)`, () => api(aAdmin, "GET", `${path}?companyId=${B.id}`, { cookie: superadminCookie }));
     }
-    await noLeak("GET /api/master/divisions (A-employee)", () => api(aEmp, "GET", "/api/master/divisions"), { requireOk: false });
+    await noLeak("GET /api/master/positions (A-employee)", () => api(aEmp, "GET", "/api/master/positions"), { requireOk: false });
 
     console.log("\n== Feature records ==");
     await denied("GET /api/feature-records/[B] (A-admin)", () => api(aAdmin, "GET", `/api/feature-records/${b.featureAdminId}?module=karyawan/laporan-cuti`), snap("feature_records", b.featureAdminId));
@@ -487,14 +487,14 @@ async function main() {
     await allowed("DELETE /api/leave-requests/[A]", () => api(aAdmin, "DELETE", `/api/leave-requests/${a.leaveId}`), async () => ((await snapshot("leave_requests", a.leaveId)) === null ? null : "row still present"));
     await allowed("DELETE /api/overtime-requests/[A]", () => api(aAdmin, "DELETE", `/api/overtime-requests/${a.overtimeId}`), async () => ((await snapshot("overtime_requests", a.overtimeId)) === null ? null : "row still present"));
     await allowed("DELETE /api/feature-records/[A]", () => api(aAdmin, "DELETE", `/api/feature-records/${a.featureAdminId}?module=karyawan/laporan-cuti`), async () => ((await snapshot("feature_records", a.featureAdminId)) === null ? null : "row still present"));
-    await allowed("DELETE /api/master/positions/[A]", () => api(aAdmin, "DELETE", `/api/master/positions/${a.positionId}`), async () => ((await snapshot("job_positions", a.positionId)) === null ? null : "row still present"));
-    await allowed("DELETE /api/master/attendance-locations/[A]", () => api(aAdmin, "DELETE", `/api/master/attendance-locations/${a.locationId}`), async () => ((await snapshot("attendance_locations", a.locationId)) === null ? null : "row still present"));
     await allowed("DELETE /api/master/divisions/[A]", () => api(aAdmin, "DELETE", `/api/master/divisions/${a.divisionId}`), async () => ((await snapshot("divisions", a.divisionId)) === null ? null : "row still present"));
+    await allowed("DELETE /api/master/attendance-locations/[A]", () => api(aAdmin, "DELETE", `/api/master/attendance-locations/${a.locationId}`), async () => ((await snapshot("attendance_locations", a.locationId)) === null ? null : "row still present"));
+    await allowed("DELETE /api/master/positions/[A]", () => api(aAdmin, "DELETE", `/api/master/positions/${a.positionId}`), async () => ((await snapshot("job_positions", a.positionId)) === null ? null : "row still present"));
     await allowed("DELETE /api/attendance/admin?id=[A]", () => api(aAdmin, "DELETE", `/api/attendance/admin?id=${a.attendanceId}`), async () => ((await snapshot("attendances", a.attendanceId)) === null ? null : "row still present"));
     await allowed("DELETE /api/announcements/[A]", () => api(aAdmin, "DELETE", `/api/announcements/${a.announcementId}`), async () => ((await snapshot("announcements", a.announcementId)) === null ? null : "row still present"));
 
     // Final integrity sweep: every B row created above must still exist.
-    const bRows = [["divisions", b.divisionId], ["job_positions", b.positionId], ["work_schedules", b.shiftId], ["attendance_locations", b.locationId],
+    const bRows = [["job_positions", b.positionId], ["divisions", b.divisionId], ["work_schedules", b.shiftId], ["attendance_locations", b.locationId],
       ["announcements", b.announcementId], ["feature_records", b.featureAdminId], ["feature_records", b.featureEmpId], ["leave_requests", b.leaveId],
       ["leave_requests", b.leaveId2], ["overtime_requests", b.overtimeId], ["overtime_requests", b.overtimeId2], ["attendances", b.attendanceId], ["visits", b.visitId]];
     const missing = [];

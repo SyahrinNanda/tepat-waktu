@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.json({ error: "Nama shift dan toleransi terlambat tidak valid." }, { status: 400 });
   try {
     const [row] = await db.insert(workSchedules).values({ companyId: context.companyId, name: parsed.data.name, graceMinutes: parsed.data.graceMinutes, active: parsed.data.active, workDays: "Senin–Minggu", startTime: "08:00:00", endTime: "17:00:00" }).returning();
-    revalidatePath("/dashboard/master/shift"); revalidatePath("/dashboard/master/jam-kerja"); revalidatePath("/dashboard/master/divisi");
+    revalidatePath("/dashboard/master/shift"); revalidatePath("/dashboard/master/jam-kerja"); revalidatePath("/dashboard/master/jabatan");
     return Response.json({ row }, { status: 201 });
   } catch (error) { return databaseError(error, "Jadwal kerja dengan nama tersebut sudah tersedia."); }
 }

@@ -81,7 +81,7 @@ export function PayrollRulesForm({ initial, latestFinal, today }: { initial: Pay
 
       <section>
         <h2>Potongan Terlambat</h2>
-        <p>Terlambat dinilai dari jadwal kerja divisi karyawan (jam masuk + toleransi). Potongan per jam/per menit dihitung dari jam masuk jadwal.</p>
+        <p>Terlambat dinilai dari jadwal kerja jabatan karyawan (jam masuk + toleransi). Potongan per jam/per menit dihitung dari jam masuk jadwal.</p>
         <div className="payroll-rules-grid">
           <label className="employee-field">Cara potong
             <select value={rules.lateDeductionMode} onChange={(event) => set("lateDeductionMode", event.target.value as PayrollRules["lateDeductionMode"])}>
@@ -100,7 +100,7 @@ export function PayrollRulesForm({ initial, latestFinal, today }: { initial: Pay
 
       <section>
         <h2>Potongan Alpa</h2>
-        <p>Alpa = hari kerja menurut jadwal divisi yang sudah lewat tanpa check-in dan tanpa izin/cuti yang disetujui, atau ditandai Alpa oleh admin.</p>
+        <p>Alpa = hari kerja menurut jadwal jabatan yang sudah lewat tanpa check-in dan tanpa izin/cuti yang disetujui, atau ditandai Alpa oleh admin.</p>
         <div className="payroll-rules-grid">
           <label className="employee-field">Cara potong
             <select value={rules.absentDeductionMode} onChange={(event) => set("absentDeductionMode", event.target.value as PayrollRules["absentDeductionMode"])}>

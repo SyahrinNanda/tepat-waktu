@@ -6,7 +6,7 @@ import {
   attendanceEvents,
   attendanceLocations,
   attendances,
-  divisions,
+  positions,
   employeeSalaryProfiles,
   employees,
   workSchedules,
@@ -40,7 +40,7 @@ export default async function Page({ searchParams }: Props) {
     employeesList,
     shiftsList,
     locationsList,
-    divisionsList,
+    positionsList,
     rawAttendances,
     eventsList,
   ] = await Promise.all([
@@ -50,8 +50,8 @@ export default async function Page({ searchParams }: Props) {
         id: employees.id,
         name: employees.name,
         employeeCode: employees.employeeCode,
-        department: employees.department,
         position: employees.position,
+        department: employees.department,
         absentRule: employeeSalaryProfiles.absentRule,
       })
       .from(employees)
@@ -81,15 +81,15 @@ export default async function Page({ searchParams }: Props) {
       .where(eq(attendanceLocations.companyId, context.companyId))
       .orderBy(asc(attendanceLocations.name)),
 
-    // 4. Divisions
+    // 4. Positions
     db
       .select({
-        id: divisions.id,
-        name: divisions.name,
+        id: positions.id,
+        name: positions.name,
       })
-      .from(divisions)
-      .where(eq(divisions.companyId, context.companyId))
-      .orderBy(asc(divisions.name)),
+      .from(positions)
+      .where(eq(positions.companyId, context.companyId))
+      .orderBy(asc(positions.name)),
 
     // 5. Daily Attendances with joined shifts & locations
     db
@@ -98,7 +98,7 @@ export default async function Page({ searchParams }: Props) {
         employeeId: attendances.employeeId,
         employeeName: employees.name,
         employeeCode: employees.employeeCode,
-        department: employees.department,
+        position: employees.position,
         shiftId: attendances.shiftId,
         shiftName: workSchedules.name,
         shiftStartTime: workSchedules.startTime,
@@ -160,7 +160,7 @@ export default async function Page({ searchParams }: Props) {
       employeeId: rec.employeeId,
       employeeName: rec.employeeName,
       employeeCode: rec.employeeCode,
-      department: rec.department,
+      position: rec.position,
       shiftId: rec.shiftId,
       shiftName: rec.shiftName,
       shiftHours,
@@ -187,7 +187,7 @@ export default async function Page({ searchParams }: Props) {
       employees={employeesList.map(({ absentRule, ...employee }) => ({ ...employee, manualAbsence: absentRule === "manual_only" }))}
       shifts={shiftsList}
       locations={locationsList}
-      divisions={divisionsList}
+      positions={positionsList}
       records={formattedRecords}
     />
   );

@@ -7,8 +7,8 @@ import { getPayrollRules } from "./payroll-settings";
 import {
   attendances,
   companies,
-  divisionSchedules,
-  divisions,
+  positionSchedules,
+  positions,
   employeeSalaryComponents,
   employeeSalaryProfiles,
   employees,
@@ -40,17 +40,17 @@ export function parseWorkDays(text: string) {
 
 /**
  * The employee's working plan per date, from the same schedules check-in uses (`resolveSchedule`):
- * the active schedules of the employee's active division in their order, else the company's oldest
+ * the active schedules of the employee's active position in their order, else the company's oldest
  * active schedule, else Monday–Friday 08:00–17:00. A day is a working day when one of those schedules
  * works that weekday; a day already worked on a specific shift uses that shift's hours.
  * Per-weekday rows (Jam Kerja) override a schedule's times; without rows its "work_days" text applies.
  */
-export async function schedulePlanner(companyId: string, department: string, recordedScheduleIds: string[]) {
-  const assigned = await db.select({ id: workSchedules.id }).from(divisions)
-    .innerJoin(divisionSchedules, eq(divisionSchedules.divisionId, divisions.id))
-    .innerJoin(workSchedules, and(eq(workSchedules.id, divisionSchedules.scheduleId), eq(workSchedules.active, true)))
-    .where(and(eq(divisions.companyId, companyId), eq(divisions.name, department), eq(divisions.active, true)))
-    .orderBy(asc(divisionSchedules.position), asc(workSchedules.name));
+export async function schedulePlanner(companyId: string, position: string, recordedScheduleIds: string[]) {
+  const assigned = await db.select({ id: workSchedules.id }).from(positions)
+    .innerJoin(positionSchedules, eq(positionSchedules.positionId, positions.id))
+    .innerJoin(workSchedules, and(eq(workSchedules.id, positionSchedules.scheduleId), eq(workSchedules.active, true)))
+    .where(and(eq(positions.companyId, companyId), eq(positions.name, position), eq(positions.active, true)))
+    .orderBy(asc(positionSchedules.sortOrder), asc(workSchedules.name));
   let defaults = assigned.map((row) => row.id);
   if (!defaults.length) {
     const [fallback] = await db.select({ id: workSchedules.id }).from(workSchedules)
@@ -88,7 +88,7 @@ export async function schedulePlanner(companyId: string, department: string, rec
 
 async function loadEmployee(companyId: string, employeeId: string): Promise<EmployeeRow | null> {
   const [row] = await db.select({
-    id: employees.id, name: employees.name, employeeCode: employees.employeeCode, position: employees.position, department: employees.department, joinedAt: employees.joinedAt,
+    id: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, position: employees.position, joinedAt: employees.joinedAt,
     baseSalary: employeeSalaryProfiles.baseSalary, overtimeRate: employeeSalaryProfiles.overtimeRate, salaryBasis: employeeSalaryProfiles.salaryBasis,
     absentRule: employeeSalaryProfiles.absentRule, absentManualAmount: employeeSalaryProfiles.absentManualAmount,
     lateRule: employeeSalaryProfiles.lateRule, lateMode: employeeSalaryProfiles.lateMode, lateAmount: employeeSalaryProfiles.lateAmount,
@@ -122,7 +122,7 @@ export async function calculatePayslip(companyId: string, employee: EmployeeRow,
       .from(employeeSalaryComponents).where(and(eq(employeeSalaryComponents.companyId, companyId), eq(employeeSalaryComponents.employeeId, employee.id))).orderBy(asc(employeeSalaryComponents.name)),
     db.select({ timezone: companies.timezone }).from(companies).where(eq(companies.id, companyId)).limit(1),
   ]);
-  const planFor = await schedulePlanner(companyId, employee.department, attendanceRows.map((row) => row.scheduleId).filter((id): id is string => Boolean(id)));
+  const planFor = await schedulePlanner(companyId, employee.position, attendanceRows.map((row) => row.scheduleId).filter((id): id is string => Boolean(id)));
   // Alpa only counts days that are over: from joining (or the period start) up to yesterday; today may still check in.
   const today = dateInTimeZone(company?.timezone ?? "Asia/Jakarta");
   const absentFrom = employee.joinedAt > start ? employee.joinedAt : start;
@@ -142,7 +142,7 @@ async function finalSnapshot(companyId: string, employee: EmployeeRow, year: num
   const fallback = payrollPeriod(year, month, 1);
   const summary = Object.fromEntries(summaryKeys.map((key) => [key, items.find((item) => item.category === "summary" && item.name === key)?.quantity ?? 0])) as PayslipSummary;
   return {
-    employee: { id: employee.id, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, department: employee.department },
+    employee: { id: employee.id, name: employee.name, employeeCode: employee.employeeCode, department: employee.department, position: employee.position },
     year, month, periodStart: payroll.periodStart ?? fallback.start, periodEnd: payroll.periodEnd ?? fallback.end,
     basis: (payroll.salaryType as SalaryBasis) ?? "monthly", baseRate: payroll.rate, summary,
     earnings: items.filter((item) => item.category === "compensation").map(toLine),

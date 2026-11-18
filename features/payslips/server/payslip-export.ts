@@ -61,7 +61,7 @@ export async function buildPayslipWorkbook(slips: Payslip[], companyName: string
     head.getCell(5).alignment = { horizontal: "right", vertical: "middle" };
     head.getCell(1).alignment = { vertical: "middle" };
 
-    const info = detail.addRow([`NIK ${employee.employeeCode || "—"} · ${employee.position || "—"} · ${employee.department || "—"} · Basis ${basisLabels[slip.basis]} ${new Intl.NumberFormat("id-ID").format(slip.baseRate)}`]);
+    const info = detail.addRow([`NIK ${employee.employeeCode || "—"} · ${employee.department || "—"} · ${employee.position || "—"} · Basis ${basisLabels[slip.basis]} ${new Intl.NumberFormat("id-ID").format(slip.baseRate)}`]);
     detail.mergeCells(info.number, 1, info.number, 5);
     info.font = { name: "Arial", size: 9.5, color: { argb: MUTED } };
     const attendance = [
@@ -129,7 +129,7 @@ export async function buildPayslipWorkbook(slips: Payslip[], companyName: string
 
   // ---------- Rekap satu baris per karyawan ----------
   const recap = workbook.addWorksheet("Rekap", { views: [{ state: "frozen", ySplit: 3 }], pageSetup: { paperSize: 9, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
-  const headers = ["No", "NIK", "Nama", "Divisi", "Jabatan", "Basis Gaji", "Tarif Dasar", "Hari Kerja", "Hadir", "Terlambat (x)", "Alpa", "Izin Dibayar", "Izin Tdk Dibayar", "Lembur / Jam Kerja", "Pendapatan", "Potongan", "Gaji Bersih", "Status"];
+  const headers = ["No", "NIK", "Nama", "Jabatan", "Divisi", "Basis Gaji", "Tarif Dasar", "Hari Kerja", "Hadir", "Terlambat (x)", "Alpa", "Izin Dibayar", "Izin Tdk Dibayar", "Lembur / Jam Kerja", "Pendapatan", "Potongan", "Gaji Bersih", "Status"];
   recap.columns = [6, 14, 26, 18, 18, 12, 16, 10, 8, 12, 8, 12, 15, 18, 18, 16, 18, 11].map((width) => ({ width }));
   const recapTitle = recap.addRow([`Rekap Gaji Karyawan — ${companyName} — Periode ${period}`]);
   recapTitle.font = { name: "Arial", size: 13, bold: true, color: { argb: INK } };
@@ -145,7 +145,7 @@ export async function buildPayslipWorkbook(slips: Payslip[], companyName: string
   slips.forEach((slip, index) => {
     const { summary } = slip;
     const row = recap.addRow([
-      index + 1, slip.employee.employeeCode, slip.employee.name, slip.employee.department, slip.employee.position,
+      index + 1, slip.employee.employeeCode, slip.employee.name, slip.employee.position, slip.employee.department,
       basisLabels[slip.basis], slip.baseRate, summary.workingDays, summary.daysWorked, summary.lateDays, summary.absentDays,
       summary.paidLeaveDays, summary.unpaidLeaveDays, formatDuration(slip.basis === "hourly" ? summary.workedHours : summary.overtimeHours),
       slip.grossPay, slip.totalDeductions, slip.netPay, slip.status === "final" ? "Terkunci" : "Draft",

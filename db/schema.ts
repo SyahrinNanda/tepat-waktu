@@ -202,8 +202,10 @@ export const employees = pgTable(
     employeeCode: text("employee_code").notNull(),
     name: text("name").notNull(),
     email: text("email").notNull(),
-    department: text("department").notNull(),
+    /** Jabatan (job_positions.name). Jabatan carries the work schedule. */
     position: text("position").notNull(),
+    /** Divisi (divisions.name). */
+    department: text("department").notNull(),
     gender: employeeGender("gender").default("unspecified").notNull(),
     birthDate: date("birth_date"),
     joinedAt: date("joined_at").notNull(),
@@ -261,7 +263,12 @@ export const workScheduleDays = pgTable("work_schedule_days", {
   index("work_schedule_days_schedule_idx").on(table.scheduleId),
 ]);
 
-export const divisions = pgTable("divisions", {
+/**
+ * Jabatan. Carries the work schedule(s): employees with the same jabatan work the same shift(s).
+ * History: until migration 0054 this table was named `divisions` and shown as "Divisi"; the two
+ * entities were swapped (rename only, data untouched).
+ */
+export const positions = pgTable("job_positions", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
@@ -270,27 +277,32 @@ export const divisions = pgTable("divisions", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-  uniqueIndex("divisions_company_name_unique").on(table.companyId, table.name),
-  index("divisions_company_idx").on(table.companyId, table.active),
-  index("divisions_schedule_idx").on(table.scheduleId),
+  uniqueIndex("job_positions_company_name_unique").on(table.companyId, table.name),
+  index("job_positions_company_idx").on(table.companyId, table.active),
+  index("job_positions_schedule_idx").on(table.scheduleId),
 ]);
 
 /**
- * All work schedules a division may use (one or more). divisions.scheduleId stays the primary
+ * All work schedules a jabatan may use (one or more). positions.scheduleId stays the primary
  * (first chosen) one for features that need a single schedule (overtime start, payslip work week).
  */
-export const divisionSchedules = pgTable("division_schedules", {
-  divisionId: uuid("division_id").notNull().references(() => divisions.id, { onDelete: "cascade" }),
+export const positionSchedules = pgTable("job_position_schedules", {
+  positionId: uuid("job_position_id").notNull().references(() => positions.id, { onDelete: "cascade" }),
   // Cascade so deleting a whole company works; the shift API refuses deleting a schedule still in use.
   scheduleId: uuid("schedule_id").notNull().references(() => workSchedules.id, { onDelete: "cascade" }),
-  position: integer("position").default(0).notNull(),
+  /** Display order of the schedules (0 = primary). */
+  sortOrder: integer("position").default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-  primaryKey({ columns: [table.divisionId, table.scheduleId] }),
-  index("division_schedules_schedule_idx").on(table.scheduleId),
+  primaryKey({ columns: [table.positionId, table.scheduleId] }),
+  index("job_position_schedules_schedule_idx").on(table.scheduleId),
 ]);
 
-export const jobPositions = pgTable("job_positions", {
+/**
+ * Divisi (no schedule). History: until migration 0054 this table was named `job_positions` and
+ * shown as "Jabatan".
+ */
+export const divisions = pgTable("divisions", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
@@ -298,8 +310,8 @@ export const jobPositions = pgTable("job_positions", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-  uniqueIndex("job_positions_company_name_unique").on(table.companyId, table.name),
-  index("job_positions_company_idx").on(table.companyId, table.active),
+  uniqueIndex("divisions_company_name_unique").on(table.companyId, table.name),
+  index("divisions_company_idx").on(table.companyId, table.active),
 ]);
 
 export const visitLocations = pgTable("visit_locations", {

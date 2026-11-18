@@ -20,7 +20,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
 
   const counter = workDayCounter(context.companyId);
   const [team, rules, balances, requests] = await Promise.all([
-    db.select({ id: employees.id, employeeCode: employees.employeeCode, name: employees.name, email: employees.email, department: employees.department, position: employees.position, status: employees.status, joinedAt: employees.joinedAt, photoAssetId: employeeDocuments.assetId })
+    db.select({ id: employees.id, employeeCode: employees.employeeCode, name: employees.name, email: employees.email, position: employees.position, department: employees.department, status: employees.status, joinedAt: employees.joinedAt, photoAssetId: employeeDocuments.assetId })
       .from(employees).leftJoin(employeeDocuments, and(eq(employeeDocuments.employeeId, employees.id), eq(employeeDocuments.kind, "profile_photo")))
       .where(eq(employees.companyId, context.companyId)).orderBy(asc(employees.name)),
     getLeaveRules(context.companyId),
@@ -30,14 +30,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
       .from(leaveRequests).where(and(eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.status, "approved"), lte(leaveRequests.startDate, to), gte(leaveRequests.endDate, from))),
   ]);
 
-  const departments = new Map(team.map((person) => [person.id, person.department]));
+  const positions = new Map(team.map((person) => [person.id, person.position]));
   const tallies = new Map<string, { annual: LeaveTally; sick: LeaveTally; permission: LeaveTally; special: Map<string, LeaveTally & { name: string }> }>();
   for (const request of requests) {
-    const department = departments.get(request.employeeId);
-    if (department === undefined) continue;
+    const position = positions.get(request.employeeId);
+    if (position === undefined) continue;
     const start = request.startDate < from ? from : request.startDate, end = request.endDate > to ? to : request.endDate;
     // Working days inside the rekap period (the stored count when the whole request is inside it).
-    const days = start === request.startDate && end === request.endDate && request.workDays != null ? request.workDays : await counter(department, start, end);
+    const days = start === request.startDate && end === request.endDate && request.workDays != null ? request.workDays : await counter(position, start, end);
     const entry = tallies.get(request.employeeId) ?? { annual: { times: 0, days: 0 }, sick: { times: 0, days: 0 }, permission: { times: 0, days: 0 }, special: new Map() };
     if (request.type === "special") {
       const name = request.name ?? "Cuti Khusus", kind = entry.special.get(name) ?? { name, times: 0, days: 0 };

@@ -6,7 +6,7 @@ import { minutesLate, type ShiftOption } from "@/features/attendance/shift-time"
 const short = (value: string) => value.slice(0, 5);
 
 /**
- * Step before the camera for a division with several shifts that day: the employee says which shift
+ * Step before the camera for a position with several shifts that day: the employee says which shift
  * they are working, so lateness (and the payslip) is measured against that shift's start time.
  * `nowTime` is the company clock ("HH:MM:SS") used for the on-time / late preview.
  */
@@ -17,7 +17,7 @@ export function ShiftPicker({ shifts, value, nowTime, onChange }: {
   onChange: (id: string) => void;
 }) {
   return <div className="shift-picker">
-    <p className="shift-picker-intro">Divisi Anda memiliki lebih dari satu jadwal kerja hari ini. Pilih shift yang sedang Anda jalani. Keterlambatan dan slip gaji dihitung dari jam masuk shift ini.</p>
+    <p className="shift-picker-intro">Jabatan Anda memiliki lebih dari satu jadwal kerja hari ini. Pilih shift yang sedang Anda jalani. Keterlambatan dan slip gaji dihitung dari jam masuk shift ini.</p>
     <div className="shift-picker-list" role="radiogroup" aria-label="Shift kerja">
       {shifts.map((shift) => {
         const late = minutesLate(nowTime, shift.startTime, shift.endTime);

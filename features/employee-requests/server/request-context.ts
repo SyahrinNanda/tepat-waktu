@@ -12,7 +12,7 @@ export async function employeeRequestContext(request: Request, module: FeatureMo
 }
 
 export async function selectableEmployee(context: RequestContext, employeeId: string) {
-  const [employee] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, userId: employees.userId }).from(employees)
+  const [employee] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, position: employees.position, userId: employees.userId }).from(employees)
     .where(and(eq(employees.id, employeeId), eq(employees.companyId, context.companyId), eq(employees.status, "active"))).limit(1);
   if (!employee || (!reviewerRoles.includes(context.role) && employee.userId !== context.userId)) return null;
   return employee;

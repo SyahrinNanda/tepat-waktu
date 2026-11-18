@@ -65,8 +65,8 @@ export function PayslipSheet({ slip, companyName }: { slip: Payslip; companyName
       <section className="payslip-doc-info">
         <Info label="Nama" value={slip.employee.name}/>
         <Info label="NIK" value={slip.employee.employeeCode}/>
-        <Info label="Jabatan" value={slip.employee.position}/>
         <Info label="Divisi" value={slip.employee.department}/>
+        <Info label="Jabatan" value={slip.employee.position}/>
         <Info label="Basis gaji" value={`${basisLabels[slip.basis]} · ${rupiah(slip.baseRate)}`}/>
       </section>
       <section className="payslip-doc-attendance">
@@ -84,7 +84,7 @@ export function PayslipSheet({ slip, companyName }: { slip: Payslip; companyName
       <footer className="payslip-doc-net"><span>Gaji Bersih Diterima</span><strong>{rupiah(slip.netPay)}</strong></footer>
       <p className="payslip-doc-note">
         {slip.basis === "monthly"
-          ? `Hari kerja mengikuti jadwal kerja divisi. Izin/cuti tidak dibayar dipotong sebesar gaji pokok dibagi jumlah hari kerja periode ini (${range}); alpa dan terlambat dipotong sesuai pengaturan perhitungan gaji perusahaan.`
+          ? `Hari kerja mengikuti jadwal kerja jabatan. Izin/cuti tidak dibayar dipotong sebesar gaji pokok dibagi jumlah hari kerja periode ini (${range}); alpa dan terlambat dipotong sesuai pengaturan perhitungan gaji perusahaan.`
           : "Upah dihitung dari kehadiran nyata. Izin/cuti dibayar tetap diupah, sedangkan izin tidak dibayar dan alpa tidak diupah."}
         {" "}Jam kerja sudah dikurangi jam istirahat; hari yang lupa check-out dihitung sampai jam pulang jadwal. Komponen per hari mengikuti hari hadir, dan komponen per jam mengikuti jam kerja.
       </p>

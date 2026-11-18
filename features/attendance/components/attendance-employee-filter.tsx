@@ -9,7 +9,7 @@ export type AttendanceEmployeeOption = {
   id: string;
   name: string;
   employeeCode: string;
-  department: string;
+  position: string;
 };
 
 export function AttendanceEmployeeFilter({ employees, value }: { employees: AttendanceEmployeeOption[]; value: string }) {
@@ -21,7 +21,7 @@ export function AttendanceEmployeeFilter({ employees, value }: { employees: Atte
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     if (!keyword) return employees;
-    return employees.filter((employee) => `${employee.name} ${employee.employeeCode} ${employee.department}`.toLowerCase().includes(keyword));
+    return employees.filter((employee) => `${employee.name} ${employee.employeeCode} ${employee.position}`.toLowerCase().includes(keyword));
   }, [employees, query]);
 
   useEffect(() => {
@@ -44,13 +44,13 @@ export function AttendanceEmployeeFilter({ employees, value }: { employees: Atte
     <label>Pilih karyawan</label>
     <button type="button" onClick={() => setOpen((current) => !current)} aria-expanded={open}>
       <span className="attendance-employee-filter-avatar"><UserRound size={17} /></span>
-      <span><strong>{selected?.name ?? "Cari dan pilih karyawan"}</strong><small>{selected ? `${selected.employeeCode} · ${selected.department}` : "Nama, nomor induk, atau divisi"}</small></span>
+      <span><strong>{selected?.name ?? "Cari dan pilih karyawan"}</strong><small>{selected ? `${selected.employeeCode} · ${selected.position}` : "Nama, nomor induk, atau jabatan"}</small></span>
       <ChevronDown size={17} />
     </button>
     {open ? <div className="attendance-employee-filter-popover">
-      <div><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari nama, nomor induk, atau divisi..." autoFocus /></div>
+      <div><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari nama, nomor induk, atau jabatan..." autoFocus /></div>
       <ul>{filtered.map((employee) => <li key={employee.id}><button type="button" onClick={() => selectEmployee(employee.id)}>
-        <span><strong>{employee.name}</strong><small>{employee.employeeCode} · {employee.department}</small></span>
+        <span><strong>{employee.name}</strong><small>{employee.employeeCode} · {employee.position}</small></span>
         {employee.id === value ? <Check size={16} /> : null}
       </button></li>)}{!filtered.length ? <li className="attendance-employee-filter-empty">Karyawan tidak ditemukan.</li> : null}</ul>
     </div> : null}

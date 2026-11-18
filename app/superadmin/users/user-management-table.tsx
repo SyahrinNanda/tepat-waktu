@@ -17,7 +17,7 @@ export type UserRow = {
   companyRole: string | null;
   /** company_members.is_active; null when the account has no company. */
   memberActive: boolean | null;
-  employeePosition: string | null;
+  employeeDepartment: string | null;
   employeeCode: string | null;
 };
 

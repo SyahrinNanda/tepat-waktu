@@ -18,7 +18,7 @@ const payloadSchema = z.object({
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
   accuracyMeters: z.coerce.number().min(0).max(100_000).optional(),
-  /** Shift chosen before the photo (divisions with several shifts). */
+  /** Shift chosen before the photo (positions with several shifts). */
   scheduleId: z.uuid().optional(),
 });
 

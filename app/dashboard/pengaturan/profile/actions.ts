@@ -10,11 +10,11 @@ import {
   attendanceLocations,
   companies,
   account,
-  divisions,
+  positions,
   employees,
   featureRecords,
   fileAssets,
-  jobPositions,
+  divisions,
   subscriptionOrders,
   user,
   visitLocations,
@@ -158,8 +158,8 @@ export async function resetCompanyData(input: {
       await tx.delete(featureRecords).where(eq(featureRecords.companyId, context.companyId));
       await tx.delete(visitLocations).where(eq(visitLocations.companyId, context.companyId));
       await tx.delete(attendanceLocations).where(eq(attendanceLocations.companyId, context.companyId));
+      await tx.delete(positions).where(eq(positions.companyId, context.companyId));
       await tx.delete(divisions).where(eq(divisions.companyId, context.companyId));
-      await tx.delete(jobPositions).where(eq(jobPositions.companyId, context.companyId));
       await tx.delete(workSchedules).where(eq(workSchedules.companyId, context.companyId));
       if (removableAssets.length) {
         await tx.delete(fileAssets).where(

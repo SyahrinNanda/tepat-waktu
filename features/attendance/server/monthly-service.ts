@@ -24,7 +24,7 @@ export async function fetchMonthlyAttendanceSummary({
   month,
   query,
   locationId,
-  division,
+  position,
   shiftId,
 }: {
   companyId: string;
@@ -32,7 +32,7 @@ export async function fetchMonthlyAttendanceSummary({
   month: number;
   query?: string;
   locationId?: string;
-  division?: string;
+  position?: string;
   shiftId?: string;
 }): Promise<MonthlyEmployeeSummary[]> {
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -45,8 +45,8 @@ export async function fetchMonthlyAttendanceSummary({
     eq(employees.status, "active"),
   ];
 
-  if (division) {
-    employeeConditions.push(eq(employees.department, division));
+  if (position) {
+    employeeConditions.push(eq(employees.position, position));
   }
 
   if (query) {
@@ -60,7 +60,7 @@ export async function fetchMonthlyAttendanceSummary({
       id: employees.id,
       name: employees.name,
       employeeCode: employees.employeeCode,
-      department: employees.department,
+      position: employees.position,
     })
     .from(employees)
     .where(and(...employeeConditions))
@@ -238,7 +238,7 @@ export async function fetchMonthlyAttendanceSummary({
       employeeId: emp.id,
       employeeCode: emp.employeeCode || "—",
       employeeName: emp.name,
-      department: emp.department || "Umum",
+      position: emp.position || "Umum",
       shiftId: assignedShiftId,
       shiftName: assignedShiftName,
       locationId: assignedLocationId,
@@ -283,7 +283,7 @@ export async function exportMonthlyAttendanceExcel(request: Request) {
   const month = parseInt(searchParams.get("month") || String(now.getMonth() + 1), 10);
   const query = searchParams.get("q") || undefined;
   const locationId = searchParams.get("locationId") || undefined;
-  const division = searchParams.get("division") || undefined;
+  const position = searchParams.get("position") || undefined;
   const shiftId = searchParams.get("shiftId") || undefined;
 
   const data = await fetchMonthlyAttendanceSummary({
@@ -292,7 +292,7 @@ export async function exportMonthlyAttendanceExcel(request: Request) {
     month,
     query,
     locationId,
-    division,
+    position,
     shiftId,
   });
 

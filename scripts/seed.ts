@@ -3,7 +3,7 @@ import { and, eq, isNull, notInArray } from "drizzle-orm";
 import { hashPassword } from "better-auth/crypto";
 import { auth } from "../lib/auth";
 import { db, pool } from "../db";
-import { account as authAccount, attendanceLocations, attendances, companies, companyMembers, divisions, divisionSchedules, employees, jobPositions, leaveRequests, subscriptionPlans, user, visitLocations, workScheduleDays, workSchedules } from "../db/schema";
+import { account as authAccount, attendanceLocations, attendances, companies, companyMembers, positions, positionSchedules, employees, divisions, leaveRequests, subscriptionPlans, user, visitLocations, workScheduleDays, workSchedules } from "../db/schema";
 
 const DEMO_EMAIL = "admin@tepatwaktu.id";
 const DEMO_PASSWORD = "TepatWaktu123!";
@@ -90,11 +90,11 @@ async function main() {
   const [existing] = await db.select({ id: employees.id }).from(employees).where(eq(employees.companyId, membership.companyId)).limit(1);
   if (!existing) {
     const team = await db.insert(employees).values([
-      { companyId: membership.companyId, employeeCode: "EMP-001", name: "Andi Saputra", email: "andi@tepatwaktu.id", department: "Operasional", position: "Supervisor", gender: "male", joinedAt: dateOffset(-240) },
-      { companyId: membership.companyId, employeeCode: "EMP-002", name: "Salsa Kirana", email: "salsa@tepatwaktu.id", department: "People", position: "HR Specialist", gender: "female", joinedAt: dateOffset(-180) },
-      { companyId: membership.companyId, employeeCode: "EMP-003", name: "Raka Wijaya", email: "raka@tepatwaktu.id", department: "Teknologi", position: "Frontend Engineer", gender: "male", joinedAt: dateOffset(-120) },
-      { companyId: membership.companyId, employeeCode: "EMP-004", name: "Maya Lestari", email: "maya@tepatwaktu.id", department: "Keuangan", position: "Finance Officer", gender: "female", joinedAt: dateOffset(-75) },
-      { companyId: membership.companyId, employeeCode: "EMP-005", name: "Bima Aditya", email: "bima@tepatwaktu.id", department: "Teknologi", position: "Backend Engineer", gender: "male", joinedAt: dateOffset(-40) },
+      { companyId: membership.companyId, employeeCode: "EMP-001", name: "Andi Saputra", email: "andi@tepatwaktu.id", position: "Operasional", department: "Supervisor", gender: "male", joinedAt: dateOffset(-240) },
+      { companyId: membership.companyId, employeeCode: "EMP-002", name: "Salsa Kirana", email: "salsa@tepatwaktu.id", position: "People", department: "HR Specialist", gender: "female", joinedAt: dateOffset(-180) },
+      { companyId: membership.companyId, employeeCode: "EMP-003", name: "Raka Wijaya", email: "raka@tepatwaktu.id", position: "Teknologi", department: "Frontend Engineer", gender: "male", joinedAt: dateOffset(-120) },
+      { companyId: membership.companyId, employeeCode: "EMP-004", name: "Maya Lestari", email: "maya@tepatwaktu.id", position: "Keuangan", department: "Finance Officer", gender: "female", joinedAt: dateOffset(-75) },
+      { companyId: membership.companyId, employeeCode: "EMP-005", name: "Bima Aditya", email: "bima@tepatwaktu.id", position: "Teknologi", department: "Backend Engineer", gender: "male", joinedAt: dateOffset(-40) },
     ]).returning({ id: employees.id });
 
     await db.insert(workSchedules).values({ companyId: membership.companyId, name: "Reguler kantor", workDays: "Senin–Jumat", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15 });
@@ -111,10 +111,10 @@ async function main() {
   if (!defaultShift) [defaultShift] = await db.insert(workSchedules).values({ companyId: membership.companyId, name: "Reguler kantor", workDays: "1,2,3,4,5", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15, active: true }).returning();
   for (let day = 1; day <= 7; day++) await db.insert(workScheduleDays).values({ scheduleId: defaultShift.id, dayOfWeek: day, enabled: day <= 5, startTime: "08:00:00", endTime: day === 5 ? "16:00:00" : "17:00:00" }).onConflictDoNothing({ target: [workScheduleDays.scheduleId, workScheduleDays.dayOfWeek] });
   for (const name of ["Operasional", "People", "Teknologi", "Keuangan"]) {
-    const [division] = await db.insert(divisions).values({ companyId: membership.companyId, name, scheduleId: defaultShift.id, active: true }).onConflictDoNothing({ target: [divisions.companyId, divisions.name] }).returning({ id: divisions.id });
-    if (division) await db.insert(divisionSchedules).values({ divisionId: division.id, scheduleId: defaultShift.id }).onConflictDoNothing();
+    const [position] = await db.insert(positions).values({ companyId: membership.companyId, name, scheduleId: defaultShift.id, active: true }).onConflictDoNothing({ target: [positions.companyId, positions.name] }).returning({ id: positions.id });
+    if (position) await db.insert(positionSchedules).values({ positionId: position.id, scheduleId: defaultShift.id }).onConflictDoNothing();
   }
-  for (const name of ["Supervisor", "HR Specialist", "Frontend Engineer", "Finance Officer", "Backend Engineer"]) await db.insert(jobPositions).values({ companyId: membership.companyId, name }).onConflictDoNothing({ target: [jobPositions.companyId, jobPositions.name] });
+  for (const name of ["Supervisor", "HR Specialist", "Frontend Engineer", "Finance Officer", "Backend Engineer"]) await db.insert(divisions).values({ companyId: membership.companyId, name }).onConflictDoNothing({ target: [divisions.companyId, divisions.name] });
   await db.insert(attendanceLocations).values({ companyId: membership.companyId, name: "Kantor Pusat", type: "headquarters", address: "Yogyakarta", latitude: -7.7956, longitude: 110.3695, radiusMeters: 100 }).onConflictDoNothing({ target: [attendanceLocations.companyId, attendanceLocations.name] });
   await db.insert(visitLocations).values({ companyId: membership.companyId, name: "Mitra Sejahtera", ownerName: "Budi Santoso", email: "mitra@example.com", phone: "081234567890", address: "Yogyakarta", latitude: -7.8014, longitude: 110.3647, radiusMeters: 100 }).onConflictDoNothing({ target: [visitLocations.companyId, visitLocations.name] });
 

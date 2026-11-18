@@ -60,8 +60,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <div className="employee-detail-avatar">{documents.profile_photo ? <Image src={`/api/files/${documents.profile_photo}`} alt={employee.name} width={100} height={100} unoptimized/> : <UserRound size={72}/>}</div>
       <div className="employee-detail-copy"><h2>{employee.name.toUpperCase()}</h2><div className="employee-detail-grid">
         <Info label="Nomor Induk" value={employee.employeeCode}/><Info label="Jenis Kelamin" value={gender(employee.gender)}/>
-        <Info label="Jabatan" value={employee.position}/><Info label="No. Handphone" value={employee.phone}/>
-        <Info label="Divisi" value={employee.department}/><Info label="Lokasi Kerja" value={employee.allAttendanceLocations ? "Semua Lokasi Perusahaan" : locationNames.length ? locationNames.join(", ") : "Lokasi Tertentu"}/>
+        <Info label="Divisi" value={employee.department}/><Info label="No. Handphone" value={employee.phone}/>
+        <Info label="Jabatan" value={employee.position}/><Info label="Lokasi Kerja" value={employee.allAttendanceLocations ? "Semua Lokasi Perusahaan" : locationNames.length ? locationNames.join(", ") : "Lokasi Tertentu"}/>
         <Info label="Email" value={employee.email}/><Info label="Alamat" value={employee.address}/>
         <Info label="Tanggal Lahir" value={employee.birthDate}/><Info label="Foto Selfie" value={documents.selfie ? "Lihat foto" : "–"} href={documents.selfie ? `/api/files/${documents.selfie}` : undefined}/>
         <Info label="Tgl Karyawan Bergabung" value={employee.joinedAt}/><Info label="Foto KTP" value={documents.identity_card ? "Lihat dokumen" : "–"} href={documents.identity_card ? `/api/files/${documents.identity_card}` : undefined}/>

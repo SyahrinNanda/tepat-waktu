@@ -2,7 +2,7 @@ export type MonthlyEmployeeSummary = {
   employeeId: string;
   employeeCode: string;
   employeeName: string;
-  department: string;
+  position: string;
   shiftId: string | null;
   shiftName: string | null;
   locationId: string | null;

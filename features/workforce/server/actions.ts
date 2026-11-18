@@ -43,7 +43,7 @@ export async function createEmployee(form: FormData) {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
   const parsed = z.object({
     employeeCode: z.string().trim().max(30).optional(), name: requiredText.max(120), email: z.email(),
-    department: requiredText.max(80), position: requiredText.max(80), gender: z.enum(["male", "female", "unspecified"]), joinedAt: z.iso.date(),
+    position: requiredText.max(80), department: requiredText.max(80), gender: z.enum(["male", "female", "unspecified"]), joinedAt: z.iso.date(),
     birthDate: z.union([z.iso.date(), z.literal("")]).optional(), phone: z.string().trim().max(40).optional(), address: z.string().trim().max(500).optional(),
     taxNumber: z.string().trim().max(60).optional(), socialSecurityNumber: z.string().trim().max(60).optional(), contractType: z.string().trim().max(60).optional(),
   }).parse(Object.fromEntries([...form.entries()].filter(([, value]) => typeof value === "string")));
@@ -168,8 +168,8 @@ export async function updateEmployee(form: FormData) {
     employeeCode: requiredText.max(30),
     name: requiredText.max(120),
     email: z.email(),
-    department: requiredText.max(80),
     position: requiredText.max(80),
+    department: requiredText.max(80),
     gender: z.enum(["male", "female", "unspecified"]),
     joinedAt: z.iso.date(),
     birthDate: z.union([z.iso.date(), z.literal("")]).optional(),
@@ -190,8 +190,8 @@ export async function updateEmployee(form: FormData) {
     employeeCode: parsed.employeeCode,
     name: parsed.name,
     email: parsed.email.toLowerCase(),
-    department: parsed.department,
     position: parsed.position,
+    department: parsed.department,
     gender: parsed.gender,
     joinedAt: parsed.joinedAt,
     birthDate: parsed.birthDate || null,

@@ -8,8 +8,8 @@ import {
   attendances,
   companies,
   companyMembers,
-  divisions,
-  divisionSchedules,
+  positions,
+  positionSchedules,
   employeeAttendanceLocations,
   employees,
   fileAssets,
@@ -204,16 +204,16 @@ type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 /**
  * The work schedule that applies to one employee on one date. Used by both the check-in screen and
  * the recorder, so what the employee sees is exactly what lateness is judged against.
- * - source "division": an active schedule of the employee's active division. A division can have
+ * - source "position": an active schedule of the employee's active position. A position can have
  *   several schedules (shifts); then the chosen / already recorded one (`scheduleId`) wins (at check-in
- *   the employee picks the shift when more than one works that day, see divisionShiftOptions),
+ *   the employee picks the shift when more than one works that day, see positionShiftOptions),
  *   else the working-day schedule whose start time is closest to `time` (shown as the suggestion),
  *   else the primary (first) one;
  * - source "company":  otherwise the company's oldest active schedule;
  * - source "default":  no schedule configured yet: 08:00–17:00 is shown, but lateness is not judged.
  * The schedule's row for that weekday overrides its times; a disabled row makes it a day off.
  */
-export type ResolvedSchedule = { id?: string; name: string; startTime: string; endTime: string; graceMinutes: number; isWorkday: boolean; source: "division" | "company" | "default" };
+export type ResolvedSchedule = { id?: string; name: string; startTime: string; endTime: string; graceMinutes: number; isWorkday: boolean; source: "position" | "company" | "default" };
 
 export const DEFAULT_SCHEDULE: ResolvedSchedule = { name: "Jadwal perusahaan", startTime: "08:00:00", endTime: "17:00:00", graceMinutes: 15, isWorkday: true, source: "default" };
 
@@ -226,40 +226,40 @@ const scheduleColumns = {
 };
 const scheduleDayJoin = (date: string) => and(eq(workScheduleDays.scheduleId, workSchedules.id), eq(workScheduleDays.dayOfWeek, weekdayNumber(date)));
 
-/** The active schedules of the employee's active division on one date, in their order, with that weekday's times. */
-async function divisionScheduleRows(executor: Executor, companyId: string, department: string | null, date: string) {
-  const rows = department ? await executor.select(scheduleColumns).from(divisions)
-    .innerJoin(divisionSchedules, eq(divisionSchedules.divisionId, divisions.id))
-    .innerJoin(workSchedules, and(eq(workSchedules.id, divisionSchedules.scheduleId), eq(workSchedules.active, true)))
+/** The active schedules of the employee's active position on one date, in their order, with that weekday's times. */
+async function positionScheduleRows(executor: Executor, companyId: string, position: string | null, date: string) {
+  const rows = position ? await executor.select(scheduleColumns).from(positions)
+    .innerJoin(positionSchedules, eq(positionSchedules.positionId, positions.id))
+    .innerJoin(workSchedules, and(eq(workSchedules.id, positionSchedules.scheduleId), eq(workSchedules.active, true)))
     .leftJoin(workScheduleDays, scheduleDayJoin(date))
-    .where(and(eq(divisions.companyId, companyId), eq(divisions.name, department), eq(divisions.active, true)))
-    .orderBy(asc(divisionSchedules.position), asc(workSchedules.name)) : [];
+    .where(and(eq(positions.companyId, companyId), eq(positions.name, position), eq(positions.active, true)))
+    .orderBy(asc(positionSchedules.sortOrder), asc(workSchedules.name)) : [];
   return rows.map((row) => ({ ...row, start: row.dayStart ?? row.baseStart, end: row.dayEnd ?? row.baseEnd, workday: row.dayEnabled !== false }));
 }
 
 /**
- * Shifts the employee must choose from at check-in: the division's schedules that work on that date.
- * Only a division with MORE THAN ONE such schedule needs a choice; otherwise this returns [] and the
+ * Shifts the employee must choose from at check-in: the position's schedules that work on that date.
+ * Only a position with MORE THAN ONE such schedule needs a choice; otherwise this returns [] and the
  * single schedule (or the day off) applies without asking.
  */
-export async function divisionShiftOptions(executor: Executor, companyId: string, department: string | null, date: string): Promise<ShiftOption[]> {
-  const workdays = (await divisionScheduleRows(executor, companyId, department, date)).filter((row) => row.workday);
+export async function positionShiftOptions(executor: Executor, companyId: string, position: string | null, date: string): Promise<ShiftOption[]> {
+  const workdays = (await positionScheduleRows(executor, companyId, position, date)).filter((row) => row.workday);
   return workdays.length > 1 ? workdays.map((row) => ({ id: row.id, name: row.name, startTime: row.start, endTime: row.end, graceMinutes: row.graceMinutes ?? 15 })) : [];
 }
 
-export async function resolveSchedule(executor: Executor, input: { companyId: string; department: string | null; date: string; time?: string; scheduleId?: string | null }): Promise<ResolvedSchedule> {
+export async function resolveSchedule(executor: Executor, input: { companyId: string; position: string | null; date: string; time?: string; scheduleId?: string | null }): Promise<ResolvedSchedule> {
   const columns = scheduleColumns, dayJoin = scheduleDayJoin(input.date);
-  const resolved = await divisionScheduleRows(executor, input.companyId, input.department, input.date);
+  const resolved = await positionScheduleRows(executor, input.companyId, input.position, input.date);
   const workdays = resolved.filter((row) => row.workday);
-  const division = resolved.find((row) => row.id === input.scheduleId)
+  const position = resolved.find((row) => row.id === input.scheduleId)
     ?? (input.time && workdays.length ? workdays.reduce((best, row) => clockDistance(row.start, input.time!) < clockDistance(best.start, input.time!) ? row : best) : undefined)
     ?? workdays[0] ?? resolved[0];
-  const [company] = division ? [] : await executor.select(columns).from(workSchedules)
+  const [company] = position ? [] : await executor.select(columns).from(workSchedules)
     .leftJoin(workScheduleDays, dayJoin)
     .where(and(eq(workSchedules.companyId, input.companyId), eq(workSchedules.active, true)))
     .orderBy(asc(workSchedules.createdAt), asc(workSchedules.id)).limit(1);
 
-  const row = division ?? company;
+  const row = position ?? company;
   if (!row) return DEFAULT_SCHEDULE;
   return {
     id: row.id,
@@ -268,7 +268,7 @@ export async function resolveSchedule(executor: Executor, input: { companyId: st
     endTime: row.dayEnd ?? row.baseEnd,
     graceMinutes: row.graceMinutes ?? 15,
     isWorkday: row.dayEnabled !== false,
-    source: division ? "division" : "company",
+    source: position ? "position" : "company",
   };
 }
 
@@ -312,15 +312,15 @@ export async function getSelfAttendanceStatus(context: SelfAttendanceContext) {
   const now = new Date();
   const zoned = zonedParts(now, context.timezone);
   const [[employee], [attendance], rules] = await Promise.all([
-    db.select({ department: employees.department }).from(employees).where(and(eq(employees.id, context.employeeId), eq(employees.companyId, context.companyId))).limit(1),
+    db.select({ position: employees.position }).from(employees).where(and(eq(employees.id, context.employeeId), eq(employees.companyId, context.companyId))).limit(1),
     db.select({ id: attendances.id, checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status, shiftId: attendances.shiftId }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.employeeId, context.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1),
     selfAttendanceRules(context.companyId, context.employeeId),
   ]);
-  const department = employee?.department ?? null;
+  const position = employee?.position ?? null;
   const [schedule, shifts] = await Promise.all([
-    resolveSchedule(db, { companyId: context.companyId, department, date: zoned.date, time: zoned.time, scheduleId: attendance?.shiftId }),
+    resolveSchedule(db, { companyId: context.companyId, position, date: zoned.date, time: zoned.time, scheduleId: attendance?.shiftId }),
     // The shift is chosen once, at check-in; afterwards the recorded one applies.
-    attendance?.checkIn ? [] : divisionShiftOptions(db, context.companyId, department, zoned.date),
+    attendance?.checkIn ? [] : positionShiftOptions(db, context.companyId, position, zoned.date),
   ]);
   return {
     employee: { id: context.employeeId, name: context.employeeName },
@@ -352,14 +352,14 @@ export async function recordAttendanceEvent(input: {
   userAgent?: string | null;
   note?: string | null;
   photo?: UploadedPhoto | null;
-  /** Shift chosen at check-in; required for a self check-in when the division has several shifts that day. */
+  /** Shift chosen at check-in; required for a self check-in when the position has several shifts that day. */
   scheduleId?: string | null;
 }) {
   const occurredAt = input.occurredAt ?? new Date();
   const zoned = zonedParts(occurredAt, input.timezone);
   try {
     return await withTransactionRetry(() => db.transaction(async (tx) => {
-      const [employee] = await tx.select({ id: employees.id, userId: employees.userId, department: employees.department, lockLocation: employees.lockLocation }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, input.companyId), eq(employees.status, "active"))).limit(1);
+      const [employee] = await tx.select({ id: employees.id, userId: employees.userId, position: employees.position, lockLocation: employees.lockLocation }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, input.companyId), eq(employees.status, "active"))).limit(1);
       if (!employee) throw new AttendanceError("Karyawan aktif tidak ditemukan.", 404);
       // Kunci Lokasi off: the employee may check in outside the radius (coordinates are still recorded).
       if (input.source === "self" && employee.lockLocation) {
@@ -412,17 +412,17 @@ export async function recordAttendanceEvent(input: {
 
       let scheduleId = attendance.shiftId;
       if (input.action === "check_in") {
-        const shifts = await divisionShiftOptions(tx, input.companyId, employee.department, zoned.date);
+        const shifts = await positionShiftOptions(tx, input.companyId, employee.position, zoned.date);
         if (shifts.length) {
           if (input.scheduleId) {
-            if (!shifts.some((shift) => shift.id === input.scheduleId)) throw new AttendanceError("Shift yang dipilih tidak berlaku untuk divisi Anda hari ini.", 422);
+            if (!shifts.some((shift) => shift.id === input.scheduleId)) throw new AttendanceError("Shift yang dipilih tidak berlaku untuk jabatan Anda hari ini.", 422);
             scheduleId = input.scheduleId;
           } else if (input.source === "self") {
             throw new AttendanceError("Pilih shift kerja Anda terlebih dahulu sebelum check-in.", 422);
           }
         }
       }
-      const schedule = await resolveSchedule(tx, { companyId: input.companyId, department: employee.department, date: zoned.date, time: zoned.time, scheduleId });
+      const schedule = await resolveSchedule(tx, { companyId: input.companyId, position: employee.position, date: zoned.date, time: zoned.time, scheduleId });
       const status = input.action === "check_in" && isLateCheckIn(schedule, zoned.time) ? "late" : attendance.status;
       await tx.insert(attendanceEvents).values({
         attendanceId: attendance.id,

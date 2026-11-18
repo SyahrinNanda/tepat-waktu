@@ -24,7 +24,7 @@ import {
 } from "@/features/attendance/types/monthly";
 
 export type LocationOption = { id: string; name: string };
-export type DivisionOption = { id: string; name: string };
+export type PositionOption = { id: string; name: string };
 export type ShiftOption = { id: string; name: string; startTime: string; endTime: string };
 
 type Props = {
@@ -32,10 +32,10 @@ type Props = {
   initialMonth: number;
   initialQuery?: string;
   initialLocationId?: string;
-  initialDivision?: string;
+  initialPosition?: string;
   initialShiftId?: string;
   locations: LocationOption[];
-  divisions: DivisionOption[];
+  positions: PositionOption[];
   shifts: ShiftOption[];
   summaries: MonthlyEmployeeSummary[];
 };
@@ -60,10 +60,10 @@ export function MonthlyAttendanceManager({
   initialMonth,
   initialQuery = "",
   initialLocationId = "",
-  initialDivision = "",
+  initialPosition = "",
   initialShiftId = "",
   locations,
-  divisions,
+  positions,
   shifts,
   summaries,
 }: Props) {
@@ -76,7 +76,7 @@ export function MonthlyAttendanceManager({
   const [month, setMonth] = useState(initialMonth);
   const [year, setYear] = useState(initialYear);
   const [selectedLocation, setSelectedLocation] = useState(initialLocationId);
-  const [selectedDivision, setSelectedDivision] = useState(initialDivision);
+  const [selectedPosition, setSelectedPosition] = useState(initialPosition);
   const [selectedShift, setSelectedShift] = useState(initialShiftId);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
 
@@ -108,13 +108,13 @@ export function MonthlyAttendanceManager({
   }, []);
 
   // Every filter applies as soon as it changes; `next` carries the value React state has not stored yet.
-  type FilterValues = { year: number; month: number; query: string; locationId: string; division: string; shiftId: string };
+  type FilterValues = { year: number; month: number; query: string; locationId: string; position: string; shiftId: string };
   const handleApplyFilter = (next: Partial<FilterValues> = {}) => {
-    const values: FilterValues = { year, month, query, locationId: selectedLocation, division: selectedDivision, shiftId: selectedShift, ...next };
+    const values: FilterValues = { year, month, query, locationId: selectedLocation, position: selectedPosition, shiftId: selectedShift, ...next };
     const params = new URLSearchParams(searchParams.toString());
     params.set("year", String(values.year));
     params.set("month", String(values.month));
-    const optional: [string, string][] = [["q", values.query.trim()], ["locationId", values.locationId], ["division", values.division], ["shiftId", values.shiftId]];
+    const optional: [string, string][] = [["q", values.query.trim()], ["locationId", values.locationId], ["position", values.position], ["shiftId", values.shiftId]];
     for (const [key, value] of optional) {
       if (value) params.set(key, value);
       else params.delete(key);
@@ -130,7 +130,7 @@ export function MonthlyAttendanceManager({
     setMonth(now.getMonth() + 1);
     setYear(now.getFullYear());
     setSelectedLocation("");
-    setSelectedDivision("");
+    setSelectedPosition("");
     setSelectedShift("");
     setFilterPanelOpen(false);
     setActiveTab("masuk");
@@ -195,10 +195,10 @@ export function MonthlyAttendanceManager({
     params.set("month", String(month));
     if (query) params.set("q", query);
     if (selectedLocation) params.set("locationId", selectedLocation);
-    if (selectedDivision) params.set("division", selectedDivision);
+    if (selectedPosition) params.set("position", selectedPosition);
     if (selectedShift) params.set("shiftId", selectedShift);
     return `/api/attendance/admin/monthly/export?${params.toString()}`;
-  }, [year, month, query, selectedLocation, selectedDivision, selectedShift]);
+  }, [year, month, query, selectedLocation, selectedPosition, selectedShift]);
 
   // Available year options around current year
   const yearOptions = useMemo(() => {
@@ -358,7 +358,7 @@ export function MonthlyAttendanceManager({
           </div>
         </div>
 
-        {/* ROW 2: Dropdowns Lokasi, Divisi, Jadwal Kerja matching Gambar 1 */}
+        {/* ROW 2: Dropdowns Lokasi, Jabatan, Jadwal Kerja matching Gambar 1 */}
         {filterPanelOpen ? <div className="monthly-toolbar-row-2" id="monthly-advanced-filters">
           {/* Lokasi */}
           <div className="monthly-field-group">
@@ -377,16 +377,16 @@ export function MonthlyAttendanceManager({
             </select>
           </div>
 
-          {/* Divisi */}
+          {/* Jabatan */}
           <div className="monthly-field-group">
-            <label className="monthly-field-label">Divisi</label>
+            <label className="monthly-field-label">Jabatan</label>
             <select
-              value={selectedDivision}
-              onChange={(e) => { setSelectedDivision(e.target.value); handleApplyFilter({ division: e.target.value }); }}
+              value={selectedPosition}
+              onChange={(e) => { setSelectedPosition(e.target.value); handleApplyFilter({ position: e.target.value }); }}
               className="monthly-select-dropdown"
             >
-              <option value="">Pilih Divisi</option>
-              {divisions.map((div) => (
+              <option value="">Pilih Jabatan</option>
+              {positions.map((div) => (
                 <option key={div.id} value={div.name}>
                   {div.name}
                 </option>

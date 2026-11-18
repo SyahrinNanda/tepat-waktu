@@ -379,6 +379,13 @@
       "when": 1796010000000,
       "tag": "0053_employee_attendance_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1796020000000,
+      "tag": "0054_swap_division_position",
+      "breakpoints": true
     }
   ]
 }

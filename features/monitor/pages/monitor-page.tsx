@@ -54,12 +54,12 @@ export async function MonitorSection({ context, params }: Props) {
 }
 
 function rankedEmployees(companyId: string, start: string, end: string, status: "late" | "present") {
-  return db.select({ id: employees.id, name: employees.name, department: employees.department, value: sql<number>`count(${attendances.id})::int` }).from(attendances)
+  return db.select({ id: employees.id, name: employees.name, position: employees.position, value: sql<number>`count(${attendances.id})::int` }).from(attendances)
     .innerJoin(employees, eq(attendances.employeeId, employees.id))
     .where(and(eq(attendances.companyId, companyId), gte(attendances.attendanceDate, start), lt(attendances.attendanceDate, end), eq(attendances.status, status)))
-    .groupBy(employees.id, employees.name, employees.department).orderBy(desc(sql`count(${attendances.id})`)).limit(5);
+    .groupBy(employees.id, employees.name, employees.position).orderBy(desc(sql`count(${attendances.id})`)).limit(5);
 }
 function ReportCard({ icon, tone, title, children }: { icon: React.ReactNode; tone: string; title: string; year: number; month: number; children: React.ReactNode }) { return <section className="monitor-report-card"><header><span className={`monitor-report-icon ${tone}`}>{icon}</span><h2>{title}</h2></header>{children}</section>; }
 function Kpi({ label, value, tone }: { label: string; value: number; tone: string }) { return <div className={`monitor-kpi ${tone}`}><span>{label}</span><strong>{value}</strong></div>; }
-function Ranking({ rows, empty, tone }: { rows: { id: string; name: string; department: string; value: number }[]; empty: string; tone: string }) { return rows.length ? <div className="monitor-ranking">{rows.map((row, index) => <div key={row.id}><b>{index + 1}</b><span><strong>{row.name}</strong><small>{row.department}</small></span><em className={tone}>{row.value} kali</em></div>)}</div> : <div className="monitor-empty"><BarChart3 size={30} /><span>{empty}</span></div>; }
+function Ranking({ rows, empty, tone }: { rows: { id: string; name: string; position: string; value: number }[]; empty: string; tone: string }) { return rows.length ? <div className="monitor-ranking">{rows.map((row, index) => <div key={row.id}><b>{index + 1}</b><span><strong>{row.name}</strong><small>{row.position}</small></span><em className={tone}>{row.value} kali</em></div>)}</div> : <div className="monitor-empty"><BarChart3 size={30} /><span>{empty}</span></div>; }
 function GenderBar({ label, value, total, tone }: { label: string; value: number; total: number; tone: string }) { const percent = total ? Math.round(value / total * 100) : 0; return <div className="gender-row"><div><span>{label}</span><b>{percent}%</b></div><div className={`gender-bar ${tone}`}><i style={{ width: `${percent}%` }} /></div></div>; }

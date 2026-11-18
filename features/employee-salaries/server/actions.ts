@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { divisions, employeeSalaryComponents, employeeSalaryProfiles, employees } from "@/db/schema";
+import { positions, employeeSalaryComponents, employeeSalaryProfiles, employees } from "@/db/schema";
 import { requireCompanyRole } from "@/lib/current-company";
 
 const money = z.coerce.number().int().min(0).max(100_000_000_000);
@@ -34,13 +34,13 @@ export async function saveSalaryComponents(input: { employeeId: string; type: "c
   revalidateSalary(parsed.employeeId); return { ok: true };
 }
 
-export async function saveSalaryBatch(input: { divisionId: string; baseSalary: number; overtimeRate: number; salaryBasis: "hourly" | "daily" | "monthly"; compensations: z.infer<typeof componentSchema>[]; deductions: z.infer<typeof componentSchema>[] }) {
-  const parsed = z.object({ divisionId: z.uuid(), baseSalary: money, overtimeRate: money, salaryBasis: basis, compensations: z.array(componentSchema).max(50), deductions: z.array(componentSchema).max(50) }).parse(input);
+export async function saveSalaryBatch(input: { positionId: string; baseSalary: number; overtimeRate: number; salaryBasis: "hourly" | "daily" | "monthly"; compensations: z.infer<typeof componentSchema>[]; deductions: z.infer<typeof componentSchema>[] }) {
+  const parsed = z.object({ positionId: z.uuid(), baseSalary: money, overtimeRate: money, salaryBasis: basis, compensations: z.array(componentSchema).max(50), deductions: z.array(componentSchema).max(50) }).parse(input);
   const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
-  const [division] = await db.select({ name: divisions.name }).from(divisions).where(and(eq(divisions.id, parsed.divisionId), eq(divisions.companyId, context.companyId))).limit(1);
-  if (!division) throw new Error("Divisi tidak ditemukan.");
-  const team = await db.select({ id: employees.id }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.department, division.name), eq(employees.status, "active")));
-  if (!team.length) throw new Error("Tidak ada karyawan aktif pada divisi ini.");
+  const [position] = await db.select({ name: positions.name }).from(positions).where(and(eq(positions.id, parsed.positionId), eq(positions.companyId, context.companyId))).limit(1);
+  if (!position) throw new Error("Jabatan tidak ditemukan.");
+  const team = await db.select({ id: employees.id }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.position, position.name), eq(employees.status, "active")));
+  if (!team.length) throw new Error("Tidak ada karyawan aktif pada jabatan ini.");
   await db.transaction(async (tx) => { for (const employee of team) { await tx.insert(employeeSalaryProfiles).values({ companyId: context.companyId, employeeId: employee.id, baseSalary: parsed.baseSalary, overtimeRate: parsed.overtimeRate, salaryBasis: parsed.salaryBasis }).onConflictDoUpdate({ target: employeeSalaryProfiles.employeeId, set: { baseSalary: parsed.baseSalary, overtimeRate: parsed.overtimeRate, salaryBasis: parsed.salaryBasis, updatedAt: new Date() } }); await tx.delete(employeeSalaryComponents).where(and(eq(employeeSalaryComponents.companyId, context.companyId), eq(employeeSalaryComponents.employeeId, employee.id))); const all = [...parsed.compensations.map((item) => ({ ...item, type: "compensation" as const })), ...parsed.deductions.map((item) => ({ ...item, type: "deduction" as const }))]; if (all.length) await tx.insert(employeeSalaryComponents).values(all.map((item) => ({ companyId: context.companyId, employeeId: employee.id, name: item.name, type: item.type, unit: item.unit, amount: item.amount }))); } });
   revalidatePath("/dashboard/karyawan/gaji"); return { ok: true, count: team.length };
 }
@@ -54,7 +54,7 @@ const attendanceRuleSchema = z.object({
   lateAmount: money,
 });
 
-/** Saves one employee's own alpa/late rule. Batch edit by division never touches these columns. */
+/** Saves one employee's own alpa/late rule. Batch edit by position never touches these columns. */
 export async function saveAttendanceRule(input: z.input<typeof attendanceRuleSchema>) {
   const parsed = attendanceRuleSchema.parse(input);
   const context = await salaryContext(parsed.employeeId);

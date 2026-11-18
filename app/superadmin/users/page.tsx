@@ -24,7 +24,7 @@ export default async function Page() {
       companyRole: companyMembers.role,
       memberActive: companyMembers.isActive,
       employeeCode: employees.employeeCode,
-      employeePosition: employees.position,
+      employeeDepartment: employees.department,
     })
     .from(user)
     .leftJoin(companyMembers, eq(user.id, companyMembers.userId))

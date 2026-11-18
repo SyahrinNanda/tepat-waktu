@@ -1,6 +1,6 @@
 export const featureModules = [
   "pengumuman",
-  "master/shift", "master/jam-kerja", "master/divisi", "master/jabatan",
+  "master/shift", "master/jam-kerja", "master/jabatan", "master/divisi",
   "master/lokasi-presensi",
   "pengajuan/izin-cuti", "pengajuan/lembur",
   "kunjungan", "kunjungan/laporan", "karyawan/laporan-cuti",

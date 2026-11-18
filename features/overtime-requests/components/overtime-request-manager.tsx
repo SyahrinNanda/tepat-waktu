@@ -7,7 +7,7 @@ import { Drawer, MasterShell } from "@/features/master-data/shifts/components/sh
 import { AttachmentField, AttachmentLink, rowAttachment, useAttachmentUploader } from "@/features/employee-requests/components/request-attachment";
 
 type Status = "pending" | "approved" | "rejected";
-export type OvertimeRow = { id: string; employeeId: string; name: string; employeeCode: string; department: string; overtimeDate: string; startTime: string; endTime: string; durationMinutes: number; description: string; status: Status; attachmentAssetId?: string | null; attachmentName?: string | null };
+export type OvertimeRow = { id: string; employeeId: string; name: string; employeeCode: string; position: string; overtimeDate: string; startTime: string; endTime: string; durationMinutes: number; description: string; status: Status; attachmentAssetId?: string | null; attachmentName?: string | null };
 const statusLabels: Record<Status, string> = { pending: "Menunggu", approved: "Disetujui", rejected: "Ditolak" };
 
 export function OvertimeRequestManager({ initialRows, employees, canReview, today }: { initialRows: OvertimeRow[]; employees: EmployeeOption[]; canReview: boolean; today: string }) {

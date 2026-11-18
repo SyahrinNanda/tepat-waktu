@@ -43,11 +43,11 @@ export function PayslipBundle({ slips, companyName, year, month, periodStart, pe
           <div><span className="payslip-doc-kicker">Rekap Gaji</span><h1>{companyName}</h1><p>Periode {period} · {slips.length} karyawan</p></div>
         </header>
         <table className="payslip-recap-table">
-          <thead><tr><th>No</th><th>Karyawan</th><th>Divisi</th><th>Hadir</th><th>Pendapatan</th><th>Potongan</th><th>Gaji Bersih</th></tr></thead>
+          <thead><tr><th>No</th><th>Karyawan</th><th>Jabatan</th><th>Hadir</th><th>Pendapatan</th><th>Potongan</th><th>Gaji Bersih</th></tr></thead>
           <tbody>{slips.map((slip, index) => <tr key={slip.employee.id}>
             <td>{index + 1}</td>
             <td><strong>{slip.employee.name}</strong><small>{slip.employee.employeeCode}{slip.status === "draft" ? " · Draft" : ""}</small></td>
-            <td>{slip.employee.department || "—"}</td>
+            <td>{slip.employee.position || "—"}</td>
             <td>{slip.summary.daysWorked}/{slip.summary.workingDays} hari</td>
             <td>{rupiah(slip.grossPay)}</td>
             <td>{rupiah(slip.totalDeductions)}</td>

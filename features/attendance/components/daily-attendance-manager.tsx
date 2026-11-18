@@ -32,8 +32,8 @@ export type EmployeeOption = {
   id: string;
   name: string;
   employeeCode: string | null;
-  department: string | null;
-  position?: string | null;
+  position: string | null;
+  department?: string | null;
   /** Irregular days off (Gaji Karyawan → Alpa: "Hanya alpa manual"): an empty past day shows as Libur. */
   manualAbsence?: boolean;
 };
@@ -50,7 +50,7 @@ export type LocationOption = {
   name: string;
 };
 
-export type DivisionOption = {
+export type PositionOption = {
   id: string;
   name: string;
 };
@@ -60,7 +60,7 @@ export type DailyAttendanceRecord = {
   employeeId: string;
   employeeName: string;
   employeeCode: string | null;
-  department: string | null;
+  position: string | null;
   shiftId: string | null;
   shiftName: string | null;
   shiftHours: string | null;
@@ -85,7 +85,7 @@ type Props = {
   employees: EmployeeOption[];
   shifts: ShiftOption[];
   locations: LocationOption[];
-  divisions: DivisionOption[];
+  positions: PositionOption[];
   records: DailyAttendanceRecord[];
 };
 
@@ -95,7 +95,7 @@ export function DailyAttendanceManager({
   employees,
   shifts,
   locations,
-  divisions,
+  positions,
   records,
 }: Props) {
   const router = useRouter();
@@ -105,7 +105,7 @@ export function DailyAttendanceManager({
   const [date, setDate] = useState(initialDate);
   const [search, setSearch] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
-  const [filterDivision, setFilterDivision] = useState("");
+  const [filterPosition, setFilterPosition] = useState("");
   const [filterShift, setFilterShift] = useState("");
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [activePill, setActivePill] = useState<string>("all");
@@ -160,7 +160,7 @@ export function DailyAttendanceManager({
   const handleResetFilters = () => {
     setSearch("");
     setFilterLocation("");
-    setFilterDivision("");
+    setFilterPosition("");
     setFilterShift("");
     setFilterPanelOpen(false);
     setActivePill("all");
@@ -188,7 +188,7 @@ export function DailyAttendanceManager({
         employeeId: emp.id,
         employeeName: emp.name,
         employeeCode: emp.employeeCode,
-        department: emp.department,
+        position: emp.position,
         shiftId: null,
         shiftName: null,
         shiftHours: null,
@@ -248,9 +248,9 @@ export function DailyAttendanceManager({
         if (!matchCheckIn && !matchCheckOut) return false;
       }
 
-      // Filter Division
-      if (filterDivision) {
-        if (row.department !== filterDivision) return false;
+      // Filter Position
+      if (filterPosition) {
+        if (row.position !== filterPosition) return false;
       }
 
       // Filter Jadwal Kerja
@@ -275,7 +275,7 @@ export function DailyAttendanceManager({
 
       return true;
     });
-  }, [combinedRows, search, filterLocation, filterDivision, filterShift, activePill]);
+  }, [combinedRows, search, filterLocation, filterPosition, filterShift, activePill]);
 
   // Delete Action
   const handleDeleteAttendance = async (id: string) => {
@@ -461,7 +461,7 @@ export function DailyAttendanceManager({
           </div>
         </div>
 
-        {/* Row 2: Dropdowns for Location, Division, and Jadwal Kerja matching Gambar 1 */}
+        {/* Row 2: Dropdowns for Location, Position, and Jadwal Kerja matching Gambar 1 */}
         {filterPanelOpen ? <div className="daily-toolbar-row-2" id="daily-advanced-filters">
           <div className="daily-select-wrap">
             <select
@@ -480,12 +480,12 @@ export function DailyAttendanceManager({
 
           <div className="daily-select-wrap">
             <select
-              value={filterDivision}
-              onChange={(e) => setFilterDivision(e.target.value)}
+              value={filterPosition}
+              onChange={(e) => setFilterPosition(e.target.value)}
               className="daily-select"
             >
-              <option value="">Semua Divisi</option>
-              {divisions.map((div) => (
+              <option value="">Semua Jabatan</option>
+              {positions.map((div) => (
                 <option key={div.id} value={div.name}>
                   {div.name}
                 </option>
@@ -609,7 +609,7 @@ export function DailyAttendanceManager({
                             <div>
                               <strong className="daily-emp-name">{row.employeeName}</strong>
                               <small className="daily-emp-meta">
-                                {row.employeeCode || "—"} · {row.department || "Umum"}
+                                {row.employeeCode || "—"} · {row.position || "Umum"}
                               </small>
                             </div>
                           </div>
@@ -842,7 +842,7 @@ function AttendanceModal({
         id: editingRecord.employeeId,
         name: editingRecord.employeeName,
         employeeCode: editingRecord.employeeCode,
-        department: editingRecord.department,
+        position: editingRecord.position,
       };
     }
     return null;
@@ -903,7 +903,7 @@ function AttendanceModal({
       (e) =>
         e.name.toLowerCase().includes(q) ||
         (e.employeeCode || "").toLowerCase().includes(q) ||
-        (e.department || "").toLowerCase().includes(q)
+        (e.position || "").toLowerCase().includes(q)
     );
   }, [employees, employeeQuery]);
 
@@ -1040,7 +1040,7 @@ function AttendanceModal({
                         <div>
                           <strong>{selectedEmployee.name}</strong>
                           <small>
-                            {selectedEmployee.employeeCode || "—"} · {selectedEmployee.department || "Umum"}
+                            {selectedEmployee.employeeCode || "—"} · {selectedEmployee.position || "Umum"}
                           </small>
                         </div>
                       </div>
@@ -1087,7 +1087,7 @@ function AttendanceModal({
                                 <div className="daily-dropdown-info">
                                   <strong>{emp.name}</strong>
                                   <small>
-                                    {emp.employeeCode || "—"} · {emp.department || "Umum"}
+                                    {emp.employeeCode || "—"} · {emp.position || "Umum"}
                                   </small>
                                 </div>
                               </button>

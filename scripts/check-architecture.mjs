@@ -8,7 +8,7 @@ const forbiddenImports = [
   "@/components/attendance-checkin",
   "@/components/admin-attendance-form",
   "@/components/admin-attendance-modal",
-  "@/components/division-manager",
+  "@/components/position-manager",
   "@/components/leave-request-module",
   "@/components/product-module-page",
   "@/components/request-form",
@@ -46,7 +46,7 @@ const requiredAdapters = [
   "app/dashboard/pengumuman/page.tsx",
   "app/dashboard/master/shift/page.tsx",
   "app/dashboard/master/jam-kerja/page.tsx",
-  "app/dashboard/master/divisi/page.tsx",
+  "app/dashboard/master/jabatan/page.tsx",
 ];
 for (const adapter of requiredAdapters) {
   const source = await readFile(join(root, adapter), "utf8");

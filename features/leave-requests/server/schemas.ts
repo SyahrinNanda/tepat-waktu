@@ -37,7 +37,7 @@ export function planSpecialLeave(input: { start: string; end?: string; durationD
   const { isWorkDay } = input;
   if (input.durationDays) {
     let day = input.start, guard = 0;
-    while (!isWorkDay(day)) { day = addDay(day); if (++guard > 31) return { ok: false, error: "Jadwal kerja karyawan ini tidak punya hari kerja. Periksa jadwal divisinya." }; }
+    while (!isWorkDay(day)) { day = addDay(day); if (++guard > 31) return { ok: false, error: "Jadwal kerja karyawan ini tidak punya hari kerja. Periksa jadwal jabatannya." }; }
     const startDate = day;
     let counted = 1;
     while (counted < input.durationDays) { day = addDay(day); if (isWorkDay(day)) counted++; if (++guard > 800) return { ok: false, error: "Durasi terlalu panjang untuk jadwal kerja karyawan ini." }; }

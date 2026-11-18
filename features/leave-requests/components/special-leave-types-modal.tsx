@@ -69,7 +69,7 @@ export function SpecialLeaveTypesModal({ kinds, onChange, onClose, onCreated }: 
 
   return <LocationModal title="Jenis Cuti Khusus" onClose={onClose}>
     <div className="special-kinds">
-      <p className="special-kinds-intro">Atur jenis cuti khusus perusahaan Anda. Jika <strong>durasi</strong> diisi, karyawan cukup memilih tanggal mulai dan tanggal selesai dihitung otomatis dalam <strong>hari kerja</strong> sesuai jadwal divisinya (hari libur jadwal tidak dihitung). Cuti khusus tidak mengurangi jatah cuti tahunan.</p>
+      <p className="special-kinds-intro">Atur jenis cuti khusus perusahaan Anda. Jika <strong>durasi</strong> diisi, karyawan cukup memilih tanggal mulai dan tanggal selesai dihitung otomatis dalam <strong>hari kerja</strong> sesuai jadwal jabatannya (hari libur jadwal tidak dihitung). Cuti khusus tidak mengurangi jatah cuti tahunan.</p>
       {kinds.length ? <ul className="special-kinds-list">{kinds.map((kind) => <li key={kind.id} className={editingId === kind.id ? "editing" : ""}>
         <div><strong>{kind.name}</strong><small>{describeKind(kind)}</small></div>
         <span className="special-kinds-actions">

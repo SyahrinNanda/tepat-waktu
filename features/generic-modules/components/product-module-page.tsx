@@ -65,7 +65,7 @@ const screens: Record<string, ScreenConfig> = {
     columns: ["Pengumuman", "Tanggal Tayang", "Target", "Status", "Aksi"],
     rows: [
       ["Jadwal libur nasional", "21 Okt 2026", "Semua Karyawan", "Terbit", ""],
-      ["Town hall kuartal IV", "18 Okt 2026", "Semua Divisi", "Terjadwal", ""],
+      ["Town hall kuartal IV", "18 Okt 2026", "Semua Jabatan", "Terjadwal", ""],
       ["Pembaruan kebijakan cuti", "10 Okt 2026", "Human Resource", "Draft", ""],
     ],
     filters: ["Semua Status", "Bulan Ini"],
@@ -98,32 +98,32 @@ const screens: Record<string, ScreenConfig> = {
     filters: ["Semua Shift"],
     form: ["Pilih Shift", "Hari Kerja", "Jam Masuk", "Jam Pulang"],
   },
-  "master/divisi": {
-    title: "Daftar Divisi",
-    description: "Kelola struktur divisi, shift, dan metode perhitungan gaji.",
-    breadcrumb: "Beranda / Master Data / Divisi",
-    action: "Tambah Divisi",
-    columns: ["Nama Divisi", "Shift Divisi", "Perhitungan Gaji", "Karyawan", "Status", "Aksi"],
+  "master/jabatan": {
+    title: "Daftar Jabatan",
+    description: "Kelola struktur jabatan, shift, dan metode perhitungan gaji.",
+    breadcrumb: "Beranda / Master Data / Jabatan",
+    action: "Tambah Jabatan",
+    columns: ["Nama Jabatan", "Shift Jabatan", "Perhitungan Gaji", "Karyawan", "Status", "Aksi"],
     rows: [
       ["Engineering", "Shift Pagi", "Bulanan", "12", "Aktif", ""],
       ["Operations", "Shift Lapangan", "Harian", "10", "Aktif", ""],
       ["Finance", "Shift Pagi", "Bulanan", "5", "Aktif", ""],
     ],
     filters: ["Semua Shift", "Semua Status"],
-    form: ["Nama Divisi", "Shift Divisi", "Perhitungan Gaji", "Status"],
+    form: ["Nama Jabatan", "Shift Jabatan", "Perhitungan Gaji", "Status"],
   },
-  "master/jabatan": {
-    title: "Daftar Jabatan",
-    description: "Kelola jabatan yang digunakan pada profil karyawan.",
-    breadcrumb: "Beranda / Master Data / Jabatan",
-    action: "Tambah Jabatan",
-    columns: ["Nama Jabatan", "Divisi", "Jumlah Karyawan", "Status", "Aksi"],
+  "master/divisi": {
+    title: "Daftar Divisi",
+    description: "Kelola divisi yang digunakan pada profil karyawan.",
+    breadcrumb: "Beranda / Master Data / Divisi",
+    action: "Tambah Divisi",
+    columns: ["Nama Divisi", "Jabatan", "Jumlah Karyawan", "Status", "Aksi"],
     rows: [
       ["Software Engineer", "Engineering", "8", "Aktif", ""],
       ["HR Specialist", "Human Resource", "3", "Aktif", ""],
       ["Finance Officer", "Finance", "4", "Aktif", ""],
     ],
-    form: ["Nama Jabatan", "Divisi", "Status"],
+    form: ["Nama Divisi", "Jabatan", "Status"],
   },
   "master/lokasi-presensi": {
     title: "Daftar Lokasi Kehadiran",
@@ -144,48 +144,48 @@ const screens: Record<string, ScreenConfig> = {
     breadcrumb: "Beranda / Karyawan / Daftar Karyawan",
     action: "Tambah Karyawan",
     exportable: true,
-    columns: ["Karyawan", "Nomor Induk", "Jabatan / Divisi", "Lokasi Kehadiran", "Mulai Kerja", "Status", "Aksi"],
+    columns: ["Karyawan", "Nomor Induk", "Divisi / Jabatan", "Lokasi Kehadiran", "Mulai Kerja", "Status", "Aksi"],
     rows: [
       ["Ardi Kurniawan", "EMP-001", "Software Engineer Â· Engineering", "Kantor Utama", "12 Jan 2024", "Aktif", ""],
       ["Nadia Safitri", "EMP-002", "HR Specialist Â· Human Resource", "Kantor Utama", "08 Mar 2024", "Aktif", ""],
       ["Rizky Fauzan", "EMP-003", "Finance Officer Â· Finance", "Kantor Utama", "19 Jun 2024", "Aktif", ""],
       ["Dian Anggraini", "EMP-004", "Field Officer Â· Operations", "Gudang Timur", "02 Sep 2024", "Nonaktif", ""],
     ],
-    filters: ["Semua Divisi", "Semua Jabatan", "Semua Status"],
+    filters: ["Semua Jabatan", "Semua Divisi", "Semua Status"],
     stats: [
       { label: "Karyawan Aktif", value: "38", meta: "+3 bulan ini", tone: "blue" },
       { label: "Karyawan Baru", value: "3", meta: "30 hari terakhir", tone: "green" },
       { label: "Dalam Cuti", value: "2", meta: "hari ini", tone: "orange" },
       { label: "Nonaktif", value: "4", meta: "seluruh waktu", tone: "red" },
     ],
-    form: ["Nama Karyawan", "Email", "Nomor Induk", "Divisi", "Jabatan", "Tanggal Mulai Kerja"],
+    form: ["Nama Karyawan", "Email", "Nomor Induk", "Jabatan", "Divisi", "Tanggal Mulai Kerja"],
   },
   "karyawan/gaji": {
     title: "Daftar Gaji Karyawan",
     description: "Atur gaji pokok, upah lembur, kompensasi, dan potongan.",
     breadcrumb: "Beranda / Karyawan / Daftar Gaji",
     action: "Batch Edit",
-    columns: ["Karyawan", "Divisi", "Gaji Pokok", "Upah Lembur", "Kompensasi", "Potongan", "Aksi"],
+    columns: ["Karyawan", "Jabatan", "Gaji Pokok", "Upah Lembur", "Kompensasi", "Potongan", "Aksi"],
     rows: [
       ["Ardi Kurniawan", "Engineering", "Rp 8.500.000", "Rp 50.000/jam", "Rp 750.000", "Rp 150.000", ""],
       ["Nadia Safitri", "Human Resource", "Rp 7.250.000", "Rp 45.000/jam", "Rp 600.000", "Rp 100.000", ""],
       ["Rizky Fauzan", "Finance", "Rp 7.800.000", "Rp 48.000/jam", "Rp 650.000", "Rp 125.000", ""],
     ],
-    filters: ["Semua Divisi"],
-    form: ["Pilih Divisi", "Upah Lembur", "Gaji Pokok", "Kompensasi", "Potongan"],
+    filters: ["Semua Jabatan"],
+    form: ["Pilih Jabatan", "Upah Lembur", "Gaji Pokok", "Kompensasi", "Potongan"],
   },
   "karyawan/laporan-cuti": {
     title: "Laporan Cuti Karyawan",
     description: "Pantau penggunaan dan sisa hak cuti setiap karyawan.",
     breadcrumb: "Beranda / Karyawan / Laporan Cuti",
     exportable: true,
-    columns: ["Karyawan", "Divisi", "Hak Cuti", "Terpakai", "Menunggu", "Sisa Cuti", "Status"],
+    columns: ["Karyawan", "Jabatan", "Hak Cuti", "Terpakai", "Menunggu", "Sisa Cuti", "Status"],
     rows: [
       ["Ardi Kurniawan", "Engineering", "12 hari", "4 hari", "0 hari", "8 hari", "Tersedia"],
       ["Nadia Safitri", "Human Resource", "12 hari", "7 hari", "2 hari", "3 hari", "Terbatas"],
       ["Rizky Fauzan", "Finance", "12 hari", "2 hari", "0 hari", "10 hari", "Tersedia"],
     ],
-    filters: ["2026", "Semua Divisi"],
+    filters: ["2026", "Semua Jabatan"],
     stats: [
       { label: "Total Hak Cuti", value: "372", meta: "hari pada tahun 2026", tone: "blue" },
       { label: "Cuti Terpakai", value: "96", meta: "25,8% dari total", tone: "green" },
@@ -215,7 +215,7 @@ const screens: Record<string, ScreenConfig> = {
       ["Rizky Fauzan", "Shift Pagi", "08:00â€“17:00", "08:24", "17:15", "14 menit", "Terlambat", ""],
       ["Dian Anggraini", "Shift Lapangan", "07:30â€“16:30", "â€”", "â€”", "â€”", "Izin", ""],
     ],
-    filters: ["16 Okt 2026", "Semua Divisi", "Semua Status"],
+    filters: ["16 Okt 2026", "Semua Jabatan", "Semua Status"],
     stats: [
       { label: "Total Karyawan", value: "38", meta: "karyawan aktif", tone: "blue" },
       { label: "Tepat Waktu", value: "29", meta: "76% dari total", tone: "green" },
@@ -226,7 +226,7 @@ const screens: Record<string, ScreenConfig> = {
   },
   "presensi/bulanan": {
     title: "Laporan Kehadiran Bulanan",
-    description: "Rekap kehadiran bulanan berdasarkan karyawan dan divisi.",
+    description: "Rekap kehadiran bulanan berdasarkan karyawan dan jabatan.",
     breadcrumb: "Beranda / Kehadiran / Laporan Bulanan",
     exportable: true,
     columns: ["Karyawan", "Hari Kerja", "Hadir", "Tepat Waktu", "Terlambat", "Izin", "Cuti", "Absen"],
@@ -235,7 +235,7 @@ const screens: Record<string, ScreenConfig> = {
       ["Nadia Safitri", "22", "20", "18", "2", "1", "1", "0"],
       ["Rizky Fauzan", "22", "22", "17", "5", "0", "0", "0"],
     ],
-    filters: ["Oktober", "2026", "Semua Divisi", "Semua Shift"],
+    filters: ["Oktober", "2026", "Semua Jabatan", "Semua Shift"],
   },
   kunjungan: {
     title: "Daftar Kunjungan",
@@ -278,7 +278,7 @@ const screens: Record<string, ScreenConfig> = {
       ["Dian Anggraini", "dian@tepatwaktu.id", "Karyawan / Staf", "14 Okt, 08:01", "Aktif", "Nonaktif", ""],
     ],
     filters: ["Semua Level", "Semua Status"],
-    form: ["Nama User", "Email", "User Level", "Divisi", "Password Sementara"],
+    form: ["Nama User", "Email", "User Level", "Jabatan", "Password Sementara"],
   },
   "pengaturan/roles": {
     title: "Role & Hak Akses",
@@ -289,7 +289,7 @@ const screens: Record<string, ScreenConfig> = {
       ["Admin Perusahaan", "1 perusahaan", "Seluruh modul perusahaan", "Tidak dapat mengakses perusahaan lain", "1", ""],
       ["General Manager", "1 perusahaan", "Monitor, laporan, persetujuan", "Tanpa pengaturan platform", "1", ""],
       ["HRD", "1 perusahaan", "Karyawan dan kehadiran", "Tanpa billing dan pengaturan platform", "3", ""],
-      ["Manager", "Divisi / tim", "Tim, kehadiran, persetujuan", "Hanya divisi yang ditugaskan", "4", ""],
+      ["Manager", "Jabatan / tim", "Tim, kehadiran, persetujuan", "Hanya jabatan yang ditugaskan", "4", ""],
       ["Karyawan / Staf", "Data pribadi", "Kehadiran dan pengajuan sendiri", "Tidak dapat melihat data karyawan lain", "29", ""],
     ],
   },
@@ -612,8 +612,8 @@ function EmployeeFormPage() {
         <div className="form-section-head"><div><span>03</span><div><h2>Informasi Pekerjaan</h2><p>Penempatan dan akses kehadiran.</p></div></div></div>
         <div className="wide-form-grid">
           <Field label="Tanggal Mulai Kerja" placeholder="dd/mm/yyyy" />
-          <Field label="Divisi Karyawan" placeholder="Pilih divisi" select />
           <Field label="Jabatan Karyawan" placeholder="Pilih jabatan" select />
+          <Field label="Divisi Karyawan" placeholder="Pilih divisi" select />
           <Field label="Shift Karyawan" placeholder="Pilih shift" select />
           <Field label="Lokasi Kehadiran" placeholder="Semua lokasi perusahaan" select full />
         </div>
@@ -845,7 +845,7 @@ function isStatus(value: string) {
 }
 
 function EmployeeDetailSections() {
-  return <section className="module-card detail-section"><div className="detail-section-head"><div><UserRound size={17} /><h2>Data Pekerjaan</h2></div><button className="text-action">Atur Penempatan</button></div><div className="detail-grid"><div className="detail-field"><small>Divisi</small><strong>Engineering</strong></div><div className="detail-field"><small>Jabatan</small><strong>Software Engineer</strong></div><div className="detail-field"><small>Shift</small><strong>Shift Pagi</strong></div><div className="detail-field"><small>Mulai Kerja</small><strong>12 Januari 2024</strong></div><div className="detail-field"><small>Lokasi Kehadiran</small><strong>Kantor Utama</strong></div><div className="detail-field"><small>Status Karyawan</small><strong>Tetap</strong></div></div></section>;
+  return <section className="module-card detail-section"><div className="detail-section-head"><div><UserRound size={17} /><h2>Data Pekerjaan</h2></div><button className="text-action">Atur Penempatan</button></div><div className="detail-grid"><div className="detail-field"><small>Jabatan</small><strong>Engineering</strong></div><div className="detail-field"><small>Divisi</small><strong>Software Engineer</strong></div><div className="detail-field"><small>Shift</small><strong>Shift Pagi</strong></div><div className="detail-field"><small>Mulai Kerja</small><strong>12 Januari 2024</strong></div><div className="detail-field"><small>Lokasi Kehadiran</small><strong>Kantor Utama</strong></div><div className="detail-field"><small>Status Karyawan</small><strong>Tetap</strong></div></div></section>;
 }
 
 function RequestDetailSections() {

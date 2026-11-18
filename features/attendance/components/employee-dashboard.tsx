@@ -257,7 +257,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
   const nowTime = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", timeZone: timezone }).format(now);
   const chosenShift = shifts.find((shift) => shift.id === shiftId);
 
-  /** Check-in of a division with several shifts starts with choosing the shift; otherwise straight to the camera. */
+  /** Check-in of a position with several shifts starts with choosing the shift; otherwise straight to the camera. */
   async function startAttendance(nextAction: AttendanceAction) {
     setShiftId("");
     if (nextAction === "check_in") {
@@ -279,7 +279,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
 
   return <div className={`employee-home ${display === "notice" ? "employee-home-notice-only" : ""}`}>
     {display === "full" ? <section className="employee-home-hero">
-      <div><span>{date}</span><h1>Halo, {name} <b>👋</b></h1><p>{attendance?.checkIn ? "Kehadiran Anda hari ini sudah mulai tercatat." : "Kehadiran Anda hari ini belum tercatat."}</p></div>
+      <div><span suppressHydrationWarning>{date}</span><h1>Halo, {name} <b>👋</b></h1><p>{attendance?.checkIn ? "Kehadiran Anda hari ini sudah mulai tercatat." : "Kehadiran Anda hari ini belum tercatat."}</p></div>
       {nextAction ? <button type="button" className="employee-home-hero-action" onClick={() => void startAttendance(nextAction)}>Buka absensi →</button> : <Link className="employee-home-hero-action" href={historyHref}>Lihat riwayat →</Link>}
     </section> : null}
 
@@ -302,7 +302,7 @@ export function EmployeeDashboard({ name, date, timezone, initialAttendance, dis
       {phase === "camera" ? <div className="camera-viewport"><video ref={videoRef} autoPlay playsInline muted />{cameraFailed ? null : <span className="live-badge">● LIVE</span>}{!cameraReady ? cameraFailed ? <div className="camera-loading camera-failed" role="alert"><CameraOff size={30} /><strong>Kamera tidak dapat dibuka</strong><small>{error || "Periksa izin kamera pada browser, lalu coba lagi."}</small></div> : <div className="camera-loading"><LoaderCircle className="spin" size={28} /><strong>{cameraStarting ? "Meminta akses kamera…" : "Menyiapkan pratinjau…"}</strong><small>Pastikan izin kamera pada browser sudah aktif.</small></div> : null}</div> : null}
       {phase === "preview" ? <div className="camera-viewport preview"><img src={photo} alt="Pratinjau foto kehadiran" /></div> : null}
       {phase === "success" ? <div className="attendance-success"><span><Check size={34} /></span><h3>{actionLabel(action)} tercatat</h3><p>{time}{companyName ? ` · ${companyName}` : ""}</p><small>Data kehadiran telah disimpan dengan aman.</small></div> : null}
-      {phase !== "success" && phase !== "shift" ? <div className="camera-meta"><span><Clock3 size={15} /> {time}</span><span><LocateFixed size={15} /> {location}</span></div> : null}
+      {phase !== "success" && phase !== "shift" ? <div className="camera-meta"><span suppressHydrationWarning><Clock3 size={15} /> {time}</span><span><LocateFixed size={15} /> {location}</span></div> : null}
       {error && phase !== "success" && !(phase === "camera" && cameraFailed) ? <div className="camera-error dialog-error" role="alert">{error}</div> : null}
       <footer>{phase === "shift" ? <button className="btn btn-primary btn-block" disabled={!shiftId} onClick={() => void openCamera("check_in")}><Camera size={18} /> {shiftId ? "Lanjut Ambil Foto" : "Pilih shift terlebih dahulu"}</button> : null}{phase === "camera" ? cameraFailed ? <button className="btn btn-primary btn-block" onClick={() => void openCamera(action)}><RefreshCw size={17} /> Coba Akses Kamera Lagi</button> : <button className="btn btn-primary btn-block" disabled={!cameraReady} onClick={capturePhoto}>{cameraReady ? <Camera size={18} /> : <LoaderCircle className="spin" size={18} />} {cameraReady ? "Ambil Foto Sekarang" : "Menyiapkan Kamera"}</button> : null}{phase === "preview" ? <><button className="btn btn-outline" disabled={submitting} onClick={() => void openCamera(action)}><RefreshCw size={16} /> Foto Ulang</button><button className="btn btn-primary" disabled={submitting} onClick={() => void confirmAttendance()}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `Konfirmasi ${actionLabel(action)}`}</button></> : null}{phase === "success" ? <button className="btn btn-primary btn-block" onClick={closeCamera}>Selesai</button> : null}{phase === "camera" && !requirePhoto ? <button className="btn btn-outline btn-block" disabled={submitting} onClick={() => { stopCamera(); void confirmAttendance(true); }}>{submitting ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />} {submitting ? "Menyimpan…" : `${actionLabel(action)} tanpa foto`}</button> : null}</footer>
     </section></div> : null}

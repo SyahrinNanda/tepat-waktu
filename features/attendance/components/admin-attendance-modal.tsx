@@ -9,7 +9,7 @@ type EmployeeOption = {
   id: string;
   name: string;
   employeeCode?: string;
-  department?: string;
+  position?: string;
   companyId: string;
 };
 
@@ -143,7 +143,7 @@ export function AdminAttendanceModal({
                       </option>
                       {employees.map((emp) => (
                         <option value={emp.id} key={emp.id}>
-                          {emp.name} {emp.department ? `(${emp.department})` : ""}
+                          {emp.name} {emp.position ? `(${emp.position})` : ""}
                         </option>
                       ))}
                     </select>

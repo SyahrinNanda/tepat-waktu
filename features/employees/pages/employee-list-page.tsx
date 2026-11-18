@@ -18,7 +18,7 @@ export default async function Page({ searchParams }: Props) {
   const status = params.status === "active" || params.status === "inactive" ? params.status : undefined;
   const rows = await db.select({
     id: employees.id, employeeCode: employees.employeeCode, name: employees.name, email: employees.email,
-    department: employees.department, position: employees.position, status: employees.status,
+    position: employees.position, department: employees.department, status: employees.status,
     allAttendanceLocations: employees.allAttendanceLocations, contractType: employees.contractType,
     photoAssetId: employeeDocuments.assetId, lockLocation: employees.lockLocation,
     lockPhoto: employees.lockPhoto, userId: employees.userId,
@@ -27,7 +27,7 @@ export default async function Page({ searchParams }: Props) {
     .where(and(
       eq(employees.companyId, context.companyId),
       status ? eq(employees.status, status) : undefined,
-      query ? or(ilike(employees.name, `%${query}%`), ilike(employees.email, `%${query}%`), ilike(employees.employeeCode, `%${query}%`), ilike(employees.department, `%${query}%`)) : undefined,
+      query ? or(ilike(employees.name, `%${query}%`), ilike(employees.email, `%${query}%`), ilike(employees.employeeCode, `%${query}%`), ilike(employees.position, `%${query}%`)) : undefined,
     )).orderBy(asc(employees.name));
   const canManage = ["admin", "general_manager", "hrd"].includes(context.role);
   const accounts = await employeeAccountStatuses(context.companyId, rows);

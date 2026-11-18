@@ -2,9 +2,9 @@
 import type { Payslip } from "@/features/payslips/server/payslip-calculation";
 import { periodContaining } from "@/features/payslips/payroll-period";
 
-/** The list search (name, NIK, division); the exports use the same match so they hold what the admin sees. */
+/** The list search (name, NIK, position); the exports use the same match so they hold what the admin sees. */
 export function matchesPayslipQuery(slip: Payslip, query: string) {
-  return `${slip.employee.name} ${slip.employee.employeeCode} ${slip.employee.department}`.toLowerCase().includes(query.trim().toLowerCase());
+  return `${slip.employee.name} ${slip.employee.employeeCode} ${slip.employee.position}`.toLowerCase().includes(query.trim().toLowerCase());
 }
 
 /**

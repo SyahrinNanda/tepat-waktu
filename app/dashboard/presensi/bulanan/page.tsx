@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { attendanceLocations, divisions, workSchedules } from "@/db/schema";
+import { attendanceLocations, positions, workSchedules } from "@/db/schema";
 import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
 import { MonthlyAttendanceManager } from "@/features/attendance/components/monthly-attendance-manager";
 import { fetchMonthlyAttendanceSummary } from "@/features/attendance/server/monthly-service";
@@ -14,7 +14,7 @@ type Props = {
     year?: string;
     q?: string;
     locationId?: string;
-    division?: string;
+    position?: string;
     shiftId?: string;
   }>;
 };
@@ -29,7 +29,7 @@ export default async function Page({ searchParams }: Props) {
   const month = clamp(Number(params.month) || currentMonth, 1, 12);
   const query = params.q?.trim() || undefined;
   const locationId = params.locationId?.trim() || undefined;
-  const division = params.division?.trim() || undefined;
+  const position = params.position?.trim() || undefined;
   const shiftId = params.shiftId?.trim() || undefined;
 
   const [locRows, divRows, shiftRows, summaries] = await Promise.all([
@@ -39,10 +39,10 @@ export default async function Page({ searchParams }: Props) {
       .where(and(eq(attendanceLocations.companyId, context.companyId), eq(attendanceLocations.active, true)))
       .orderBy(asc(attendanceLocations.name)),
     db
-      .select({ id: divisions.id, name: divisions.name })
-      .from(divisions)
-      .where(and(eq(divisions.companyId, context.companyId), eq(divisions.active, true)))
-      .orderBy(asc(divisions.name)),
+      .select({ id: positions.id, name: positions.name })
+      .from(positions)
+      .where(and(eq(positions.companyId, context.companyId), eq(positions.active, true)))
+      .orderBy(asc(positions.name)),
     db
       .select({
         id: workSchedules.id,
@@ -59,7 +59,7 @@ export default async function Page({ searchParams }: Props) {
       month,
       query,
       locationId,
-      division,
+      position,
       shiftId,
     }),
   ]);
@@ -70,10 +70,10 @@ export default async function Page({ searchParams }: Props) {
       initialMonth={month}
       initialQuery={query}
       initialLocationId={locationId}
-      initialDivision={division}
+      initialPosition={position}
       initialShiftId={shiftId}
       locations={locRows}
-      divisions={divRows}
+      positions={divRows}
       shifts={shiftRows}
       summaries={summaries}
     />

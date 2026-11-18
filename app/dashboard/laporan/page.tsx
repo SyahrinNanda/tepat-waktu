@@ -14,15 +14,15 @@ export default async function ReportsPage() {
   // 30-day window ending today in the company zone; plain calendar math, no fixed UTC offset.
   const start = new Date(`${today}T00:00:00Z`); start.setUTCDate(start.getUTCDate() - 29);
   const startDate = start.toISOString().slice(0, 10);
-  const [byStatus, [active], byDepartment] = await Promise.all([
+  const [byStatus, [active], byPosition] = await Promise.all([
     db.select({ status: attendances.status, value: count() }).from(attendances).where(and(eq(attendances.companyId, context.companyId), gte(attendances.attendanceDate, startDate))).groupBy(attendances.status),
     db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))),
-    db.select({ department: employees.department, value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))).groupBy(employees.department).orderBy(sql`count(*) desc`),
+    db.select({ position: employees.position, value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))).groupBy(employees.position).orderBy(sql`count(*) desc`),
   ]);
   const stats = Object.fromEntries(byStatus.map((row) => [row.status, Number(row.value)]));
   const totalRecords = byStatus.reduce((sum, row) => sum + Number(row.value), 0);
   const presenceRate = totalRecords ? Math.round(((stats.present ?? 0) + (stats.late ?? 0)) / totalRecords * 100) : 0;
-  const maxDepartment = Math.max(...byDepartment.map((row) => Number(row.value)), 1);
+  const maxPosition = Math.max(...byPosition.map((row) => Number(row.value)), 1);
   return (
     <>
       <div className="page-heading"><div><h1>Laporan 30 hari</h1><p>Gambaran singkat pola kehadiran dan komposisi tim.</p></div><span className="badge blue">{formatDate(startDate)} – {formatDate(today)}</span></div>
@@ -34,7 +34,7 @@ export default async function ReportsPage() {
       </section>
       <section className="dashboard-grid">
         <div className="card"><div className="card-head"><div><h2 className="card-title">Komposisi departemen</h2><p className="card-subtitle">Distribusi {Number(active.value)} karyawan aktif</p></div></div>
-          {byDepartment.length ? byDepartment.map((row) => <div className="progress-row" key={row.department}><div className="progress-copy"><span>{row.department}</span><strong>{Number(row.value)}</strong></div><div className="progress"><i style={{ width: `${Number(row.value)/maxDepartment*100}%`, background: "var(--primary)" }} /></div></div>) : <div className="empty-state">Belum ada data karyawan.</div>}
+          {byPosition.length ? byPosition.map((row) => <div className="progress-row" key={row.position}><div className="progress-copy"><span>{row.position}</span><strong>{Number(row.value)}</strong></div><div className="progress"><i style={{ width: `${Number(row.value)/maxPosition*100}%`, background: "var(--primary)" }} /></div></div>) : <div className="empty-state">Belum ada data karyawan.</div>}
         </div>
         <div className="card"><div className="card-head"><div><h2 className="card-title">Ringkasan status</h2><p className="card-subtitle">Seluruh pencatatan periode ini</p></div></div>
           <ReportRow label="Hadir" value={stats.present ?? 0} color="var(--green)" total={totalRecords} />

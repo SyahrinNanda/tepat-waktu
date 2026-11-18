@@ -14,12 +14,12 @@ export async function getLeaveRules(companyId: string): Promise<AnnualLeaveRules
   return { ...row, eligibility: (LEAVE_ELIGIBILITY as readonly string[]).includes(row.eligibility) ? row.eligibility as LeaveEligibility : "immediate" };
 }
 
-/** Counts an employee's working days (their division schedule) in a date range; planners are cached per division. */
+/** Counts an employee's working days (their position schedule) in a date range; planners are cached per position. */
 export function workDayCounter(companyId: string) {
   const planners = new Map<string, Promise<(date: string, scheduleId: string | null) => unknown>>();
-  return async (department: string, start: string, end: string) => {
-    if (!planners.has(department)) planners.set(department, schedulePlanner(companyId, department, []));
-    const planFor = await planners.get(department)!;
+  return async (position: string, start: string, end: string) => {
+    if (!planners.has(position)) planners.set(position, schedulePlanner(companyId, position, []));
+    const planFor = await planners.get(position)!;
     let days = 0;
     for (let day = start, guard = 0; day <= end && guard < 800; day = shiftDate(day, 1), guard++) if (planFor(day, null) !== null) days++;
     return days;
@@ -34,7 +34,7 @@ export async function annualLeaveBalances(companyId: string, asOf: string, optio
   if (options.employeeIds && !options.employeeIds.length) return new Map<string, AnnualLeaveBalance>();
   const [rules, team, overrides, requests] = await Promise.all([
     options.rules ?? getLeaveRules(companyId),
-    db.select({ id: employees.id, joinedAt: employees.joinedAt, department: employees.department }).from(employees).where(and(eq(employees.companyId, companyId), employeeFilter)),
+    db.select({ id: employees.id, joinedAt: employees.joinedAt, position: employees.position }).from(employees).where(and(eq(employees.companyId, companyId), employeeFilter)),
     db.select({ employeeId: employeeLeaveEntitlements.employeeId, year: employeeLeaveEntitlements.year, days: employeeLeaveEntitlements.maximumDays }).from(employeeLeaveEntitlements)
       .where(and(eq(employeeLeaveEntitlements.companyId, companyId), options.employeeIds ? inArray(employeeLeaveEntitlements.employeeId, options.employeeIds) : undefined)),
     db.select({ id: leaveRequests.id, employeeId: leaveRequests.employeeId, startDate: leaveRequests.startDate, endDate: leaveRequests.endDate, workDays: leaveRequests.workDays, status: leaveRequests.status }).from(leaveRequests)
@@ -42,15 +42,15 @@ export async function annualLeaveBalances(companyId: string, asOf: string, optio
         options.employeeIds ? inArray(leaveRequests.employeeId, options.employeeIds) : undefined, options.excludeRequestId ? ne(leaveRequests.id, options.excludeRequestId) : undefined)),
   ]);
   const counter = options.counter ?? workDayCounter(companyId);
-  const departments = new Map(team.map((person) => [person.id, person.department]));
+  const positions = new Map(team.map((person) => [person.id, person.position]));
   const overridesByEmployee = new Map<string, Map<number, number>>();
   for (const item of overrides) overridesByEmployee.set(item.employeeId, (overridesByEmployee.get(item.employeeId) ?? new Map()).set(item.year, item.days));
   const requestsByEmployee = new Map<string, { startDate: string; workDays: number; status: "pending" | "approved" | "rejected" }[]>();
   for (const request of requests) {
-    const department = departments.get(request.employeeId);
-    if (department === undefined) continue;
+    const position = positions.get(request.employeeId);
+    if (position === undefined) continue;
     // Requests saved before working days were stored are counted against the schedule now.
-    const workDays = request.workDays ?? await counter(department, request.startDate, request.endDate);
+    const workDays = request.workDays ?? await counter(position, request.startDate, request.endDate);
     requestsByEmployee.set(request.employeeId, [...(requestsByEmployee.get(request.employeeId) ?? []), { startDate: request.startDate, workDays, status: request.status }]);
   }
   return new Map(team.map((person) => [person.id, annualLeaveBalance({ rules, joinedAt: person.joinedAt, asOf, requests: requestsByEmployee.get(person.id) ?? [], overrides: overridesByEmployee.get(person.id) })]));
@@ -68,12 +68,12 @@ export type AnnualLeaveCheck =
  */
 export async function checkAnnualLeave(companyId: string, input: { employeeId: string; startDate: string; endDate: string }, excludeRequestId?: string): Promise<AnnualLeaveCheck> {
   if (input.endDate < input.startDate) return { ok: false, error: "Tanggal selesai tidak boleh sebelum tanggal mulai." };
-  const [employee] = await db.select({ joinedAt: employees.joinedAt, department: employees.department }).from(employees)
+  const [employee] = await db.select({ joinedAt: employees.joinedAt, position: employees.position }).from(employees)
     .where(and(eq(employees.id, input.employeeId), eq(employees.companyId, companyId))).limit(1);
   if (!employee) return { ok: false, error: "Karyawan tidak ditemukan." };
   const counter = workDayCounter(companyId);
   const [workDays, balances] = await Promise.all([
-    counter(employee.department, input.startDate, input.endDate),
+    counter(employee.position, input.startDate, input.endDate),
     annualLeaveBalances(companyId, input.startDate, { employeeIds: [input.employeeId], excludeRequestId, counter }),
   ]);
   const balance = balances.get(input.employeeId)!;

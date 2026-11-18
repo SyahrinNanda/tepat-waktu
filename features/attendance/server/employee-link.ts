@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { employees } from "@/db/schema";
 import { employeeCapacity } from "@/features/subscriptions/server/employee-capacity";
 
-const positionByRole: Record<string, string> = {
+const departmentByRole: Record<string, string> = {
   general_manager: "General Manager",
   hrd: "HRD",
   manager: "Manager",
@@ -30,7 +30,7 @@ export async function ensureEmployeeRecord(input: { companyId: string; userId: s
     try {
       await db.insert(employees).values({
         companyId: input.companyId, userId: input.userId, employeeCode: `EMP-${randomUUID().slice(0, 8).toUpperCase()}`,
-        name: input.name, email, department: "Umum", position: positionByRole[input.role] ?? "Staf", joinedAt: new Date().toISOString().slice(0, 10),
+        name: input.name, email, position: "Umum", department: departmentByRole[input.role] ?? "Staf", joinedAt: new Date().toISOString().slice(0, 10),
       });
     } catch (error) {
       // A concurrent request may have created or linked it first; fall through and read it back.

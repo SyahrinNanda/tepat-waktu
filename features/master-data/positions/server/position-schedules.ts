@@ -1,15 +1,15 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { divisions, divisionSchedules, workSchedules } from "@/db/schema";
+import { positions, positionSchedules, workSchedules } from "@/db/schema";
 
 type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
- * Division form body. `scheduleIds` holds one or more work schedules in the order chosen; the first is
- * the primary one (divisions.schedule_id). A single legacy `scheduleId` is still accepted.
+ * Position form body. `scheduleIds` holds one or more work schedules in the order chosen; the first is
+ * the primary one (positions.schedule_id). A single legacy `scheduleId` is still accepted.
  */
-export const divisionBodySchema = z.object({
+export const positionBodySchema = z.object({
   name: z.string().trim().min(2).max(100),
   scheduleIds: z.array(z.uuid()).max(20).optional(),
   scheduleId: z.uuid().optional(),
@@ -23,25 +23,25 @@ export async function schedulesBelongToCompany(companyId: string, scheduleIds: s
   return rows.length === scheduleIds.length;
 }
 
-/** Replaces the division's schedule list with `scheduleIds` (in order). */
-export async function replaceDivisionSchedules(executor: Executor, divisionId: string, scheduleIds: string[]) {
-  await executor.delete(divisionSchedules).where(eq(divisionSchedules.divisionId, divisionId));
-  if (scheduleIds.length) await executor.insert(divisionSchedules).values(scheduleIds.map((scheduleId, position) => ({ divisionId, scheduleId, position })));
+/** Replaces the position's schedule list with `scheduleIds` (in order). */
+export async function replacePositionSchedules(executor: Executor, positionId: string, scheduleIds: string[]) {
+  await executor.delete(positionSchedules).where(eq(positionSchedules.positionId, positionId));
+  if (scheduleIds.length) await executor.insert(positionSchedules).values(scheduleIds.map((scheduleId, sortOrder) => ({ positionId, scheduleId, sortOrder })));
 }
 
-export type DivisionListRow = { id: string; name: string; scheduleId: string | null; scheduleIds: string[]; shiftNames: string[]; active: boolean };
+export type PositionListRow = { id: string; name: string; scheduleId: string | null; scheduleIds: string[]; shiftNames: string[]; active: boolean };
 
-/** Divisions of a company with all their schedules (ids + names, primary first). */
-export async function listDivisionsWithSchedules(companyId: string, divisionId?: string): Promise<DivisionListRow[]> {
-  const where = divisionId ? and(eq(divisions.companyId, companyId), eq(divisions.id, divisionId)) : eq(divisions.companyId, companyId);
+/** Positions of a company with all their schedules (ids + names, primary first). */
+export async function listPositionsWithSchedules(companyId: string, positionId?: string): Promise<PositionListRow[]> {
+  const where = positionId ? and(eq(positions.companyId, companyId), eq(positions.id, positionId)) : eq(positions.companyId, companyId);
   const [rows, links] = await Promise.all([
-    db.select({ id: divisions.id, name: divisions.name, scheduleId: divisions.scheduleId, active: divisions.active }).from(divisions).where(where).orderBy(asc(divisions.name)),
-    db.select({ divisionId: divisionSchedules.divisionId, scheduleId: workSchedules.id, name: workSchedules.name })
-      .from(divisionSchedules).innerJoin(divisions, eq(divisions.id, divisionSchedules.divisionId)).innerJoin(workSchedules, eq(workSchedules.id, divisionSchedules.scheduleId))
-      .where(where).orderBy(asc(divisionSchedules.position), asc(workSchedules.name)),
+    db.select({ id: positions.id, name: positions.name, scheduleId: positions.scheduleId, active: positions.active }).from(positions).where(where).orderBy(asc(positions.name)),
+    db.select({ positionId: positionSchedules.positionId, scheduleId: workSchedules.id, name: workSchedules.name })
+      .from(positionSchedules).innerJoin(positions, eq(positions.id, positionSchedules.positionId)).innerJoin(workSchedules, eq(workSchedules.id, positionSchedules.scheduleId))
+      .where(where).orderBy(asc(positionSchedules.sortOrder), asc(workSchedules.name)),
   ]);
   return rows.map((row) => {
-    const own = links.filter((link) => link.divisionId === row.id);
+    const own = links.filter((link) => link.positionId === row.id);
     return { ...row, scheduleIds: own.map((link) => link.scheduleId), shiftNames: own.map((link) => link.name) };
   });
 }

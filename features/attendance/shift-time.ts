@@ -20,5 +20,5 @@ export function minutesLate(checkIn: string, startTime: string, endTime: string)
   return Math.max(0, diff);
 }
 
-/** One work schedule of the employee's division that works on the given day (for the shift picker). */
+/** One work schedule of the employee's position that works on the given day (for the shift picker). */
 export type ShiftOption = { id: string; name: string; startTime: string; endTime: string; graceMinutes: number };

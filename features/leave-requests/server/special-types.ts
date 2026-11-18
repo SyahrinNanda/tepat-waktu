@@ -34,12 +34,12 @@ export async function resolveSpecialLeave(companyId: string, input: SpecialInput
     input.specialLeaveTypeId
       ? db.select(columns).from(specialLeaveTypes).where(and(eq(specialLeaveTypes.id, input.specialLeaveTypeId), eq(specialLeaveTypes.companyId, companyId))).limit(1)
       : Promise.resolve([]),
-    db.select({ department: employees.department }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, companyId))).limit(1),
+    db.select({ position: employees.position }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, companyId))).limit(1),
   ]);
   if (!kind) return { ok: false, error: "Jenis cuti khusus tidak ditemukan. Pilih ulang jenisnya." };
   if (!employee) return { ok: false, error: "Karyawan tidak ditemukan." };
 
-  const planFor = await schedulePlanner(companyId, employee.department, []);
+  const planFor = await schedulePlanner(companyId, employee.position, []);
   const plan = planSpecialLeave({ start: input.startDate, end: input.endDate, durationDays: kind.durationDays, isWorkDay: (date) => planFor(date, null) !== null });
   if (!plan.ok) return plan;
 

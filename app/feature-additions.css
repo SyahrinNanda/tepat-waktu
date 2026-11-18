@@ -8,8 +8,8 @@
 @media(max-width:900px){.employee-detail-profile{grid-template-columns:1fr}.employee-detail-grid{grid-template-columns:1fr;column-gap:0}.employee-report-filters{grid-template-columns:1fr}.employee-info{grid-template-columns:150px 10px 1fr}}
 
 /* Divisi: several work schedules per division (checkbox list in the drawer, tags in the table). */
-.division-shift-tags{display:flex;flex-wrap:wrap;gap:5px}.division-shift-tags span{padding:3px 9px;color:#9a5300;background:#fff4dc;border:1px solid #fde3ac;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
-.division-shift-hint,.division-shift-empty{margin:8px 0 0;color:#7c766f;font-size:11px;line-height:1.5}
+.position-shift-tags{display:flex;flex-wrap:wrap;gap:5px}.position-shift-tags span{padding:3px 9px;color:#9a5300;background:#fff4dc;border:1px solid #fde3ac;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.position-shift-hint,.position-shift-empty{margin:8px 0 0;color:#7c766f;font-size:11px;line-height:1.5}
 /* Karyawan: "Lokasi Tertentu" location list. */
 /* Edit karyawan: tabs + Ganti Password. */
 .employee-edit-tabs button{cursor:pointer;border-bottom:2px solid transparent!important}.employee-edit-tabs button.is-active{color:#b05c07;border-bottom-color:#f19a05!important}
@@ -17,7 +17,7 @@
 .employee-password-input{position:relative}.employee-password-input input{padding-right:40px!important}.employee-password-input button{position:absolute;top:0;right:0;width:38px;height:37px;display:grid;place-items:center;color:#7c766f;background:none;border:0;cursor:pointer}
 .employee-password-empty{padding:18px;display:flex;gap:12px;color:#5d5852;background:#fafaf9;border:1px dashed #dcd9d5;border-radius:8px;font-size:12px}.employee-password-empty svg{flex:none;color:#c46d06}.employee-password-empty strong{color:#2d2a28}.employee-password-empty p{margin:4px 0 10px}
 
-.division-shift-picker{margin:0 0 20px;color:#2e2b29;font-size:12px}.division-shift-picker>label{display:block;margin-bottom:8px}
+.position-shift-picker{margin:0 0 20px;color:#2e2b29;font-size:12px}.position-shift-picker>label{display:block;margin-bottom:8px}
 .employee-location-select{margin-top:10px}.employee-location-select .multi-select-empty a{color:#b05c07;font-weight:600}
 /* Searchable multi-select dropdown (components/multi-select-dropdown.tsx). */
 .multi-select{position:relative;font-size:12px}.multi-select-trigger{width:100%;min-height:42px;padding:5px 36px 5px 8px;position:relative;display:flex;align-items:center;color:#413d3a;background:#fff;border:1px solid #d9d7d4;border-radius:5px;font:inherit;text-align:left;cursor:pointer}.multi-select.is-open .multi-select-trigger,.multi-select-trigger:focus-visible{border-color:#f7a20f;outline:0;box-shadow:0 0 0 3px #fbbf2433}

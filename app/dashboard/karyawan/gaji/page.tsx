@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { divisions, employeeDocuments, employeeSalaryComponents, employeeSalaryProfiles, employees } from "@/db/schema";
+import { positions, employeeDocuments, employeeSalaryComponents, employeeSalaryProfiles, employees } from "@/db/schema";
 import { SalaryManager } from "@/features/employee-salaries/components/salary-manager";
 import { requireCompanyRole } from "@/lib/current-company";
 
@@ -9,9 +9,9 @@ export const metadata: Metadata = { title: "Daftar Gaji Karyawan" };
 
 export default async function Page() {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
-  const [team, components, divisionRows] = await Promise.all([
+  const [team, components, positionRows] = await Promise.all([
     db.select({
-      id: employees.id, name: employees.name, email: employees.email, department: employees.department, position: employees.position,
+      id: employees.id, name: employees.name, email: employees.email, position: employees.position, department: employees.department,
       photoAssetId: employeeDocuments.assetId, baseSalary: employeeSalaryProfiles.baseSalary, overtimeRate: employeeSalaryProfiles.overtimeRate, salaryBasis: employeeSalaryProfiles.salaryBasis,
       absentRule: employeeSalaryProfiles.absentRule, absentManualAmount: employeeSalaryProfiles.absentManualAmount,
       lateRule: employeeSalaryProfiles.lateRule, lateMode: employeeSalaryProfiles.lateMode, lateAmount: employeeSalaryProfiles.lateAmount,
@@ -21,8 +21,8 @@ export default async function Page() {
       .where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))).orderBy(asc(employees.name)),
     db.select({ id: employeeSalaryComponents.id, employeeId: employeeSalaryComponents.employeeId, name: employeeSalaryComponents.name, type: employeeSalaryComponents.type, unit: employeeSalaryComponents.unit, amount: employeeSalaryComponents.amount })
       .from(employeeSalaryComponents).where(eq(employeeSalaryComponents.companyId, context.companyId)).orderBy(asc(employeeSalaryComponents.name)),
-    db.select({ id: divisions.id, name: divisions.name }).from(divisions)
-      .where(and(eq(divisions.companyId, context.companyId), eq(divisions.active, true))).orderBy(asc(divisions.name)),
+    db.select({ id: positions.id, name: positions.name }).from(positions)
+      .where(and(eq(positions.companyId, context.companyId), eq(positions.active, true))).orderBy(asc(positions.name)),
   ]);
   const byEmployee = Map.groupBy(components, (component) => component.employeeId);
   const rows = team.map((employee) => {
@@ -32,5 +32,5 @@ export default async function Page() {
       attendanceRule: { absentRule: employee.absentRule ?? "company", absentManualAmount: employee.absentManualAmount ?? 0, lateRule: employee.lateRule ?? "company", lateMode: employee.lateMode ?? "per_day", lateAmount: employee.lateAmount ?? 0 },
       compensations: serialize("compensation"), deductions: serialize("deduction") };
   });
-  return <SalaryManager initialRows={rows} divisions={divisionRows}/>;
+  return <SalaryManager initialRows={rows} positions={positionRows}/>;
 }

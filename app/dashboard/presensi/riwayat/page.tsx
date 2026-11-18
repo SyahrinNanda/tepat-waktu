@@ -34,17 +34,17 @@ export default async function Page({ searchParams }: PageProps) {
     id: employees.id,
     name: employees.name,
     employeeCode: employees.employeeCode,
-    department: employees.department,
+    position: employees.position,
   }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))).orderBy(asc(employees.name)) : [];
 
-  type SelectedEmployee = { id: string; name: string; code: string; department: string; position: string };
+  type SelectedEmployee = { id: string; name: string; code: string; position: string; department: string };
   let employee: SelectedEmployee | undefined;
   if (canSelectEmployee) {
     const requestedEmployeeId = employeeOptions.some((item) => item.id === params.employeeId) ? params.employeeId : employeeOptions[0]?.id;
     if (requestedEmployeeId) {
       [employee] = await db.select({
         id: employees.id, name: employees.name, code: employees.employeeCode,
-        department: employees.department, position: employees.position,
+        position: employees.position, department: employees.department,
       }).from(employees).where(and(
         eq(employees.companyId, context.companyId),
         eq(employees.id, requestedEmployeeId),
@@ -56,8 +56,8 @@ export default async function Page({ searchParams }: PageProps) {
       id: employees.id,
       name: employees.name,
       code: employees.employeeCode,
-      department: employees.department,
       position: employees.position,
+      department: employees.department,
     }).from(employees).where(and(
       eq(employees.companyId, context.companyId),
       eq(employees.userId, context.session.user.id),
@@ -73,8 +73,8 @@ export default async function Page({ searchParams }: PageProps) {
       id: employees.id,
       name: employees.name,
       code: employees.employeeCode,
-      department: employees.department,
       position: employees.position,
+      department: employees.department,
     }).from(employees).where(and(
       eq(employees.companyId, context.companyId),
       eq(employees.email, context.session.user.email.toLowerCase()),
@@ -139,7 +139,7 @@ export default async function Page({ searchParams }: PageProps) {
       <div>
         <span className="breadcrumb">Kehadiran / Riwayat {canSelectEmployee ? "Karyawan" : "Saya"}</span>
         <h1>{canSelectEmployee ? "Riwayat Kehadiran Karyawan" : "Riwayat Kehadiran Saya"}</h1>
-        <p>{employee.name} · {employee.code} · {employee.position}, {employee.department}</p>
+        <p>{employee.name} · {employee.code} · {employee.department}, {employee.position}</p>
       </div>
       {!canSelectEmployee ? <Link className="btn btn-primary" href="/dashboard/presensi/check-in"><Camera size={16} /> Buka Kehadiran</Link> : null}
     </header>

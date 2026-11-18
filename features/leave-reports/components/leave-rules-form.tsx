@@ -24,7 +24,7 @@ export function LeaveRulesForm({ rules }: { rules: AnnualLeaveRules }) {
   }
   return <form className="leave-rules-form leave-rules-page" onSubmit={submit}>
     <div className="leave-modal-body">
-      <p className="leave-rules-intro">Setiap karyawan punya periode cuti sendiri yang dimulai dari <strong>tanggal bergabung</strong>. Jatah direset otomatis setiap ulang tahun kerjanya. Contoh: bergabung 15 Maret, maka periodenya 15 Maret – 14 Maret tahun berikutnya. Cuti dihitung dalam <strong>hari kerja</strong> sesuai jadwal divisi.</p>
+      <p className="leave-rules-intro">Setiap karyawan punya periode cuti sendiri yang dimulai dari <strong>tanggal bergabung</strong>. Jatah direset otomatis setiap ulang tahun kerjanya. Contoh: bergabung 15 Maret, maka periodenya 15 Maret – 14 Maret tahun berikutnya. Cuti dihitung dalam <strong>hari kerja</strong> sesuai jadwal jabatan.</p>
       <label>Jatah cuti per periode (hari kerja)<input type="number" min={0} max={60} value={days} onChange={(event) => setDays(event.target.value)} required/></label>
       <fieldset><legend>Karyawan baru mulai berhak cuti</legend>
         <label className="leave-rules-option"><input type="radio" name="eligibility" checked={eligibility === "immediate"} onChange={() => setEligibility("immediate")}/><span><strong>Langsung sejak tanggal bergabung</strong><small>Jatah penuh tersedia sejak hari pertama bekerja.</small></span></label>

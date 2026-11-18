@@ -18,7 +18,7 @@ export type PayslipSummary = {
   overtimeHours: number;
 };
 export type Payslip = {
-  employee: { id: string; name: string; employeeCode: string; position: string; department: string };
+  employee: { id: string; name: string; employeeCode: string; department: string; position: string };
   year: number;
   month: number;
   /** Dates the slip covers (the company's payroll period), "YYYY-MM-DD" inclusive. */
@@ -90,8 +90,8 @@ export type CalculationInput = {
   year: number;
   month: number;
   /**
-   * The employee's schedule for a date. `scheduleId` is the schedule recorded at check-in (a division
-   * may have several shifts); null asks for the division's default plan of that weekday.
+   * The employee's schedule for a date. `scheduleId` is the schedule recorded at check-in (a position
+   * may have several shifts); null asks for the position's default plan of that weekday.
    */
   planFor: (date: string, scheduleId: string | null) => DayPlan;
   rules: PayrollRules;
@@ -155,7 +155,7 @@ export const round2 = (value: number) => Math.round(value * 100) / 100;
 
 export function buildPayslip({ employee, year, month, planFor, rules: companyRules, absentFrom, absentBefore, attendanceRows, leaveRows, overtimeRows, components }: CalculationInput): Payslip {
   const rules = effectiveRules(companyRules, employee.attendanceRule);
-  // Staff with irregular days off: the division schedule does not say which days they work.
+  // Staff with irregular days off: the position schedule does not say which days they work.
   const manualAbsence = employee.attendanceRule?.absentRule === "manual_only";
   const { start: periodStart, end: periodEnd, dates } = payrollPeriod(year, month, rules.periodStartDay);
   const workingDates = dates.filter((date) => planFor(date, null));
@@ -210,7 +210,7 @@ export function buildPayslip({ employee, year, month, planFor, rules: companyRul
   // (80 minutes x Rp 30.000 must be Rp 40.000, not 1,33 x Rp 30.000 = Rp 39.900.)
   const exactWorkedHours = workedMinutes / 60;
   const exactOvertimeHours = overtimeRows.reduce((total, row) => total + row.minutes, 0) / 60;
-  // A paid leave day off the division schedule (manual_only staff) is paid as the standard 8-hour day.
+  // A paid leave day off the position schedule (manual_only staff) is paid as the standard 8-hour day.
   const exactPaidLeaveHours = paidLeaveDates.reduce((total, date) => total + (plannedMinutes(planFor(date, null), rules) || (manualAbsence ? 480 : 0)), 0) / 60;
   const workedHours = round2(exactWorkedHours);
   const overtimeHours = round2(exactOvertimeHours);
@@ -253,7 +253,7 @@ export function buildPayslip({ employee, year, month, planFor, rules: companyRul
   const grossPay = earnings.reduce((total, line) => total + line.amount, 0);
   const totalDeductions = deductions.reduce((total, line) => total + line.amount, 0);
   return {
-    employee: { id: employee.id, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, department: employee.department },
+    employee: { id: employee.id, name: employee.name, employeeCode: employee.employeeCode, department: employee.department, position: employee.position },
     year, month, periodStart, periodEnd, basis: employee.salaryBasis, baseRate: rate,
     summary: { workingDays: workingDates.length, daysWorked, lateDays, lateMinutes, missingCheckouts, absentDays, paidLeaveDays: paidLeaveDates.length, unpaidLeaveDays, workedHours, overtimeHours },
     earnings, deductions, grossPay, totalDeductions, netPay: grossPay - totalDeductions,

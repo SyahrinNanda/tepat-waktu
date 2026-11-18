@@ -38,7 +38,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const [existing] = await db.select({ id: leaveRequests.id, status: leaveRequests.status, employeeUserId: employees.userId, attachmentAssetId: leaveRequests.attachmentAssetId }).from(leaveRequests).innerJoin(employees, eq(leaveRequests.employeeId, employees.id)).where(and(eq(leaveRequests.id, id), eq(leaveRequests.companyId, context.companyId))).limit(1);
   if (!existing || (!canReview && existing.employeeUserId !== context.userId)) return Response.json({ error: "Pengajuan tidak ditemukan." }, { status: 404 });
   if (existing.status !== "pending") return Response.json({ error: "Hanya pengajuan berstatus menunggu yang dapat diedit." }, { status: 409 });
-  const [employee] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, department: employees.department, userId: employees.userId }).from(employees).where(and(eq(employees.id, parsed.data.employeeId), eq(employees.companyId, context.companyId), eq(employees.status, "active"))).limit(1);
+  const [employee] = await db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, position: employees.position, userId: employees.userId }).from(employees).where(and(eq(employees.id, parsed.data.employeeId), eq(employees.companyId, context.companyId), eq(employees.status, "active"))).limit(1);
   if (!employee || (!canReview && employee.userId !== context.userId)) return Response.json({ error: "Karyawan tidak ditemukan atau tidak dapat dipilih." }, { status: 403 });
   const special = await resolveLeaveRules(context.companyId, input, id);
   if (!special.ok) return Response.json({ error: special.error }, { status: 400 });
@@ -52,7 +52,7 @@ export async function PATCH(request: Request, { params }: Params) {
   if (replacing) await removeRequestAttachment(existing.attachmentAssetId);
   const [file] = await db.select({ name: fileAssets.originalName }).from(fileAssets).where(eq(fileAssets.id, nextAttachmentId)).limit(1);
   revalidatePaths(id);
-  return Response.json({ row: { ...updated, name: employee.name, employeeCode: employee.employeeCode, department: employee.department, attachmentName: file?.name ?? null } });
+  return Response.json({ row: { ...updated, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, attachmentName: file?.name ?? null } });
 }
 
 export async function DELETE(request: Request, { params }: Params) {

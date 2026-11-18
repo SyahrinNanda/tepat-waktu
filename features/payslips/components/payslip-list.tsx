@@ -67,7 +67,7 @@ export function PayslipList({ slips, year, month, years, periodStart, periodEnd,
         <th>Karyawan</th><th>Basis Gaji</th><th>Kehadiran</th><th>Izin Dibayar / Tidak</th><th>Pendapatan</th><th>Potongan</th><th>Gaji Bersih</th><th>Status</th><th>Aksi</th>
       </tr></thead><tbody>{filtered.map((slip) => <tr key={slip.employee.id}>
         <td><input type="checkbox" disabled={slip.status === "final"} checked={selected.includes(slip.employee.id)} onChange={() => setSelected((current) => current.includes(slip.employee.id) ? current.filter((id) => id !== slip.employee.id) : [...current, slip.employee.id])}/></td>
-        <td><strong>{slip.employee.name}</strong><small>{slip.employee.employeeCode} · {slip.employee.department}</small></td>
+        <td><strong>{slip.employee.name}</strong><small>{slip.employee.employeeCode} · {slip.employee.position}</small></td>
         <td>{basisLabels[slip.basis]}<small>{rupiah(slip.baseRate)}</small></td>
         <td>{slip.summary.daysWorked} / {slip.summary.workingDays} hari{slip.summary.absentDays ? <small className="payslip-warn">{slip.summary.absentDays} hari alpa</small> : null}</td>
         <td>{slip.summary.paidLeaveDays} / <span className={slip.summary.unpaidLeaveDays ? "payslip-warn" : ""}>{slip.summary.unpaidLeaveDays}</span> hari</td>

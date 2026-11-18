@@ -12,7 +12,7 @@ import { describeLeaveRules, shiftDate, type AnnualLeaveBalance, type AnnualLeav
 
 export type LeaveTally = { times: number; days: number };
 export type LeaveReportRow = {
-  id: string; employeeCode: string; name: string; email: string; department: string; position: string; status: "active" | "inactive";
+  id: string; employeeCode: string; name: string; email: string; position: string; department: string; status: "active" | "inactive";
   joinedAt: string; photoAssetId: string | null; balance: AnnualLeaveBalance;
   annual: LeaveTally; sick: LeaveTally; permission: LeaveTally; special: (LeaveTally & { name: string })[];
 };
@@ -34,9 +34,9 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
   const range = `${formatDate(from)} – ${formatDate(to)}`;
 
   function exportCsv() {
-    const header = ["NIK", "Nama", "Jabatan", "Divisi", "Tanggal Bergabung", "Periode Cuti Mulai", "Periode Cuti Selesai", "Reset Berikutnya", "Jatah", "Bawaan", "Terpakai", "Menunggu", "Sisa", `Cuti Tahunan (${from} s.d. ${to})`, "Izin (kali)", "Izin (hari)", "Sakit (kali)", "Sakit (hari)", "Cuti Khusus"];
+    const header = ["NIK", "Nama", "Divisi", "Jabatan", "Tanggal Bergabung", "Periode Cuti Mulai", "Periode Cuti Selesai", "Reset Berikutnya", "Jatah", "Bawaan", "Terpakai", "Menunggu", "Sisa", `Cuti Tahunan (${from} s.d. ${to})`, "Izin (kali)", "Izin (hari)", "Sakit (kali)", "Sakit (hari)", "Cuti Khusus"];
     const quote = (value: unknown) => `"${String(value).replaceAll('"', '""')}"`;
-    const lines = rows.map((row) => [row.employeeCode, row.name, row.position, row.department, row.joinedAt, row.balance.start, row.balance.end, row.balance.nextReset, row.balance.entitled, row.balance.carried, row.balance.used, row.balance.pending, Math.max(row.balance.available, 0), row.annual.days, row.permission.times, row.permission.days, row.sick.times, row.sick.days, row.special.map((item) => `${item.name} ${item.times}x/${item.days} hari`).join("; ")].map(quote).join(","));
+    const lines = rows.map((row) => [row.employeeCode, row.name, row.department, row.position, row.joinedAt, row.balance.start, row.balance.end, row.balance.nextReset, row.balance.entitled, row.balance.carried, row.balance.used, row.balance.pending, Math.max(row.balance.available, 0), row.annual.days, row.permission.times, row.permission.days, row.sick.times, row.sick.days, row.special.map((item) => `${item.name} ${item.times}x/${item.days} hari`).join("; ")].map(quote).join(","));
     const url = URL.createObjectURL(new Blob([`﻿${header.map(quote).join(",")}\r\n${lines.join("\r\n")}`], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a"); link.href = url; link.download = `laporan-cuti-${from}-sd-${to}.csv`; link.click(); URL.revokeObjectURL(url);
   }
@@ -63,7 +63,7 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
       <div className="table-scroll"><table className="leave-report-table leave-report-table-v2">
         <thead>
           <tr className="leave-report-groups"><th colSpan={4}/><th colSpan={5}>Cuti Tahunan · periode berjalan (per {formatDate(today)})</th><th colSpan={4}>Rekap {range}</th><th/></tr>
-          <tr><th>#</th><th>Foto</th><th>Nama Karyawan</th><th>Jabatan–Divisi</th><th>Periode &amp; Reset</th><th>Jatah</th><th>Terpakai</th><th>Menunggu</th><th>Sisa</th><th>Cuti Tahunan</th><th>Izin</th><th>Sakit</th><th>Cuti Khusus</th><th/></tr>
+          <tr><th>#</th><th>Foto</th><th>Nama Karyawan</th><th>Divisi–Jabatan</th><th>Periode &amp; Reset</th><th>Jatah</th><th>Terpakai</th><th>Menunggu</th><th>Sisa</th><th>Cuti Tahunan</th><th>Izin</th><th>Sakit</th><th>Cuti Khusus</th><th/></tr>
         </thead>
         <tbody>{rows.map((row, index) => {
           const balance = row.balance, available = Math.max(balance.available, 0);
@@ -71,7 +71,7 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
             <td>{index + 1}</td>
             <td>{row.photoAssetId ? <Image className="leave-avatar" src={`/api/files/${row.photoAssetId}`} width={48} height={48} unoptimized alt={`Foto ${row.name}`}/> : <CircleUserRound className="leave-avatar-placeholder"/>}</td>
             <td>{row.status === "inactive" && <span className="leave-inactive">Karyawan Belum Aktif</span>}<small className="leave-code">NI: {row.employeeCode}</small><strong>{row.name}</strong><small>Bergabung {formatDate(row.joinedAt)}</small></td>
-            <td><strong>{row.position}</strong><small>{row.department}</small></td>
+            <td><strong>{row.department}</strong><small>{row.position}</small></td>
             <td><strong>{formatDate(balance.start)} – {formatDate(balance.end)}</strong><small>Reset {formatDate(balance.nextReset)}</small></td>
             <td><strong>{balance.entitled}</strong>{balance.carried > 0 && <small>{balance.base} + {balance.carried} bawaan</small>}{!balance.eligible && <small>Mulai {formatDate(balance.eligibleFrom)}</small>}</td>
             <td>{balance.used}</td>
@@ -87,7 +87,7 @@ export function LeaveReportManager({ initialRows, rules, from, to, today, canMan
           </tr>;
         })}</tbody>
       </table>{!rows.length && <div className="salary-empty">Data karyawan tidak ditemukan.</div>}</div>
-      <footer>menampilkan {rows.length} dari {initialRows.length} data. Jumlah hari dihitung dalam hari kerja sesuai jadwal divisi karyawan.</footer>
+      <footer>menampilkan {rows.length} dari {initialRows.length} data. Jumlah hari dihitung dalam hari kerja sesuai jadwal jabatan karyawan.</footer>
     </section>
     {editing && <EntitlementModal row={editing} rules={rules} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); router.refresh(); }}/>}
   </>;

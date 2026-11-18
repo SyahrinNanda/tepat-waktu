@@ -7,7 +7,7 @@
  * POST /api/attendance/me and verifies the response, the database row and GET /api/attendance/me.
  *
  * Covers: late / on time / within grace, day off (disabled weekday), weekday override of the base
- * time, inactive division schedule -> company schedule, no division -> company schedule, no
+ * time, inactive position schedule -> company schedule, no position -> company schedule, no
  * schedule at all (not judged), check-out before check-in, double check-in/out, concurrent
  * check-ins, and the geofence (no location, outside, inside, accuracy allowance and its cap).
  *
@@ -110,16 +110,16 @@ async function createCompany(label) {
   const { rows: [company] } = await db.query(`insert into companies (name, industry, timezone) values ($1, 'Testing', $2) returning id`, [`${COMPANY_PREFIX}${label}`, TZ]);
   return company.id;
 }
-/** Employee account (role employee) linked to an employee record in `department`. */
-async function createEmployee(companyId, key, department) {
+/** Employee account (role employee) linked to an employee record in `position`. */
+async function createEmployee(companyId, key, position) {
   const userId = randomUUID();
   const email = `${EMAIL_PREFIX}${key}-${randomBytes(3).toString("hex")}@example.com`;
   await db.query(`insert into "user" (id, name, email, email_verified) values ($1, $2, $3, true)`, [userId, `ZZ ${key}`, email]);
   await db.query(`insert into account (id, account_id, provider_id, user_id, password) values ($1, $2, 'credential', $2, $3)`, [randomUUID(), userId, hash]);
   await db.query(`insert into company_members (company_id, user_id, role) values ($1, $2, 'employee')`, [companyId, userId]);
   const { rows: [employee] } = await db.query(
-    `insert into employees (company_id, employee_code, name, email, department, position, joined_at, user_id) values ($1, $2, $3, $4, $5, 'Staf', current_date, $6) returning id`,
-    [companyId, `ZZ-${key}`, `ZZ ${key}`, email, department ?? "Tanpa Divisi", userId]);
+    `insert into employees (company_id, employee_code, name, email, position, department, joined_at, user_id) values ($1, $2, $3, $4, $5, 'Staf', current_date, $6) returning id`,
+    [companyId, `ZZ-${key}`, `ZZ ${key}`, email, position ?? "Tanpa Jabatan", userId]);
   return { employeeId: employee.id, cookie: await login(email) };
 }
 /** Schedule with base times; `today` overrides today's weekday row ({ start, enabled }). */
@@ -130,9 +130,9 @@ async function createSchedule(companyId, name, { start, grace = 15, active = tru
   if (today) await db.query(`insert into work_schedule_days (schedule_id, day_of_week, enabled, start_time, end_time) values ($1, $2, $3, $4, '23:59:00')`, [schedule.id, weekday, today.enabled ?? true, today.start ?? start]);
   return schedule.id;
 }
-async function createDivision(companyId, name, scheduleId) {
-  const { rows: [division] } = await db.query(`insert into divisions (company_id, name, schedule_id, active) values ($1, $2, $3, true) returning id`, [companyId, name, scheduleId]);
-  await db.query(`insert into division_schedules (division_id, schedule_id, position) values ($1, $2, 0)`, [division.id, scheduleId]);
+async function createPosition(companyId, name, scheduleId) {
+  const { rows: [position] } = await db.query(`insert into job_positions (company_id, name, schedule_id, active) values ($1, $2, $3, true) returning id`, [companyId, name, scheduleId]);
+  await db.query(`insert into job_position_schedules (job_position_id, schedule_id, position) values ($1, $2, 0)`, [position.id, scheduleId]);
 }
 /** Company admin account (for the admin attendance API). Returns the session cookie. */
 async function createAdmin(companyId, key) {
@@ -169,7 +169,7 @@ try {
 
   // ---- Company A: schedules ------------------------------------------------------------------
   const companyA = await createCompany("Jadwal");
-  // Oldest active schedule = the company schedule used without (a usable) division.
+  // Oldest active schedule = the company schedule used without (a usable) position.
   await createSchedule(companyA, "Perusahaan", { start: past });
   await sleep(20); // created_at ordering
   const scenarios = [
@@ -179,13 +179,13 @@ try {
     { key: "dayoff", label: "hari libur (hari ini dinonaktifkan) -> hadir, bukan terlambat", schedule: { start: past, today: { enabled: false } }, expect: "present", workday: false, timing: true },
     { key: "override", label: "jam khusus hari ini menimpa jam dasar -> terlambat", schedule: { start: future, today: { start: past } }, expect: "late", timing: true },
     { key: "override-early", label: "jam khusus hari ini lebih siang dari jam dasar -> hadir", schedule: { start: past, today: { start: future } }, expect: "present", timing: true },
-    { key: "inactive", label: "jadwal divisi nonaktif -> pakai jadwal perusahaan (terlambat)", schedule: { start: future, active: false }, expect: "late", source: "company", timing: true },
+    { key: "inactive", label: "jadwal jabatan nonaktif -> pakai jadwal perusahaan (terlambat)", schedule: { start: future, active: false }, expect: "late", source: "company", timing: true },
   ];
   for (const s of scenarios) {
     if (s.timing && !early) continue;
     const scheduleId = await createSchedule(companyA, s.key, s.schedule, now.weekday);
-    await createDivision(companyA, `Divisi ${s.key}`, scheduleId);
-    const { employeeId, cookie } = await createEmployee(companyA, s.key, `Divisi ${s.key}`);
+    await createPosition(companyA, `Jabatan ${s.key}`, scheduleId);
+    const { employeeId, cookie } = await createEmployee(companyA, s.key, `Jabatan ${s.key}`);
     const before = await status(cookie);
     const res = await attend(cookie, "check_in");
     const row = await dbStatus(employeeId, now.date);
@@ -195,16 +195,16 @@ try {
     if (s.key === "override") record(before.body.schedule?.startTime === past, "Jadwal: layar check-in menampilkan jam khusus hari ini", `${before.body.schedule?.startTime} vs ${past}`);
   }
   if (early) {
-    const { employeeId, cookie } = await createEmployee(companyA, "nodiv", "Divisi Tidak Ada");
+    const { employeeId, cookie } = await createEmployee(companyA, "nodiv", "Jabatan Tidak Ada");
     const before = await status(cookie);
     const res = await attend(cookie, "check_in");
     record(res.status === 201 && res.body.status === "late" && (await dbStatus(employeeId, now.date))?.status === "late" && before.body.schedule?.source === "company",
-      "Jadwal: tanpa divisi -> jadwal perusahaan tertua (terlambat)", `HTTP ${res.status}, ${res.body.status ?? res.body.message}, source ${before.body.schedule?.source}`);
+      "Jadwal: tanpa jabatan -> jadwal perusahaan tertua (terlambat)", `HTTP ${res.status}, ${res.body.status ?? res.body.message}, source ${before.body.schedule?.source}`);
   }
 
   // ---- Check-in / check-out sequence and concurrency -----------------------------------------
   {
-    const { employeeId, cookie } = await createEmployee(companyA, "flow", "Divisi Tidak Ada");
+    const { employeeId, cookie } = await createEmployee(companyA, "flow", "Jabatan Tidak Ada");
     const out1 = await attend(cookie, "check_out");
     record(out1.status === 409 && !(await dbStatus(employeeId, now.date)), "Alur: check-out sebelum check-in ditolak (409) tanpa membuat data", `HTTP ${out1.status} ${out1.body.message ?? ""}`);
     const in1 = await attend(cookie, "check_in");
@@ -218,7 +218,7 @@ try {
     record(after.body.nextAction === null, "Alur: setelah check-in dan check-out tidak ada aksi berikutnya", String(after.body.nextAction));
   }
   {
-    const { employeeId, cookie } = await createEmployee(companyA, "race", "Divisi Tidak Ada");
+    const { employeeId, cookie } = await createEmployee(companyA, "race", "Jabatan Tidak Ada");
     const responses = await Promise.all(Array.from({ length: 6 }, () => attend(cookie, "check_in")));
     const created = responses.filter((r) => r.status === 201).length;
     const events = (await db.query(`select count(*)::int as n from attendance_events where employee_id = $1 and type = 'check_in'`, [employeeId])).rows[0].n;

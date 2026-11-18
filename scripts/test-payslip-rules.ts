@@ -10,7 +10,7 @@ function check(ok: boolean, name: string, detail = "") {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? `  -- ${detail}` : ""}`);
 }
 
-// November 2026: 1 Nov is a Sunday. Mon-Fri 08:00-17:00 division schedule.
+// November 2026: 1 Nov is a Sunday. Mon-Fri 08:00-17:00 position schedule.
 const planFor: CalculationInput["planFor"] = (date) => {
   const day = new Date(`${date}T00:00:00Z`).getUTCDay();
   return day >= 1 && day <= 5 ? { start: "08:00:00", end: "17:00:00" } : null;
@@ -20,7 +20,7 @@ const alpa = (date: string) => ({ date, scheduleId: null, status: "absent" as co
 
 function slip(opts: { basis?: "monthly" | "daily" | "hourly"; rule?: EmployeeAttendanceRule; rules?: Partial<PayrollRules>; rows?: CalculationInput["attendanceRows"]; leaves?: CalculationInput["leaveRows"] }) {
   return buildPayslip({
-    employee: { id: "e1", name: "Uji", employeeCode: "E1", position: "Staf", department: "Umum", baseSalary: opts.basis === "daily" ? 100_000 : 2_100_000, overtimeRate: 0, salaryBasis: opts.basis ?? "monthly", attendanceRule: opts.rule },
+    employee: { id: "e1", name: "Uji", employeeCode: "E1", department: "Staf", position: "Umum", baseSalary: opts.basis === "daily" ? 100_000 : 2_100_000, overtimeRate: 0, salaryBasis: opts.basis ?? "monthly", attendanceRule: opts.rule },
     year: 2026, month: 11, planFor, rules: { ...DEFAULT_PAYROLL_RULES, ...opts.rules },
     // Days up to (not including) 6 Nov are over: Mon 2 - Thu 5 are past working days.
     absentFrom: "2026-11-01", absentBefore: "2026-11-06",
@@ -51,7 +51,7 @@ const manual = (amount: number): EmployeeAttendanceRule => ({ absentRule: "manua
   const s = slip({ rule: manual(0), rules: { absentDeductionMode: "fixed", absentDeductionAmount: 99_000 }, rows: [alpa("2026-11-03")] });
   check(!line(s, "Alpa"), "Hanya alpa manual: aturan potongan alpa perusahaan tidak dipakai", JSON.stringify(s.deductions));
 }
-// (c) manual_only, daily: paid leave on a Sunday (not a division working day) is still paid.
+// (c) manual_only, daily: paid leave on a Sunday (not a position working day) is still paid.
 {
   const s = slip({ basis: "daily", rule: manual(0), rows: [worked("2026-11-01")], leaves: [{ startDate: "2026-11-08", endDate: "2026-11-08", paid: true }] });
   const paid = s.earnings.find((item) => item.name === "Izin/Cuti Dibayar");

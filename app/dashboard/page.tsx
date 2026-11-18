@@ -46,7 +46,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     db.select({ value: count() }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today), eq(attendances.status, "present"))),
     db.select({ value: count() }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today), eq(attendances.status, "late"))),
     db.select({ value: count() }).from(leaveRequests).where(and(eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.status, "pending"))),
-    db.select({ id: attendances.id, name: employees.name, department: employees.department, checkIn: attendances.checkIn, status: attendances.status })
+    db.select({ id: attendances.id, name: employees.name, position: employees.position, checkIn: attendances.checkIn, status: attendances.status })
       .from(attendances).innerJoin(employees, eq(attendances.employeeId, employees.id))
       .where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today))).orderBy(desc(attendances.createdAt)).limit(6),
   ]);
@@ -71,7 +71,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </section>
       <section className="dashboard-grid">
         <div className="card"><div className="card-head"><div><h2 className="card-title">Kehadiran hari ini</h2><p className="card-subtitle">Pembaruan pencatatan terbaru</p></div></div>
-          {recent.length ? <div className="table-wrap"><table className="table"><thead><tr><th>Karyawan</th><th>Jam masuk</th><th>Status</th></tr></thead><tbody>{recent.map((row) => <tr key={row.id}><td><div className="table-user"><span className="avatar">{row.name.slice(0,2).toUpperCase()}</span><span><strong>{row.name}</strong><small>{row.department}</small></span></div></td><td>{row.checkIn?.slice(0,5) ?? "—"}</td><td><StatusBadge value={row.status} /></td></tr>)}</tbody></table></div> : <div className="empty-state"><Clock3 size={28} /><strong>Belum ada pencatatan</strong><span>Kehadiran hari ini akan muncul di sini.</span></div>}
+          {recent.length ? <div className="table-wrap"><table className="table"><thead><tr><th>Karyawan</th><th>Jam masuk</th><th>Status</th></tr></thead><tbody>{recent.map((row) => <tr key={row.id}><td><div className="table-user"><span className="avatar">{row.name.slice(0,2).toUpperCase()}</span><span><strong>{row.name}</strong><small>{row.position}</small></span></div></td><td>{row.checkIn?.slice(0,5) ?? "—"}</td><td><StatusBadge value={row.status} /></td></tr>)}</tbody></table></div> : <div className="empty-state"><Clock3 size={28} /><strong>Belum ada pencatatan</strong><span>Kehadiran hari ini akan muncul di sini.</span></div>}
         </div>
         <div className="card"><div className="card-head"><div><h2 className="card-title">Tingkat kehadiran</h2><p className="card-subtitle">Rekap hari ini</p></div></div>
           <div className="donut-wrap"><div className="donut" style={{ "--value": rate } as React.CSSProperties} /><div className="donut-label"><strong>{rate}%</strong><small>TERCATAT</small></div></div>

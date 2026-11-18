@@ -9,7 +9,7 @@ import { useEmployeeSave } from "@/features/employees/components/use-employee-sa
 import { AttendanceLocationPicker, type LocationOption } from "@/features/employees/components/attendance-location-picker";
 
 type Option = { id: string; name: string };
-export function EmployeeCreateForm({ divisions, positions, locations, today, disabled = false }: { divisions: Option[]; positions: Option[]; locations: LocationOption[]; today: string; disabled?: boolean }) {
+export function EmployeeCreateForm({ positions, divisions, locations, today, disabled = false }: { positions: Option[]; divisions: Option[]; locations: LocationOption[]; today: string; disabled?: boolean }) {
   const { error, pending, onSubmit, errorRef } = useEmployeeSave(createEmployeeAction);
   return <form onSubmit={onSubmit} className="employee-create-card">
     <div className="employee-create-head"><h2>Detail Karyawan</h2><div><Link className="btn btn-outline" href="/dashboard/karyawan">Batalkan</Link>{disabled ? <button className="btn btn-primary" type="button" disabled title="Batas karyawan paket tercapai"><Save size={15}/> Simpan</button> : <SubmitButton pendingLabel="Menyimpan..." pending={pending}><Save size={15}/> Simpan</SubmitButton>}</div></div>
@@ -31,8 +31,8 @@ export function EmployeeCreateForm({ divisions, positions, locations, today, dis
       <Field label="Tanggal Lahir"><input name="birthDate" type="date"/></Field>
       <fieldset className="employee-gender"><legend>Jenis Kelamin Karyawan</legend><label><input type="radio" name="gender" value="male" defaultChecked/> Laki-Laki</label><label><input type="radio" name="gender" value="female"/> Perempuan</label></fieldset>
       <Field label="Tanggal Mulai Kerja Karyawan"><input name="joinedAt" type="date" defaultValue={today} required/></Field>
-      <Field label="Divisi Karyawan"><select name="department" defaultValue="" required><option value="" disabled>Pilih Divisi</option>{divisions.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></Field>
       <Field label="Jabatan Karyawan"><select name="position" defaultValue="" required><option value="" disabled>Pilih Jabatan</option>{positions.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></Field>
+      <Field label="Divisi Karyawan"><select name="department" defaultValue="" required><option value="" disabled>Pilih Divisi</option>{divisions.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></Field>
       <Field label="Tipe Kontrak"><select name="contractType" defaultValue=""><option value="">Pilih tipe kontrak</option><option value="Tetap">Tetap</option><option value="Kontrak">Kontrak</option><option value="Magang">Magang</option><option value="Harian Lepas">Harian Lepas</option></select></Field>
       <AttendanceLocationPicker locations={locations}/>
     </div></div>
