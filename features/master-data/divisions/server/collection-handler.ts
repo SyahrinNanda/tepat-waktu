@@ -1,27 +1,29 @@
+import { asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { db } from "@/db";
-import { divisions } from "@/db/schema";
+import { jobPositions } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
-import { divisionBodySchema, listDivisionsWithSchedules, replaceDivisionSchedules, schedulesBelongToCompany } from "@/features/master-data/divisions/server/division-schedules";
+
+const inputSchema = z.object({ name: z.string().trim().min(2).max(100), active: z.boolean().default(true) });
 
 export async function GET(request: Request) {
-  const context = await featureContext(request, "master/divisi", "read"); if ("error" in context) return context.error;
-  return Response.json({ rows: await listDivisionsWithSchedules(context.companyId) });
+  const context = await featureContext(request, "master/jabatan", "read");
+  if ("error" in context) return context.error;
+  const rows = await db.select().from(jobPositions).where(eq(jobPositions.companyId, context.companyId)).orderBy(asc(jobPositions.name));
+  return Response.json({ rows });
 }
 
 export async function POST(request: Request) {
-  const context = await featureContext(request, "master/divisi", "write"); if ("error" in context) return context.error;
-  const parsed = divisionBodySchema.safeParse(await request.json().catch(() => null)); if (!parsed.success) return Response.json({ error: "Nama dan minimal satu jadwal kerja wajib diisi." }, { status: 400 });
-  const { scheduleIds, ...values } = parsed.data;
-  if (!(await schedulesBelongToCompany(context.companyId, scheduleIds))) return Response.json({ error: "Jadwal kerja tidak ditemukan." }, { status: 404 });
+  const context = await featureContext(request, "master/jabatan", "write");
+  if ("error" in context) return context.error;
+  const parsed = inputSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return Response.json({ error: "Nama jabatan wajib diisi minimal 2 karakter." }, { status: 400 });
   try {
-    const id = await db.transaction(async (tx) => {
-      const [row] = await tx.insert(divisions).values({ companyId: context.companyId, ...values, scheduleId: scheduleIds[0] }).returning({ id: divisions.id });
-      await replaceDivisionSchedules(tx, row.id, scheduleIds);
-      return row.id;
-    });
-    revalidatePath("/dashboard/master/divisi");
-    const [row] = await listDivisionsWithSchedules(context.companyId, id);
-    return Response.json({ row }, { status: 201 });
-  } catch { return Response.json({ error: "Nama divisi sudah digunakan." }, { status: 409 }); }
+    const [row] = await db.insert(jobPositions).values({ companyId: context.companyId, ...parsed.data }).returning();
+    revalidatePath("/dashboard/master/jabatan");
+    return Response.json({ row: { ...row, employeeCount: 0 } }, { status: 201 });
+  } catch {
+    return Response.json({ error: "Nama jabatan sudah digunakan." }, { status: 409 });
+  }
 }
