@@ -52,7 +52,7 @@ export async function resetUserPassword(formData: FormData) {
 
     await db.insert(account).values({
       id: crypto.randomUUID(),
-      accountId: targetUser.email,
+      accountId: userId,
       providerId: "credential",
       userId,
       password: hashedPassword,

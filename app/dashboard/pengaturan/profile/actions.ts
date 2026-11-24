@@ -62,7 +62,7 @@ export async function updateUserProfile(input: {
         .where(eq(user.id, context.session.user.id));
       await tx
         .update(account)
-        .set({ accountId: email, updatedAt: new Date() })
+        .set({ accountId: context.session.user.id, updatedAt: new Date() })
         .where(and(eq(account.userId, context.session.user.id), eq(account.providerId, "credential")));
     });
 
