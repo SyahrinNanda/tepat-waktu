@@ -16,6 +16,7 @@ export async function GET(request: Request) {
       params.get("from") || undefined,
       params.get("to") || undefined,
       scope.employeeId,
+      scope.employeeFilter,
     );
     return new Response(Buffer.from(bytes), {
       headers: {

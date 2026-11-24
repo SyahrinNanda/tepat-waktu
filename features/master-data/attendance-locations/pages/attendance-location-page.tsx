@@ -7,7 +7,7 @@ import { requireCompanyRole } from "@/lib/current-company";
 
 export const metadata: Metadata = { title: "Daftar Lokasi Kerja" };
 export default async function Page() {
-  const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
+  const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
   const rows = await db.select().from(attendanceLocations).where(eq(attendanceLocations.companyId, context.companyId)).orderBy(asc(attendanceLocations.name));
   return <AttendanceLocationManager initialRows={rows} canManage={["admin", "general_manager", "hrd"].includes(context.role)}/>;
 }

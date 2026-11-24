@@ -1,5 +1,10 @@
 export type DeviceKind = "mobile" | "tablet" | "desktop" | "unknown";
 export type ParsedDevice = { kind: DeviceKind; name: string; browser: string };
+/** One device of an employee: active login sessions and/or devices used for check-in. */
+export type EmployeeDeviceRow = {
+  key: string; kind: DeviceKind; name: string; browser: string; lastUsed: string; lastIp: string | null;
+  attendanceCount: number; lastAttendance: string | null; sessionIds: string[];
+};
 
 /** Readable device from a browser user agent: "Android 14 · Pixel 8", "iPhone · iOS 18.5", "Windows 10/11"... */
 export function parseUserAgent(userAgent: string | null | undefined): ParsedDevice {

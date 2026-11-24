@@ -1,6 +1,7 @@
 "use server";
 
 import { createHash, randomUUID } from "node:crypto";
+import { leaveLabel, pushToEmployees, verdictLabel } from "@/features/notifications/server/push";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Route } from "next";
 import { revalidatePath } from "next/cache";
@@ -265,7 +266,8 @@ export async function createLeaveRequest(form: FormData) {
 export async function reviewLeave(form: FormData) {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
   const parsed = z.object({ id: z.uuid(), status: z.enum(["approved", "rejected"]) }).parse(Object.fromEntries(form));
-  await db.update(leaveRequests).set({ status: parsed.status, reviewedAt: new Date(), reviewedBy: context.session.user.id }).where(and(eq(leaveRequests.id, parsed.id), eq(leaveRequests.companyId, context.companyId)));
+  const [reviewed] = await db.update(leaveRequests).set({ status: parsed.status, reviewedAt: new Date(), reviewedBy: context.session.user.id }).where(and(eq(leaveRequests.id, parsed.id), eq(leaveRequests.companyId, context.companyId))).returning({ employeeId: leaveRequests.employeeId, type: leaveRequests.type, specialLeaveName: leaveRequests.specialLeaveName });
+  if (reviewed) pushToEmployees(context.companyId, [reviewed.employeeId], { title: `Pengajuan ${leaveLabel(reviewed.type, reviewed.specialLeaveName)} Anda ${verdictLabel(parsed.status)}`, body: "Ketuk untuk melihat detail.", href: `/pengajuan/izin-cuti/${parsed.id}` });
   revalidatePath("/dashboard/pengajuan");
   revalidatePath("/dashboard/pengajuan/izin-cuti");
   revalidatePath(`/dashboard/pengajuan/izin-cuti/${parsed.id}`);

@@ -38,6 +38,8 @@ type Props = {
   positions: PositionOption[];
   shifts: ShiftOption[];
   summaries: MonthlyEmployeeSummary[];
+  /** Admin, GM, HRD: export and import. Manager only views. */
+  canManage?: boolean;
 };
 
 const MONTH_NAMES = [
@@ -66,6 +68,7 @@ export function MonthlyAttendanceManager({
   positions,
   shifts,
   summaries,
+  canManage = false,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -317,7 +320,7 @@ export function MonthlyAttendanceManager({
           </button>
 
           {/* Right Action: Menu `...` matching Gambar 1 & Gambar 2 */}
-          <div className="monthly-toolbar-right" ref={moreMenuRef}>
+          {canManage ? <div className="monthly-toolbar-right" ref={moreMenuRef}>
             <button
               type="button"
               className="monthly-more-btn"
@@ -355,7 +358,7 @@ export function MonthlyAttendanceManager({
                 </button>
               </div>
             ) : null}
-          </div>
+          </div> : null}
         </div>
 
         {/* ROW 2: Dropdowns Lokasi, Jabatan, Jadwal Kerja matching Gambar 1 */}

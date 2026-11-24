@@ -4,6 +4,8 @@ import { CalendarClock, CheckCircle2, Clock3, Users } from "lucide-react";
 import { db } from "@/db";
 import { attendances, employees, leaveRequests } from "@/db/schema";
 import { dateInTimeZone, requireCompany } from "@/lib/current-company";
+import { getAppSettings } from "@/features/access/app-settings";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 import { StatusBadge } from "@/components/status-badge";
 import { EmployeeDashboard } from "@/features/attendance/components/employee-dashboard";
 import { MonitorSection } from "@/features/monitor/pages/monitor-page";
@@ -41,15 +43,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     )).limit(1) : [];
     personalAttendance = attendance ?? null;
   }
+  // Admin, GM, HRD: the company. Manager: their Divisi. Staff: only themselves.
+  const scope = await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role });
+  const scopeFilter = employeeScopeFilter(scope);
   const [[total], [present], [late], [pending], recent] = await Promise.all([
-    db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))),
-    db.select({ value: count() }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today), eq(attendances.status, "present"))),
-    db.select({ value: count() }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today), eq(attendances.status, "late"))),
-    db.select({ value: count() }).from(leaveRequests).where(and(eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.status, "pending"))),
+    db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"), scopeFilter)),
+    db.select({ value: count() }).from(attendances).innerJoin(employees, eq(attendances.employeeId, employees.id)).where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today), eq(attendances.status, "present"), scopeFilter)),
+    db.select({ value: count() }).from(attendances).innerJoin(employees, eq(attendances.employeeId, employees.id)).where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today), eq(attendances.status, "late"), scopeFilter)),
+    db.select({ value: count() }).from(leaveRequests).innerJoin(employees, eq(leaveRequests.employeeId, employees.id)).where(and(eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.status, "pending"), scopeFilter)),
     db.select({ id: attendances.id, name: employees.name, position: employees.position, checkIn: attendances.checkIn, status: attendances.status })
       .from(attendances).innerJoin(employees, eq(attendances.employeeId, employees.id))
-      .where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today))).orderBy(desc(attendances.createdAt)).limit(6),
+      .where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, today), scopeFilter)).orderBy(desc(attendances.createdAt)).limit(6),
   ]);
+  const appSettings = await getAppSettings(context.companyId);
+  const firstName = context.session.user.name.split(" ")[0];
   const recorded = Number(present.value) + Number(late.value);
   const rate = Number(total.value) ? Math.round((recorded / Number(total.value)) * 100) : 0;
 
@@ -62,7 +69,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         initialAttendance={personalAttendance}
         display="notice"
       /> : null}
-      <div className="page-heading"><div><h1>Selamat datang, {context.session.user.name.split(" ")[0]} 👋</h1><p>Berikut ringkasan kehadiran tim Anda hari ini.</p></div><span className="badge blue">{new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeZone: context.timezone }).format(new Date())}</span></div>
+      <div className="page-heading"><div><h1>{appSettings.greeting ? appSettings.greeting.replaceAll("$nama", firstName) : `Selamat datang, ${firstName} 👋`}</h1><p>{appSettings.quote ?? "Berikut ringkasan kehadiran tim Anda hari ini."}</p></div><span className="badge blue">{new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeZone: context.timezone }).format(new Date())}</span></div>
       <section className="stats-grid">
         <Stat icon={<Users size={19} />} tone="blue" label="Karyawan aktif" value={Number(total.value)} meta="Terdaftar di ruang kerja" />
         <Stat icon={<CheckCircle2 size={19} />} tone="green" label="Hadir hari ini" value={Number(present.value)} meta={`${rate}% dari total karyawan`} />
@@ -79,7 +86,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="progress-row"><div className="progress-copy"><span>Terlambat</span><strong>{Number(late.value)}</strong></div><div className="progress"><i style={{ width: `${Number(total.value) ? Number(late.value)/Number(total.value)*100 : 0}%`, background: "var(--orange)" }} /></div></div>
         </div>
       </section>
-      {context.role !== "employee" ? <MonitorSection context={context} params={params} /> : null}
+      {context.role !== "employee" ? <MonitorSection context={context} params={params} employeeFilter={scopeFilter} limited={scope.kind === "team"} /> : null}
     </>
   );
 }

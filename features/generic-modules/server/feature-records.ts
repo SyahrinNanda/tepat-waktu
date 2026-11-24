@@ -3,6 +3,7 @@ import { getAppSession } from "@/lib/app-session";
 import { db } from "@/db";
 import { companies, companyMembers, featureRecords, user } from "@/db/schema";
 import { canManageFeature, canReadFeature, canWriteFeature, isFeatureModule } from "@/features/generic-modules/config/feature-modules";
+import { MENU_DISABLED_MESSAGE, moduleBlocked } from "@/features/access/app-settings";
 import { selectedCompanyFromRequest } from "@/lib/selected-company";
 import { subscriptionBlock } from "@/features/subscriptions/server/subscription-status";
 
@@ -24,6 +25,7 @@ export async function featureContext(request: Request, module: string, operation
   if (!allowed) return { error: Response.json({ error: "Tidak memiliki akses ke fitur ini." }, { status: 403 }) } as const;
   const blocked = await subscriptionBlock(membership.companyId);
   if (blocked) return { error: blocked } as const;
+  if (await moduleBlocked(membership.companyId, membership.role, module)) return { error: Response.json({ error: MENU_DISABLED_MESSAGE }, { status: 403 }) } as const;
   return { module, companyId: membership.companyId, role: membership.role, userId: session.user.id, userName: session.user.name, isSuperAdmin: false } as const;
 }
 

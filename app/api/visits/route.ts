@@ -4,7 +4,8 @@ import { z } from "zod";
 import { db } from "@/db";
 import { companies, employees } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
-import { createVisit, listVisits } from "@/features/visits/server/visit-service";
+import { createVisit, listVisits, visitScope } from "@/features/visits/server/visit-service";
+import { managerCanSeeEmployee } from "@/features/access/team-scope";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,8 @@ export async function GET(request: Request) {
     ownEmployeeId = await ownEmployee(context.companyId, context.userId);
     if (!ownEmployeeId) return Response.json({ rows: [] });
   }
-  return Response.json({ rows: await listVisits(context.companyId, params.get("from") || undefined, params.get("to") || undefined, ownEmployeeId) });
+  const scope = await visitScope(context);
+  return Response.json({ rows: await listVisits(context.companyId, params.get("from") || undefined, params.get("to") || undefined, ownEmployeeId, scope?.employeeFilter) });
 }
 
 export async function POST(request: Request) {
@@ -50,6 +52,11 @@ export async function POST(request: Request) {
   // Staff (role "employee") may only record visits for themselves.
   if (context.role === "employee" && parsed.data.employeeId !== await ownEmployee(context.companyId, context.userId)) {
     return Response.json({ error: "Anda hanya dapat mencatat kunjungan untuk diri sendiri." }, { status: 403 });
+  }
+
+  // A manager records visits only for their own Divisi.
+  if (context.role === "manager" && !(await managerCanSeeEmployee(context.companyId, context.userId, parsed.data.employeeId))) {
+    return Response.json({ error: "Anda hanya dapat mencatat kunjungan untuk karyawan di divisi Anda." }, { status: 403 });
   }
 
   // Handle selfie

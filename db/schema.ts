@@ -1106,3 +1106,13 @@ export const notificationReads = pgTable("notification_reads", {
   userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
   seenAt: timestamp("seen_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/** Expo push tokens of the mobile app, one row per installed device (a user may have several). */
+export const pushTokens = pgTable("push_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  platform: text("platform").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("push_tokens_user_idx").on(table.userId)]);

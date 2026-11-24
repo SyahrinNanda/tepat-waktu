@@ -124,8 +124,8 @@ export async function attendanceManagerContext(request: Request, requestedCompan
     .innerJoin(companies, eq(companyMembers.companyId, companies.id))
     .where(conditions)
     .limit(1);
-  if (!membership || !["admin", "owner"].includes(membership.role)) {
-    throw new AttendanceError("Hanya Admin Perusahaan yang dapat menambahkan kehadiran karyawan lain.", 403);
+  if (!membership || !["admin", "owner", "general_manager", "hrd"].includes(membership.role)) {
+    throw new AttendanceError("Hanya Admin, General Manager, dan HRD yang dapat mengelola kehadiran karyawan.", 403);
   }
   await assertSubscriptionActive(membership.companyId);
   return { ...actor, ...membership, source: "admin" as const };

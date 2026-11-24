@@ -5,6 +5,8 @@ import { employeeDocuments, employees, leaveRequests } from "@/db/schema";
 import { LeaveReportManager, type LeaveReportRow, type LeaveTally } from "@/features/leave-reports/components/leave-report-manager";
 import { annualLeaveBalances, getLeaveRules, workDayCounter } from "@/features/leave-requests/server/annual-balance";
 import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 
 export const metadata: Metadata = { title: "Laporan Cuti Karyawan" };
 
@@ -12,6 +14,7 @@ const isDate = (value?: string) => Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(v
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
+  await requireMenus(context, ["menuLaporan"]);
   const query = await searchParams;
   const today = dateInTimeZone(context.timezone);
   // Rekap period: from–to of the filter (default: this calendar year).
@@ -19,10 +22,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   if (from > to) [from, to] = [to, from];
 
   const counter = workDayCounter(context.companyId);
+  const scopeFilter = employeeScopeFilter(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }));
   const [team, rules, balances, requests] = await Promise.all([
     db.select({ id: employees.id, employeeCode: employees.employeeCode, name: employees.name, email: employees.email, position: employees.position, department: employees.department, status: employees.status, joinedAt: employees.joinedAt, photoAssetId: employeeDocuments.assetId })
       .from(employees).leftJoin(employeeDocuments, and(eq(employeeDocuments.employeeId, employees.id), eq(employeeDocuments.kind, "profile_photo")))
-      .where(eq(employees.companyId, context.companyId)).orderBy(asc(employees.name)),
+      .where(and(eq(employees.companyId, context.companyId), scopeFilter)).orderBy(asc(employees.name)),
     getLeaveRules(context.companyId),
     annualLeaveBalances(context.companyId, today, { counter }),
     // Approved requests overlapping the rekap period.

@@ -7,6 +7,7 @@ import { employeeDocuments, employees } from "@/db/schema";
 import { EmployeeListTable } from "@/features/employees/components/employee-list-table";
 import { employeeAccountStatuses } from "@/features/invitations/server/employee-account";
 import { requireCompanyRole } from "@/lib/current-company";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 
 export const metadata: Metadata = { title: "Daftar Karyawan" };
 type Props = { searchParams: Promise<{ q?: string; status?: string }> };
@@ -16,6 +17,7 @@ export default async function Page({ searchParams }: Props) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
   const status = params.status === "active" || params.status === "inactive" ? params.status : undefined;
+  const scope = await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role });
   const rows = await db.select({
     id: employees.id, employeeCode: employees.employeeCode, name: employees.name, email: employees.email,
     position: employees.position, department: employees.department, status: employees.status,
@@ -26,6 +28,7 @@ export default async function Page({ searchParams }: Props) {
     .leftJoin(employeeDocuments, and(eq(employeeDocuments.employeeId, employees.id), eq(employeeDocuments.kind, "profile_photo")))
     .where(and(
       eq(employees.companyId, context.companyId),
+      employeeScopeFilter(scope),
       status ? eq(employees.status, status) : undefined,
       query ? or(ilike(employees.name, `%${query}%`), ilike(employees.email, `%${query}%`), ilike(employees.employeeCode, `%${query}%`), ilike(employees.position, `%${query}%`)) : undefined,
     )).orderBy(asc(employees.name));

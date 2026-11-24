@@ -41,6 +41,8 @@ type NavItem = {
   label: string;
   icon?: React.ComponentType<{ size?: number; strokeWidth?: number }>;
   roles?: CompanyRole[];
+  /** Hidden when the Admin switches one of these off (Pengaturan Aplikasi). */
+  menus?: string[];
 };
 
 type CompanyRole = "admin" | "general_manager" | "hrd" | "manager" | "employee";
@@ -84,7 +86,7 @@ const groups: NavGroup[] = [
       { href: "/dashboard/karyawan/slip-gaji", label: "Slip Gaji", roles: hrRoles },
       // Admin/superadmin only set payslips up; everyone else reads their own.
       { href: "/dashboard/karyawan/slip-gaji-saya", label: "Slip Gaji Saya", roles: ["general_manager", "hrd", "manager", "employee"] },
-      { href: "/dashboard/karyawan/laporan-cuti", label: "Laporan Cuti", roles: managementRoles },
+      { href: "/dashboard/karyawan/laporan-cuti", label: "Laporan Cuti", roles: managementRoles, menus: ["menuLaporan"] },
       { href: "/dashboard/karyawan/keluhan", label: "Keluhan Karyawan" },
     ],
   },
@@ -93,8 +95,8 @@ const groups: NavGroup[] = [
     icon: ClipboardList,
     base: "/dashboard/pengajuan",
     children: [
-      { href: "/dashboard/pengajuan/izin-cuti", label: "Izin / Cuti" },
-      { href: "/dashboard/pengajuan/lembur", label: "Lembur" },
+      { href: "/dashboard/pengajuan/izin-cuti", label: "Izin / Cuti", menus: ["menuIzin"] },
+      { href: "/dashboard/pengajuan/lembur", label: "Lembur", menus: ["menuLembur"] },
     ],
   },
   {
@@ -105,7 +107,7 @@ const groups: NavGroup[] = [
       { href: "/dashboard/presensi/check-in", label: "Check-in / Check-out", roles: ["general_manager", "hrd", "manager", "employee"] },
       { href: "/dashboard/presensi/harian", label: "Kehadiran", roles: managementRoles },
       { href: "/dashboard/presensi/riwayat", label: "Riwayat", roles: ["admin", "general_manager", "hrd", "manager", "employee"] },
-      { href: "/dashboard/presensi/bulanan", label: "Laporan Bulanan", roles: managementRoles },
+      { href: "/dashboard/presensi/bulanan", label: "Laporan Bulanan", roles: managementRoles, menus: ["menuLaporan"] },
     ],
   },
   {
@@ -113,8 +115,8 @@ const groups: NavGroup[] = [
     icon: MapPinned,
     base: "/dashboard/kunjungan",
     children: [
-      { href: "/dashboard/kunjungan", label: "Daftar Kunjungan" },
-      { href: "/dashboard/kunjungan/laporan", label: "Laporan Kunjungan" },
+      { href: "/dashboard/kunjungan", label: "Daftar Kunjungan", menus: ["menuKunjungan"] },
+      { href: "/dashboard/kunjungan/laporan", label: "Laporan Kunjungan", menus: ["menuKunjungan", "menuLaporan"] },
     ],
   },
   {
@@ -143,6 +145,7 @@ export function DashboardShell({
   isSuperAdmin = false,
   subscription,
   announcements = [],
+  disabledMenus = [],
 }: {
   children: React.ReactNode;
   userName: string;
@@ -152,13 +155,14 @@ export function DashboardShell({
   isSuperAdmin?: boolean;
   subscription?: SubscriptionAlertInput;
   announcements?: TenantAnnouncement[];
+  disabledMenus?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const normalizedRole = (role === "owner" ? "admin" : role) as CompanyRole;
   const canRenew = isSuperAdmin || normalizedRole === "admin";
-  const canAccess = (item: NavItem) => !item.roles || item.roles.includes(normalizedRole);
+  const canAccess = (item: NavItem) => (!item.roles || item.roles.includes(normalizedRole)) && !item.menus?.some((menu) => disabledMenus.includes(menu));
   const roleLabels: Record<CompanyRole, string> = {
     admin: "Admin Perusahaan",
     general_manager: "General Manager",

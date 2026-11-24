@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, lt, sql, type SQL } from "drizzle-orm";
 import { BarChart3, CheckCircle2, Clock3, RotateCcw, Users } from "lucide-react";
 import { db } from "@/db";
 import { attendances, companies, employees, subscriptionPlans } from "@/db/schema";
 import { dateInTimeZone } from "@/lib/current-company";
 
 type MonitorContext = { companyId: string; timezone: string; plan: string };
-type Props = { context: MonitorContext; params: { year?: string; month?: string } };
+type Props = { context: MonitorContext; params: { year?: string; month?: string }; employeeFilter?: SQL; limited?: boolean };
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
 // Rendered at the bottom of /dashboard for management roles (formerly the Monitor Perusahaan page).
-export async function MonitorSection({ context, params }: Props) {
+export async function MonitorSection({ context, params, employeeFilter, limited = false }: Props) {
   const today = dateInTimeZone(context.timezone);
   const currentYear = Number(today.slice(0, 4));
   const year = /^20\d{2}$/.test(params.year ?? "") ? Number(params.year) : currentYear;
@@ -18,14 +18,14 @@ export async function MonitorSection({ context, params }: Props) {
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
   const next = new Date(Date.UTC(year, month, 1));
   const endDate = next.toISOString().slice(0, 10);
-  const attendanceFilter = and(eq(attendances.companyId, context.companyId), gte(attendances.attendanceDate, startDate), lt(attendances.attendanceDate, endDate));
+  const attendanceFilter = and(eq(attendances.companyId, context.companyId), gte(attendances.attendanceDate, startDate), lt(attendances.attendanceDate, endDate), employeeFilter);
 
   const [[team], byStatus, topLate, topOnTime, genders, [plan]] = await Promise.all([
-    db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))),
-    db.select({ status: attendances.status, value: count() }).from(attendances).where(attendanceFilter).groupBy(attendances.status),
-    rankedEmployees(context.companyId, startDate, endDate, "late"),
-    rankedEmployees(context.companyId, startDate, endDate, "present"),
-    db.select({ gender: employees.gender, value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))).groupBy(employees.gender),
+    db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"), employeeFilter)),
+    db.select({ status: attendances.status, value: count() }).from(attendances).innerJoin(employees, eq(attendances.employeeId, employees.id)).where(attendanceFilter).groupBy(attendances.status),
+    rankedEmployees(context.companyId, startDate, endDate, "late", employeeFilter),
+    rankedEmployees(context.companyId, startDate, endDate, "present", employeeFilter),
+    db.select({ gender: employees.gender, value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"), employeeFilter)).groupBy(employees.gender),
     db.select({ name: subscriptionPlans.name, maxEmployees: subscriptionPlans.maxEmployees }).from(companies).leftJoin(subscriptionPlans, eq(companies.plan, subscriptionPlans.code)).where(eq(companies.id, context.companyId)).limit(1),
   ]);
   const status = Object.fromEntries(byStatus.map((item) => [item.status, Number(item.value)]));
@@ -37,26 +37,26 @@ export async function MonitorSection({ context, params }: Props) {
   const years = Array.from({ length: Math.max(currentYear - 2023 + 1, 1) }, (_, index) => currentYear - index);
 
   return <section className="dashboard-monitor" id="monitor">
-    <div className="dashboard-monitor-head"><div><span>Analitik periode</span><h2>Monitor Perusahaan</h2></div>
+    <div className="dashboard-monitor-head"><div><span>Analitik periode</span><h2>{limited ? "Monitor Divisi" : "Monitor Perusahaan"}</h2></div>
     <form className="monitor-global-filter" action="/dashboard#monitor"><select name="year" defaultValue={year}>{years.map((item) => <option key={item}>{item}</option>)}</select><select name="month" defaultValue={month}>{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select><button type="submit">Terapkan</button><Link href="/dashboard#monitor" aria-label="Reset filter"><RotateCcw size={15} /></Link></form></div>
     <div className="monitor-layout"><main className="monitor-main">
-      <ReportCard icon={<BarChart3 size={17} />} tone="blue" title="Laporan Absen Semua Karyawan" year={year} month={month}>
+      <ReportCard icon={<BarChart3 size={17} />} tone="blue" title={limited ? "Laporan Absen Karyawan Divisi" : "Laporan Absen Semua Karyawan"} year={year} month={month}>
         <div className="monitor-kpis"><Kpi label="Total Karyawan" value={active} tone="blue" /><Kpi label="Tepat Waktu" value={status.present ?? 0} tone="green" /><Kpi label="Terlambat" value={status.late ?? 0} tone="red" /><Kpi label="Izin" value={status.leave ?? 0} tone="orange" /></div>
         <div className="monitor-attendance-summary"><div><strong>{(status.present ?? 0) + (status.late ?? 0)}</strong><span>Kehadiran masuk tercatat</span></div><div><strong>{status.absent ?? 0}</strong><span>Tidak hadir</span></div><div><strong>{status.leave ?? 0}</strong><span>Izin / cuti</span></div></div>
       </ReportCard>
       <ReportCard icon={<Clock3 size={17} />} tone="red" title="Laporan 5 Karyawan Terlambat Teratas" year={year} month={month}><Ranking rows={topLate} empty="Belum ada keterlambatan pada periode ini." tone="red" /></ReportCard>
       <ReportCard icon={<CheckCircle2 size={17} />} tone="green" title="Laporan 5 Karyawan Tepat Waktu Teratas" year={year} month={month}><Ranking rows={topOnTime} empty="Belum ada kehadiran tepat waktu pada periode ini." tone="green" /></ReportCard>
     </main><aside className="monitor-side">
-      <section className="monitor-side-card"><h2><i className="blue" />Laporan Limit Karyawan</h2><div className="limit-ring" style={{ "--usage": usage } as React.CSSProperties}><div><strong>{active}</strong><span>dari {maxEmployees}</span></div></div><div className="limit-copy"><span>Karyawan Terpakai</span><b>{active} / {maxEmployees}</b></div><div className="monitor-progress"><i style={{ width: `${usage}%` }} /></div><small>Paket {plan?.name ?? context.plan}</small></section>
+      {!limited && <section className="monitor-side-card"><h2><i className="blue" />Laporan Limit Karyawan</h2><div className="limit-ring" style={{ "--usage": usage } as React.CSSProperties}><div><strong>{active}</strong><span>dari {maxEmployees}</span></div></div><div className="limit-copy"><span>Karyawan Terpakai</span><b>{active} / {maxEmployees}</b></div><div className="monitor-progress"><i style={{ width: `${usage}%` }} /></div><small>Paket {plan?.name ?? context.plan}</small></section>}
       <section className="monitor-side-card"><h2><i className="orange" />Perbandingan Jenis Kelamin</h2><div className="gender-graphic"><Users size={31} /><strong>{knownGender}</strong><span>data terisi</span></div><GenderBar label="Laki-laki" value={male} total={knownGender} tone="blue" /><GenderBar label="Perempuan" value={female} total={knownGender} tone="pink" />{knownGender < active ? <small>{active - knownGender} profil belum mengisi jenis kelamin.</small> : null}</section>
     </aside></div>
   </section>;
 }
 
-function rankedEmployees(companyId: string, start: string, end: string, status: "late" | "present") {
+function rankedEmployees(companyId: string, start: string, end: string, status: "late" | "present", employeeFilter?: SQL) {
   return db.select({ id: employees.id, name: employees.name, position: employees.position, value: sql<number>`count(${attendances.id})::int` }).from(attendances)
     .innerJoin(employees, eq(attendances.employeeId, employees.id))
-    .where(and(eq(attendances.companyId, companyId), gte(attendances.attendanceDate, start), lt(attendances.attendanceDate, end), eq(attendances.status, status)))
+    .where(and(eq(attendances.companyId, companyId), gte(attendances.attendanceDate, start), lt(attendances.attendanceDate, end), eq(attendances.status, status), employeeFilter))
     .groupBy(employees.id, employees.name, employees.position).orderBy(desc(sql`count(${attendances.id})`)).limit(5);
 }
 function ReportCard({ icon, tone, title, children }: { icon: React.ReactNode; tone: string; title: string; year: number; month: number; children: React.ReactNode }) { return <section className="monitor-report-card"><header><span className={`monitor-report-icon ${tone}`}>{icon}</span><h2>{title}</h2></header>{children}</section>; }

@@ -4,20 +4,24 @@ import { BarChart3, CalendarCheck, Clock3, UserRoundX } from "lucide-react";
 import { db } from "@/db";
 import { attendances, employees } from "@/db/schema";
 import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 
 export const metadata: Metadata = { title: "Laporan" };
 
 export default async function ReportsPage() {
   // Company-wide figures: management only, like the other report pages.
   const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
+  await requireMenus(context, ["menuLaporan"]);
   const today = dateInTimeZone(context.timezone);
   // 30-day window ending today in the company zone; plain calendar math, no fixed UTC offset.
   const start = new Date(`${today}T00:00:00Z`); start.setUTCDate(start.getUTCDate() - 29);
   const startDate = start.toISOString().slice(0, 10);
+  const scopeFilter = employeeScopeFilter(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }));
   const [byStatus, [active], byPosition] = await Promise.all([
-    db.select({ status: attendances.status, value: count() }).from(attendances).where(and(eq(attendances.companyId, context.companyId), gte(attendances.attendanceDate, startDate))).groupBy(attendances.status),
-    db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))),
-    db.select({ position: employees.position, value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"))).groupBy(employees.position).orderBy(sql`count(*) desc`),
+    db.select({ status: attendances.status, value: count() }).from(attendances).innerJoin(employees, eq(attendances.employeeId, employees.id)).where(and(eq(attendances.companyId, context.companyId), gte(attendances.attendanceDate, startDate), scopeFilter)).groupBy(attendances.status),
+    db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"), scopeFilter)),
+    db.select({ position: employees.position, value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"), scopeFilter)).groupBy(employees.position).orderBy(sql`count(*) desc`),
   ]);
   const stats = Object.fromEntries(byStatus.map((row) => [row.status, Number(row.value)]));
   const totalRecords = byStatus.reduce((sum, row) => sum + Number(row.value), 0);

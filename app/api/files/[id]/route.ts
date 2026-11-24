@@ -5,6 +5,7 @@ import { companyMembers, employees, fileAssets } from "@/db/schema";
 import { AttendanceError, authenticatedActor } from "@/features/attendance/server/attendance-service";
 import { getPrivateObject } from "@/lib/object-storage";
 import { getSubscriptionStatus, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/features/subscriptions/server/subscription-status";
+import { managerCanSeeEmployee } from "@/features/access/team-scope";
 
 export const runtime = "nodejs";
 
@@ -29,8 +30,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       if (!["admin", "owner"].includes(membership.role) && asset.uploadedBy !== actor.userId) {
         const [employee] = await db.select({ id: employees.id }).from(employees).where(and(eq(employees.companyId, asset.companyId), eq(employees.userId, actor.userId))).limit(1);
         const canReviewDocument = asset.category === "employee_document" && ["general_manager", "hrd"].includes(membership.role);
-        const canReviewVisit = asset.category === "visit_attachment" && ["general_manager", "hrd", "manager"].includes(membership.role);
-        if (!canReviewDocument && !canReviewVisit && (!employee || employee.id !== asset.ownerEmployeeId)) throw new AttendanceError("Anda tidak memiliki akses ke file ini.", 403);
+        const managerOfOwner = membership.role === "manager" && ["visit_attachment", "attendance_photo"].includes(asset.category) && await managerCanSeeEmployee(asset.companyId, actor.userId, asset.ownerEmployeeId);
+        const canReviewVisit = asset.category === "visit_attachment" && (["general_manager", "hrd"].includes(membership.role) || managerOfOwner);
+        // Supervisors see the team's attendance records (web daily monitor, mobile team screen), so they need the proof photos too.
+        const canReviewAttendance = asset.category === "attendance_photo" && (["general_manager", "hrd"].includes(membership.role) || managerOfOwner);
+        if (!canReviewDocument && !canReviewVisit && !canReviewAttendance &&(!employee || employee.id !== asset.ownerEmployeeId)) throw new AttendanceError("Anda tidak memiliki akses ke file ini.", 403);
       }
     }
 

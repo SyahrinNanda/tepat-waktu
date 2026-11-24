@@ -7,6 +7,8 @@ import { featureContext } from "@/features/generic-modules/server/feature-record
 import { ATTACHMENT_INVALID, claimRequestAttachment } from "@/features/employee-requests/server/request-attachment";
 import { leaveInputSchema, resolveLeavePaid, reviewerRoles } from "./schemas";
 import { resolveLeaveRules } from "./resolve-leave";
+import { leaveLabel, pushToEmployees, pushToReviewers, verdictLabel } from "@/features/notifications/server/push";
+const shortDate = (value: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
 
 export async function GET(request: Request) {
   const context = await featureContext(request, "pengajuan/izin-cuti", "read");
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
   if (!attachment) return Response.json({ error: ATTACHMENT_INVALID }, { status: 400 });
   const [created] = await db.insert(leaveRequests).values({ companyId: context.companyId, ...input, ...special.values, paid: resolveLeavePaid(input, canReview, special.paid), attachmentAssetId: attachment.id }).returning();
   revalidatePaths();
+  pushToReviewers(context.companyId, employee.userId, { title: `Pengajuan ${leaveLabel(created.type, created.specialLeaveName)} baru`, body: `${employee.name} · ${shortDate(created.startDate)}${created.endDate !== created.startDate ? `–${shortDate(created.endDate)}` : ""} · menunggu persetujuan`, href: `/pengajuan/izin-cuti/${created.id}` });
   return Response.json({ row: { ...created, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, attachmentName: attachment.name } }, { status: 201 });
 }
 
@@ -44,9 +47,10 @@ export async function PATCH(request: Request) {
   const parsed = z.object({ ids: z.array(z.uuid()).min(1).max(200), status: z.enum(["approved", "rejected"]) }).safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Pilih pengajuan dan keputusan yang valid." }, { status: 400 });
   const rows = await db.update(leaveRequests).set({ status: parsed.data.status, reviewedBy: context.userId, reviewedAt: new Date() })
-    .where(and(eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.status, "pending"), inArray(leaveRequests.id, parsed.data.ids))).returning({ id: leaveRequests.id, status: leaveRequests.status });
+    .where(and(eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.status, "pending"), inArray(leaveRequests.id, parsed.data.ids))).returning({ id: leaveRequests.id, status: leaveRequests.status, employeeId: leaveRequests.employeeId, type: leaveRequests.type, specialLeaveName: leaveRequests.specialLeaveName, startDate: leaveRequests.startDate });
   revalidatePaths();
-  return Response.json({ rows });
+  for (const row of rows) pushToEmployees(context.companyId, [row.employeeId], { title: `Pengajuan ${leaveLabel(row.type, row.specialLeaveName)} Anda ${verdictLabel(row.status)}`, body: `Mulai ${shortDate(row.startDate)}. Ketuk untuk melihat detail.`, href: `/pengajuan/izin-cuti/${row.id}` });
+  return Response.json({ rows: rows.map(({ id, status }) => ({ id, status })) });
 }
 
 function revalidatePaths() {

@@ -4,16 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
-import { and, asc, desc, eq, gt, gte, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { UserRound } from "lucide-react";
 import { db } from "@/db";
-import { attendanceEvents, attendances, employeeContracts, employeeDocuments, employees, leaveRequests, overtimeRequests, session, user, visitAttachments, visitLocations, visits } from "@/db/schema";
+import { attendances, employeeContracts, employeeDocuments, employees, leaveRequests, overtimeRequests, user, visitAttachments, visitLocations, visits } from "@/db/schema";
 import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
+import { accessScope, employeeInScope } from "@/features/access/team-scope";
 import { EmployeeContracts } from "@/features/employees/components/employee-contracts";
 import { EmployeeVisits } from "@/features/employees/components/employee-visits";
 import { EmployeeOvertime } from "@/features/employees/components/employee-overtime";
-import { EmployeeDevices, type EmployeeDeviceRow } from "@/features/employees/components/employee-devices";
-import { parseUserAgent } from "@/features/employees/devices";
+import { EmployeeDevices } from "@/features/employees/components/employee-devices";
+import { employeeDevices } from "@/features/employees/server/device-service";
 import { employeeAccountStatuses } from "@/features/invitations/server/employee-account";
 import { employeeAccountMessage } from "@/features/invitations/account-messages";
 import { EmployeeAccountCard } from "@/features/invitations/components/employee-account-card";
@@ -33,7 +34,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     db.select().from(leaveRequests).where(and(eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.employeeId, id))),
     db.select().from(overtimeRequests).where(and(eq(overtimeRequests.companyId, context.companyId), eq(overtimeRequests.employeeId, id))),
   ]);
-  if (!employee) notFound();
+  if (!employee || !employeeInScope(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }), employee)) notFound();
   const accountStatus = (await employeeAccountStatuses(context.companyId, [employee])).get(employee.id) ?? "none";
   const [loginAccount] = employee.userId ? await db.select({ email: user.email }).from(user).where(eq(user.id, employee.userId)).limit(1) : [];
   const canManage = ["admin", "general_manager", "hrd"].includes(context.role);
@@ -95,32 +96,6 @@ async function employeeVisits(companyId: string, employeeId: string, from: strin
   }).from(visits).leftJoin(visitLocations, eq(visits.locationId, visitLocations.id)).leftJoin(visitAttachments, eq(visitAttachments.visitId, visits.id))
     .where(and(...conditions)).groupBy(visits.id, visitLocations.id).orderBy(desc(visits.visitDate), desc(visits.visitTime)).limit(1000);
   return rows.map(({ outletName, locationName, ...row }) => ({ ...row, locationName: locationName ?? outletName }));
-}
-
-/**
- * Devices of one employee, grouped by browser user agent: active login sessions of their account plus the
- * devices recorded on their check-ins / check-outs.
- */
-async function employeeDevices(companyId: string, employeeId: string, userId: string | null): Promise<EmployeeDeviceRow[]> {
-  const [sessions, events] = await Promise.all([
-    userId ? db.select({ id: session.id, userAgent: session.userAgent, ipAddress: session.ipAddress, updatedAt: session.updatedAt }).from(session).where(and(eq(session.userId, userId), gt(session.expiresAt, new Date()))) : Promise.resolve([]),
-    db.select({ userAgent: attendanceEvents.userAgent, count: sql<number>`count(*)::int`, last: sql<Date>`max(${attendanceEvents.occurredAt})`, ip: sql<string | null>`(array_agg(${attendanceEvents.ipAddress} order by ${attendanceEvents.occurredAt} desc))[1]` })
-      .from(attendanceEvents).where(and(eq(attendanceEvents.companyId, companyId), eq(attendanceEvents.employeeId, employeeId))).groupBy(attendanceEvents.userAgent),
-  ]);
-  const devices = new Map<string, EmployeeDeviceRow & { lastIpAt: number }>();
-  const entry = (userAgent: string | null) => {
-    const key = userAgent?.trim() || "unknown";
-    let row = devices.get(key);
-    if (!row) { const parsed = parseUserAgent(userAgent); row = { key, ...parsed, lastUsed: new Date(0).toISOString(), lastIp: null, lastIpAt: 0, attendanceCount: 0, lastAttendance: null, sessionIds: [] }; devices.set(key, row); }
-    return row;
-  };
-  const seen = (row: EmployeeDeviceRow & { lastIpAt: number }, at: Date, ip: string | null) => {
-    if (at.toISOString() > row.lastUsed) row.lastUsed = at.toISOString();
-    if (ip && at.getTime() >= row.lastIpAt) { row.lastIp = ip; row.lastIpAt = at.getTime(); }
-  };
-  for (const item of events) { const row = entry(item.userAgent); const last = new Date(item.last); row.attendanceCount += item.count; row.lastAttendance = last.toISOString(); seen(row, last, item.ip); }
-  for (const item of sessions) { const row = entry(item.userAgent); row.sessionIds.push(item.id); seen(row, item.updatedAt, item.ipAddress); }
-  return [...devices.values()].map(({ lastIpAt, ...row }) => { void lastIpAt; return row; }).sort((a, b) => Number(b.sessionIds.length > 0) - Number(a.sessionIds.length > 0) || b.lastUsed.localeCompare(a.lastUsed));
 }
 
 function Info({ label, value, href }: { label: string; value?: string | null; href?: string }) { return <div className="employee-info"><span>{label}</span><b>:</b>{href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <strong>{value || "–"}</strong>}</div>; }

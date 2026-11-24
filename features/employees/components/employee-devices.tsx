@@ -3,13 +3,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Ellipsis, HelpCircle, LogOut, Monitor, Smartphone, Tablet } from "lucide-react";
 import { confirmAction } from "@/components/confirm-dialog";
-import type { DeviceKind } from "@/features/employees/devices";
+import type { DeviceKind, EmployeeDeviceRow } from "@/features/employees/devices";
 import { signOutEmployeeDevices } from "@/features/employees/server/device-actions";
 
-export type EmployeeDeviceRow = {
-  key: string; kind: DeviceKind; name: string; browser: string; lastUsed: string; lastIp: string | null;
-  attendanceCount: number; lastAttendance: string | null; sessionIds: string[];
-};
+export type { EmployeeDeviceRow };
 
 const icons = { mobile: Smartphone, tablet: Tablet, desktop: Monitor, unknown: HelpCircle } as const;
 const kindLabels: Record<DeviceKind, string> = { mobile: "HP", tablet: "Tablet", desktop: "Komputer", unknown: "Lainnya" };

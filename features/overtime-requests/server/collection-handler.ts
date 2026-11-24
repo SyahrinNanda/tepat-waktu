@@ -5,6 +5,9 @@ import { db } from "@/db";
 import { positions, employees, fileAssets, overtimeRequests, workSchedules } from "@/db/schema";
 import { canReviewRequests, employeeRequestContext, revalidateRequestPaths, selectableEmployee } from "@/features/employee-requests/server/request-context";
 import { ATTACHMENT_INVALID, claimRequestAttachment } from "@/features/employee-requests/server/request-attachment";
+import { pushToEmployees, pushToReviewers, verdictLabel } from "@/features/notifications/server/push";
+const shortDate = (value: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
+const hoursLabel = (minutes: number) => [Math.floor(minutes / 60) ? `${Math.floor(minutes / 60)} jam` : "", minutes % 60 ? `${minutes % 60} menit` : ""].filter(Boolean).join(" ");
 
 export const overtimeInput = z.object({ employeeId: z.uuid(), overtimeDate: z.iso.date(), durationMinutes: z.number().int().min(15).max(1440), description: z.string().trim().min(3).max(500), attachmentAssetId: z.uuid().nullish() });
 const path = "/dashboard/pengajuan/lembur";
@@ -27,14 +30,18 @@ export async function POST(request: Request) {
   const attachment = attachmentAssetId ? await claimRequestAttachment(context, attachmentAssetId, employee.id) : null;
   if (attachmentAssetId && !attachment) return Response.json({ error: ATTACHMENT_INVALID }, { status: 400 });
   const [created] = await db.insert(overtimeRequests).values({ companyId: context.companyId, ...input, startTime, endTime, attachmentAssetId: attachment?.id ?? null }).returning();
-  revalidateRequestPaths(revalidatePath, path); return Response.json({ row: { ...created, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, attachmentName: attachment?.name ?? null } }, { status: 201 });
+  revalidateRequestPaths(revalidatePath, path);
+  pushToReviewers(context.companyId, employee.userId, { title: "Pengajuan lembur baru", body: `${employee.name} · ${shortDate(created.overtimeDate)} · ${hoursLabel(created.durationMinutes)} · menunggu persetujuan`, href: `/pengajuan/lembur/${created.id}` });
+  return Response.json({ row: { ...created, name: employee.name, employeeCode: employee.employeeCode, position: employee.position, attachmentName: attachment?.name ?? null } }, { status: 201 });
 }
 
 export async function PATCH(request: Request) {
   const context = await employeeRequestContext(request, "pengajuan/lembur", "manage"); if ("error" in context) return context.error;
   const parsed = z.object({ ids: z.array(z.uuid()).min(1).max(200), status: z.enum(["approved", "rejected"]) }).safeParse(await request.json().catch(() => null)); if (!parsed.success) return Response.json({ error: "Pilih pengajuan dan keputusan yang valid." }, { status: 400 });
-  const rows = await db.update(overtimeRequests).set({ status: parsed.data.status, reviewedBy: context.userId, reviewedAt: new Date(), updatedAt: new Date() }).where(and(eq(overtimeRequests.companyId, context.companyId), eq(overtimeRequests.status, "pending"), inArray(overtimeRequests.id, parsed.data.ids))).returning({ id: overtimeRequests.id, status: overtimeRequests.status });
-  revalidateRequestPaths(revalidatePath, path); return Response.json({ rows });
+  const rows = await db.update(overtimeRequests).set({ status: parsed.data.status, reviewedBy: context.userId, reviewedAt: new Date(), updatedAt: new Date() }).where(and(eq(overtimeRequests.companyId, context.companyId), eq(overtimeRequests.status, "pending"), inArray(overtimeRequests.id, parsed.data.ids))).returning({ id: overtimeRequests.id, status: overtimeRequests.status, employeeId: overtimeRequests.employeeId, overtimeDate: overtimeRequests.overtimeDate });
+  revalidateRequestPaths(revalidatePath, path);
+  for (const row of rows) pushToEmployees(context.companyId, [row.employeeId], { title: `Pengajuan lembur Anda ${verdictLabel(row.status)}`, body: `Lembur ${shortDate(row.overtimeDate)}. Ketuk untuk melihat detail.`, href: `/pengajuan/lembur/${row.id}` });
+  return Response.json({ rows: rows.map(({ id, status }) => ({ id, status })) });
 }
 
 export function addMinutes(time: string, duration: number) { const total = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) + duration; return `${String(Math.floor((total % 1440) / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}:00`; }

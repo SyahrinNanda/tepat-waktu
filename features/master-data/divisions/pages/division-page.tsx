@@ -7,7 +7,7 @@ import { requireCompanyRole } from "@/lib/current-company";
 
 export const metadata: Metadata = { title: "Daftar Divisi" };
 export default async function Page() {
-  const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
+  const context = await requireCompanyRole(["admin", "general_manager", "hrd"]);
   const [rows, counts] = await Promise.all([
     db.select().from(divisions).where(eq(divisions.companyId, context.companyId)).orderBy(asc(divisions.name)),
     db.select({ name: employees.department, value: count() }).from(employees).where(eq(employees.companyId, context.companyId)).groupBy(employees.department),

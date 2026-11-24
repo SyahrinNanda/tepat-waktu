@@ -5,9 +5,11 @@ import { LeaveRequestManager } from "@/features/leave-requests/components/leave-
 import { listSpecialLeaveTypes } from "@/features/leave-requests/server/special-types";
 import { annualLeaveBalances } from "@/features/leave-requests/server/annual-balance";
 import { dateInTimeZone, requireCompany } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
 
 export async function LeaveRequestModule() {
   const context = await requireCompany();
+  await requireMenus(context, ["menuIzin"]);
   const canReview = ["admin", "owner", "general_manager", "hrd"].includes(context.role);
   const [team, rows, specialTypes] = await Promise.all([
     db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode, position: employees.position }).from(employees)

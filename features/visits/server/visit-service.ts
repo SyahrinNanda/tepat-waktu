@@ -1,26 +1,28 @@
 import { createHash, randomUUID } from "node:crypto";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
-import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { employees, fileAssets, visitAttachments, visitLocations, visits } from "@/db/schema";
 import { compressUpload, storedFileName } from "@/lib/file-compression";
 import { deletePrivateObject, getPrivateObject, putPrivateObject } from "@/lib/object-storage";
 import type { VisitReportRow, VisitRow } from "@/features/visits/types";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 
 /**
- * Visits a member may see: everyone's for managers, only their own for role "employee".
+ * Visits a member may see: the company's for admin/GM/HRD, a manager's own Divisi, only their own for role "employee".
  * Returns null when an employee has no active employee record (they see nothing).
  */
-export async function visitScope(context: { companyId: string; userId: string; role: string }): Promise<{ employeeId?: string } | null> {
-  if (context.role !== "employee") return {};
+export async function visitScope(context: { companyId: string; userId: string; role: string }): Promise<{ employeeId?: string; employeeFilter?: SQL } | null> {
+  if (context.role !== "employee") return { employeeFilter: employeeScopeFilter(await accessScope(context)) };
   const [row] = await db.select({ id: employees.id }).from(employees)
     .where(and(eq(employees.companyId, context.companyId), eq(employees.userId, context.userId), eq(employees.status, "active"))).limit(1);
   return row ? { employeeId: row.id } : null;
 }
 
-export async function listVisits(companyId: string, from?: string, to?: string, employeeId?: string) {
+export async function listVisits(companyId: string, from?: string, to?: string, employeeId?: string, employeeFilter?: SQL) {
   const conditions = [eq(visits.companyId, companyId)];
+  if (employeeFilter) conditions.push(employeeFilter);
   if (employeeId) conditions.push(eq(visits.employeeId, employeeId));
   if (from) conditions.push(gte(visits.visitDate, from));
   if (to) conditions.push(lte(visits.visitDate, to));
@@ -36,6 +38,15 @@ export async function listVisits(companyId: string, from?: string, to?: string, 
     .where(and(...conditions))
     .groupBy(visits.id, employees.id)
     .orderBy(desc(visits.visitDate), desc(visits.visitTime)) as Promise<VisitRow[]>;
+}
+
+/** Marks a visit done when it is inside the caller's scope; returns null otherwise. */
+export async function completeVisit(companyId: string, visitId: string, scope: { employeeId?: string; employeeFilter?: SQL }) {
+  const [target] = await db.select({ id: visits.id }).from(visits).innerJoin(employees, eq(visits.employeeId, employees.id))
+    .where(and(eq(visits.id, visitId), eq(visits.companyId, companyId), scope.employeeId ? eq(visits.employeeId, scope.employeeId) : undefined, scope.employeeFilter)).limit(1);
+  if (!target) return null;
+  const [row] = await db.update(visits).set({ status: "Selesai", updatedAt: new Date() }).where(eq(visits.id, target.id)).returning({ status: visits.status });
+  return row ?? null;
 }
 
 export async function createVisit(input: {
@@ -158,9 +169,9 @@ export async function createVisit(input: {
         throw new Error(`Ukuran lampiran ${file.name} maksimal 8 MB.`);
       }
       const source = new Uint8Array(await file.arrayBuffer());
-      const format = imageFormat(source);
+      const format = attachmentFormat(source);
       if (!format) {
-        throw new Error(`Lampiran ${file.name} harus berformat JPEG, PNG, atau WebP.`);
+        throw new Error(`Lampiran ${file.name} harus berformat JPEG, PNG, WebP, atau PDF.`);
       }
       const compressed = await compressUpload(source, format.contentType, format.extension, "detail");
       const checksum = createHash("sha256").update(compressed.bytes).digest("hex");
@@ -215,6 +226,12 @@ export async function createVisit(input: {
   }
 }
 
+/** Visit attachments: a photo or a PDF document (the selfie stays photo-only). */
+function attachmentFormat(bytes: Uint8Array) {
+  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) return { contentType: "application/pdf", extension: "pdf" };
+  return imageFormat(bytes);
+}
+
 function imageFormat(bytes: Uint8Array) {
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return { contentType: "image/jpeg", extension: "jpg" };
   if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return { contentType: "image/png", extension: "png" };
@@ -222,7 +239,7 @@ function imageFormat(bytes: Uint8Array) {
   return null;
 }
 
-export async function visitReports(companyId: string, from: string, to: string): Promise<VisitReportRow[]> {
+export async function visitReports(companyId: string, from: string, to: string, employeeFilter?: SQL): Promise<VisitReportRow[]> {
   const rows = await db
     .select({
       employeeId: employees.id,
@@ -240,6 +257,7 @@ export async function visitReports(companyId: string, from: string, to: string):
         eq(visits.companyId, companyId),
         gte(visits.visitDate, from),
         lte(visits.visitDate, to),
+        employeeFilter,
       ),
     )
     .orderBy(asc(employees.name));
@@ -264,8 +282,8 @@ export async function visitReports(companyId: string, from: string, to: string):
   return [...grouped.values()];
 }
 
-export async function exportVisitWorkbook(companyId: string, from?: string, to?: string, employeeId?: string) {
-  const rows = await listVisits(companyId, from, to, employeeId);
+export async function exportVisitWorkbook(companyId: string, from?: string, to?: string, employeeId?: string, employeeFilter?: SQL) {
+  const rows = await listVisits(companyId, from, to, employeeId, employeeFilter);
   const attachmentRows = rows.length
     ? await db
         .select({
@@ -351,8 +369,8 @@ export async function exportVisitWorkbook(companyId: string, from?: string, to?:
   return new Uint8Array(buffer);
 }
 
-export async function exportVisitPhotos(companyId: string, from?: string, to?: string, employeeId?: string) {
-  const rows = await listVisits(companyId, from, to, employeeId);
+export async function exportVisitPhotos(companyId: string, from?: string, to?: string, employeeId?: string, employeeFilter?: SQL) {
+  const rows = await listVisits(companyId, from, to, employeeId, employeeFilter);
   const attachments = rows.length
     ? await db
         .select({

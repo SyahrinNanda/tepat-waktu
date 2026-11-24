@@ -6,6 +6,8 @@ import { BarChart3 } from "lucide-react";
 import { db } from "@/db";
 import { attendances, employees } from "@/db/schema";
 import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
+import { accessScope, employeeInScope } from "@/features/access/team-scope";
 import { StatusBadge } from "@/components/status-badge";
 
 export const metadata: Metadata = { title: "Detail Laporan Kehadiran Bulanan" };
@@ -14,13 +16,14 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ month?: 
 export default async function Page({ params, searchParams }: Props) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
+  await requireMenus(context, ["menuLaporan"]);
   const today = dateInTimeZone(context.timezone);
   const year = clamp(Number(query.year) || Number(today.slice(0, 4)), 2020, 2100);
   const month = clamp(Number(query.month) || Number(today.slice(5, 7)), 1, 12);
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
   const endDate = `${year}-${String(month).padStart(2, "0")}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, "0")}`;
   const [employee] = await db.select().from(employees).where(and(eq(employees.id, id), eq(employees.companyId, context.companyId))).limit(1);
-  if (!employee) notFound();
+  if (!employee || !employeeInScope(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }), employee)) notFound();
   const rows = await db.select().from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.employeeId, employee.id), gte(attendances.attendanceDate, startDate), lte(attendances.attendanceDate, endDate))).orderBy(asc(attendances.attendanceDate));
   const counts = rows.reduce<Record<string, number>>((result, row) => { result[row.status] = (result[row.status] ?? 0) + 1; return result; }, {});
   return <>

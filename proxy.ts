@@ -4,7 +4,9 @@ export function proxy(request: NextRequest) {
   const origin = request.headers.get("origin");
   let parsed: URL | null = null;
   try { if (origin) parsed = new URL(origin); } catch {}
-  const host = request.nextUrl.hostname;
+  // With `next dev -H 0.0.0.0` (needed for phones on the LAN) nextUrl.hostname is "0.0.0.0";
+  // the Host header carries the name the client actually used.
+  const host = (request.headers.get("host") ?? "").replace(/:\d+$/, "") || request.nextUrl.hostname;
   const local = host === "localhost" || host === "127.0.0.1" || /^192\.168\.\d+\.\d+$/.test(host);
   const allowed = parsed && process.env.NODE_ENV === "development" && local && parsed.protocol === "http:" &&
     (parsed.hostname === host || (["localhost", "127.0.0.1"].includes(parsed.hostname) && ["localhost", "127.0.0.1"].includes(host)));

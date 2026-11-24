@@ -5,11 +5,14 @@ import { employees } from "@/db/schema";
 import { VisitListManager } from "@/features/visits/components/visit-list-manager";
 import { listVisits } from "@/features/visits/server/visit-service";
 import { dateInTimeZone, requireCompany } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 
 export const metadata: Metadata = { title: "Daftar Kunjungan" };
 
 export default async function Page() {
   const context = await requireCompany();
+  await requireMenus(context, ["menuKunjungan"]);
   const today = dateInTimeZone(context.timezone);
   if (context.role === "employee") {
     // Staff see and record only their own visits.
@@ -18,9 +21,10 @@ export default async function Page() {
     const rows = own ? await listVisits(context.companyId, undefined, undefined, own.id) : [];
     return <VisitListManager initialRows={rows} employees={own ? [own] : []} today={today} canWrite={Boolean(own)} selfieCameraOnly/>;
   }
+  const scopeFilter = employeeScopeFilter(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }));
   const [rows, employeeRows] = await Promise.all([
-    listVisits(context.companyId),
-    db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode }).from(employees).where(eq(employees.companyId, context.companyId)).orderBy(asc(employees.name)),
+    listVisits(context.companyId, undefined, undefined, undefined, scopeFilter),
+    db.select({ id: employees.id, name: employees.name, employeeCode: employees.employeeCode }).from(employees).where(and(eq(employees.companyId, context.companyId), scopeFilter)).orderBy(asc(employees.name)),
   ]);
   return <VisitListManager initialRows={rows} employees={employeeRows} today={today} canWrite={["owner", "admin", "general_manager", "hrd", "manager"].includes(context.role)} selfieCameraOnly={!["owner", "admin"].includes(context.role)}/>;
 }

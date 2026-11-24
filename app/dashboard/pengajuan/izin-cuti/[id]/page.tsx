@@ -6,6 +6,7 @@ import { CalendarDays, Paperclip, ShieldCheck } from "lucide-react";
 import { db } from "@/db";
 import { employees, fileAssets, leaveRequests, user } from "@/db/schema";
 import { requireCompany } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
 import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
 import { reviewLeave } from "@/features/workforce/server/actions";
@@ -17,6 +18,7 @@ type Props = { params: Promise<{ id: string }> };
 export default async function Page({ params }: Props) {
   const { id } = await params;
   const context = await requireCompany();
+  await requireMenus(context, ["menuIzin"]);
   const canReview = ["admin", "owner", "general_manager", "hrd"].includes(context.role);
   const [row] = await db.select({
     id: leaveRequests.id, type: leaveRequests.type, specialName: leaveRequests.specialLeaveName, workDays: leaveRequests.workDays, paid: leaveRequests.paid, startDate: leaveRequests.startDate, endDate: leaveRequests.endDate,

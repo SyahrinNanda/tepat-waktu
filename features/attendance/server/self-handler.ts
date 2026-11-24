@@ -20,6 +20,8 @@ const payloadSchema = z.object({
   accuracyMeters: z.coerce.number().min(0).max(100_000).optional(),
   /** Shift chosen before the photo (positions with several shifts). */
   scheduleId: z.uuid().optional(),
+  /** "1" when the phone reports the location comes from a fake-GPS (mock location) app. */
+  mocked: z.enum(["0", "1"]).optional(),
 });
 
 export async function GET(request: Request) {
@@ -39,6 +41,7 @@ export async function POST(request: Request) {
     const context = await selfAttendanceContext(request);
     const form = await request.formData();
     const parsed = payloadSchema.parse(Object.fromEntries(form));
+    if (parsed.mocked === "1") throw new AttendanceError("Lokasi palsu terdeteksi. Matikan aplikasi fake GPS / lokasi palsu (mock location) di ponsel, lalu coba lagi.", 422);
     const photo = form.get("photo");
     const hasPhoto = photo instanceof File && photo.size > 0;
     // Kunci Foto (employee list): when off, the photo is optional.

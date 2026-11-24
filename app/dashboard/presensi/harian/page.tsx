@@ -12,6 +12,7 @@ import {
   workSchedules,
 } from "@/db/schema";
 import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 import {
   DailyAttendanceManager,
   DailyAttendanceRecord,
@@ -33,6 +34,7 @@ export default async function Page({ searchParams }: Props) {
     ? params.date!
     : dateInTimeZone(context.timezone);
 
+  const scopeFilter = employeeScopeFilter(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }));
   const checkInLocation = alias(attendanceLocations, "check_in_loc");
   const checkOutLocation = alias(attendanceLocations, "check_out_loc");
 
@@ -56,7 +58,7 @@ export default async function Page({ searchParams }: Props) {
       })
       .from(employees)
       .leftJoin(employeeSalaryProfiles, eq(employeeSalaryProfiles.employeeId, employees.id))
-      .where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active")))
+      .where(and(eq(employees.companyId, context.companyId), eq(employees.status, "active"), scopeFilter))
       .orderBy(asc(employees.name)),
 
     // 2. Shifts / Work schedules
@@ -119,7 +121,7 @@ export default async function Page({ searchParams }: Props) {
       .leftJoin(workSchedules, eq(attendances.shiftId, workSchedules.id))
       .leftJoin(checkInLocation, eq(attendances.checkInLocationId, checkInLocation.id))
       .leftJoin(checkOutLocation, eq(attendances.checkOutLocationId, checkOutLocation.id))
-      .where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, date)))
+      .where(and(eq(attendances.companyId, context.companyId), eq(attendances.attendanceDate, date), scopeFilter))
       .orderBy(asc(employees.name)),
 
     // 6. Audit events with photos for the date
@@ -182,6 +184,7 @@ export default async function Page({ searchParams }: Props) {
   return (
     <DailyAttendanceManager
       initialDate={date}
+      canManage={context.role !== "manager"}
       today={dateInTimeZone(context.timezone)}
       // "Hanya alpa manual" staff: a past day without attendance is a day off, not a missing record.
       employees={employeesList.map(({ absentRule, ...employee }) => ({ ...employee, manualAbsence: absentRule === "manual_only" }))}

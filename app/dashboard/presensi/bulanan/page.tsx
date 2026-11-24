@@ -3,6 +3,8 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { attendanceLocations, positions, workSchedules } from "@/db/schema";
 import { dateInTimeZone, requireCompanyRole } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 import { MonthlyAttendanceManager } from "@/features/attendance/components/monthly-attendance-manager";
 import { fetchMonthlyAttendanceSummary } from "@/features/attendance/server/monthly-service";
 
@@ -21,6 +23,7 @@ type Props = {
 
 export default async function Page({ searchParams }: Props) {
   const context = await requireCompanyRole(["admin", "general_manager", "hrd", "manager"]);
+  await requireMenus(context, ["menuLaporan"]);
   const params = await searchParams;
   const today = dateInTimeZone(context.timezone);
   const currentYear = Number(today.slice(0, 4));
@@ -31,6 +34,7 @@ export default async function Page({ searchParams }: Props) {
   const locationId = params.locationId?.trim() || undefined;
   const position = params.position?.trim() || undefined;
   const shiftId = params.shiftId?.trim() || undefined;
+  const employeeFilter = employeeScopeFilter(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }));
 
   const [locRows, divRows, shiftRows, summaries] = await Promise.all([
     db
@@ -61,6 +65,7 @@ export default async function Page({ searchParams }: Props) {
       locationId,
       position,
       shiftId,
+      employeeFilter,
     }),
   ]);
 
@@ -76,6 +81,7 @@ export default async function Page({ searchParams }: Props) {
       positions={divRows}
       shifts={shiftRows}
       summaries={summaries}
+      canManage={context.role !== "manager"}
     />
   );
 }

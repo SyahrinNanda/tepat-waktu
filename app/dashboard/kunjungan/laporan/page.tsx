@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { VisitReportManager } from "@/features/visits/components/visit-report-manager";
 import { visitReports } from "@/features/visits/server/visit-service";
 import { dateInTimeZone, requireCompany } from "@/lib/current-company";
+import { requireMenus } from "@/features/access/app-settings";
+import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 
 export const metadata: Metadata = { title: "Laporan Kunjungan" };
 
@@ -17,6 +19,7 @@ type Props = {
 
 export default async function Page({ searchParams }: Props) {
   const context = await requireCompany();
+  await requireMenus(context, ["menuKunjungan", "menuLaporan"]);
   const params = await searchParams;
 
   const today = dateInTimeZone(context.timezone);
@@ -62,7 +65,8 @@ export default async function Page({ searchParams }: Props) {
     to = date;
   }
 
-  const rows = await visitReports(context.companyId, from, to);
+  const scopeFilter = employeeScopeFilter(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }));
+  const rows = await visitReports(context.companyId, from, to, scopeFilter);
 
   return (
     <VisitReportManager

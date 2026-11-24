@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { positions } from "@/db/schema";
+import { employees, positions } from "@/db/schema";
 import { featureContext } from "@/features/generic-modules/server/feature-records";
 import { positionBodySchema, listPositionsWithSchedules, replacePositionSchedules, schedulesBelongToCompany } from "@/features/master-data/positions/server/position-schedules";
 
@@ -14,13 +14,21 @@ export async function PATCH(request: Request, { params }: Params) {
   if (!(await schedulesBelongToCompany(context.companyId, scheduleIds))) return Response.json({ error: "Jadwal kerja tidak ditemukan." }, { status: 404 });
   const id = (await params).id;
   try {
-    const found = await db.transaction(async (tx) => {
-      const [row] = await tx.update(positions).set({ ...values, scheduleId: scheduleIds[0], updatedAt: new Date() }).where(and(eq(positions.id, id), eq(positions.companyId, context.companyId))).returning({ id: positions.id });
-      if (!row) return false;
-      await replacePositionSchedules(tx, row.id, scheduleIds);
-      return true;
+    // Employees are linked to a jabatan by name, and an inactive jabatan gives no schedule: keep both in step.
+    const result = await db.transaction(async (tx) => {
+      const [existing] = await tx.select({ name: positions.name, active: positions.active }).from(positions).where(and(eq(positions.id, id), eq(positions.companyId, context.companyId))).for("update").limit(1);
+      if (!existing) return "missing" as const;
+      if (existing.active && !values.active) {
+        const [assigned] = await tx.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.position, existing.name), eq(employees.status, "active")));
+        if (Number(assigned.value) > 0) return { activeEmployees: Number(assigned.value) };
+      }
+      await tx.update(positions).set({ ...values, scheduleId: scheduleIds[0], updatedAt: new Date() }).where(eq(positions.id, id));
+      if (existing.name !== values.name) await tx.update(employees).set({ position: values.name }).where(and(eq(employees.companyId, context.companyId), eq(employees.position, existing.name)));
+      await replacePositionSchedules(tx, id, scheduleIds);
+      return "saved" as const;
     });
-    if (!found) return Response.json({ error: "Jabatan tidak ditemukan." }, { status: 404 });
+    if (result === "missing") return Response.json({ error: "Jabatan tidak ditemukan." }, { status: 404 });
+    if (result !== "saved") return Response.json({ error: `Jabatan masih dipakai ${result.activeEmployees} karyawan aktif. Pindahkan karyawan ke jabatan lain sebelum menonaktifkan.` }, { status: 409 });
     revalidatePath("/dashboard/master/jabatan");
     const [row] = await listPositionsWithSchedules(context.companyId, id);
     return Response.json({ row });
@@ -29,6 +37,11 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(request: Request, { params }: Params) {
   const context = await featureContext(request, "master/jabatan", "manage"); if ("error" in context) return context.error;
-  const [row] = await db.delete(positions).where(and(eq(positions.id, (await params).id), eq(positions.companyId, context.companyId))).returning({ id: positions.id });
+  const id = (await params).id;
+  const [position] = await db.select({ name: positions.name }).from(positions).where(and(eq(positions.id, id), eq(positions.companyId, context.companyId))).limit(1);
+  if (!position) return Response.json({ error: "Jabatan tidak ditemukan." }, { status: 404 });
+  const [assigned] = await db.select({ value: count() }).from(employees).where(and(eq(employees.companyId, context.companyId), eq(employees.position, position.name)));
+  if (Number(assigned.value) > 0) return Response.json({ error: `Jabatan masih dipakai ${assigned.value} karyawan. Pindahkan karyawan ke jabatan lain sebelum menghapus.` }, { status: 409 });
+  const [row] = await db.delete(positions).where(and(eq(positions.id, id), eq(positions.companyId, context.companyId))).returning({ id: positions.id });
   if (!row) return Response.json({ error: "Jabatan tidak ditemukan." }, { status: 404 }); revalidatePath("/dashboard/master/jabatan"); return Response.json({ ok: true });
 }

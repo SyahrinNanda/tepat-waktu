@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { and, asc, eq, gte, ilike, lte, or } from "drizzle-orm";
+import { and, asc, eq, gte, ilike, lte, or, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   attendances,
@@ -7,6 +7,7 @@ import {
   employees,
   workSchedules,
 } from "@/db/schema";
+import { getAppSettings, menusBlockedFor, MENU_DISABLED_MESSAGE } from "@/features/access/app-settings";
 import { attendanceManagerContext } from "@/features/attendance/server/attendance-service";
 import { dateInTimeZone } from "@/lib/current-company";
 import { getPayrollRules } from "@/features/payslips/server/payroll-settings";
@@ -26,6 +27,7 @@ export async function fetchMonthlyAttendanceSummary({
   locationId,
   position,
   shiftId,
+  employeeFilter,
 }: {
   companyId: string;
   year: number;
@@ -34,6 +36,8 @@ export async function fetchMonthlyAttendanceSummary({
   locationId?: string;
   position?: string;
   shiftId?: string;
+  /** Limits the report to the viewer's scope (a manager's Divisi). */
+  employeeFilter?: SQL;
 }): Promise<MonthlyEmployeeSummary[]> {
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -44,6 +48,8 @@ export async function fetchMonthlyAttendanceSummary({
     eq(employees.companyId, companyId),
     eq(employees.status, "active"),
   ];
+
+  if (employeeFilter) employeeConditions.push(employeeFilter);
 
   if (position) {
     employeeConditions.push(eq(employees.position, position));
@@ -277,6 +283,9 @@ export async function exportMonthlyAttendanceExcel(request: Request) {
   const { searchParams } = new URL(request.url);
   const requestedCompanyId = searchParams.get("companyId");
   const context = await attendanceManagerContext(request, requestedCompanyId);
+  if (menusBlockedFor("role" in context ? context.role : "admin", await getAppSettings(context.companyId)).includes("menuLaporan")) {
+    return Response.json({ error: MENU_DISABLED_MESSAGE, message: MENU_DISABLED_MESSAGE }, { status: 403 });
+  }
 
   const now = new Date();
   const year = parseInt(searchParams.get("year") || String(now.getFullYear()), 10);

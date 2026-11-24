@@ -7,6 +7,7 @@ import { featureContext } from "@/features/generic-modules/server/feature-record
 import { ATTACHMENT_INVALID, claimRequestAttachment, removeRequestAttachment } from "@/features/employee-requests/server/request-attachment";
 import { leaveInputSchema, resolveLeavePaid, reviewerRoles } from "./schemas";
 import { resolveLeaveRules } from "./resolve-leave";
+import { leaveLabel, pushToEmployees, verdictLabel } from "@/features/notifications/server/push";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -30,6 +31,7 @@ export async function PATCH(request: Request, { params }: Params) {
     if (!parsed.success) return Response.json({ error: "Keputusan tidak valid." }, { status: 400 });
     const [row] = await db.update(leaveRequests).set({ status: parsed.data.status, reviewedBy: context.userId, reviewedAt: new Date() }).where(and(eq(leaveRequests.id, id), eq(leaveRequests.companyId, context.companyId), eq(leaveRequests.status, "pending"))).returning();
     if (!row) return Response.json({ error: "Pengajuan tidak ditemukan atau sudah diproses." }, { status: 404 });
+    pushToEmployees(context.companyId, [row.employeeId], { title: `Pengajuan ${leaveLabel(row.type, row.specialLeaveName)} Anda ${verdictLabel(row.status)}`, body: "Ketuk untuk melihat detail.", href: `/pengajuan/izin-cuti/${row.id}` });
     revalidatePaths(id); return Response.json({ row });
   }
   const parsed = leaveInputSchema.safeParse(body);

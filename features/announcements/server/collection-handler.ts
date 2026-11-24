@@ -1,4 +1,5 @@
 import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { pushToCompany } from "@/features/notifications/server/push";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
       companyId: context.companyId, imageAssetId: asset?.id, ...parsed.data, createdBy: context.userId,
     }).returning();
     revalidatePath("/dashboard/pengumuman");
+    if (row.status === "published") pushToCompany(context.companyId, context.userId, { title: `Pengumuman: ${row.title}`, body: row.summary, href: `/pengumuman/${row.id}` });
     return Response.json({ row }, { status: 201 });
   } catch (error) {
     if (asset) await removeStoredAsset(asset).catch(() => undefined);

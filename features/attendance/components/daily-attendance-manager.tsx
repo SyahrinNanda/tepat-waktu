@@ -87,11 +87,14 @@ type Props = {
   locations: LocationOption[];
   positions: PositionOption[];
   records: DailyAttendanceRecord[];
+  /** Admin, GM, HRD: add, edit, delete, export. Manager only views. */
+  canManage?: boolean;
 };
 
 export function DailyAttendanceManager({
   initialDate,
   today,
+  canManage = false,
   employees,
   shifts,
   locations,
@@ -412,7 +415,7 @@ export function DailyAttendanceManager({
           </button>
 
           {/* Right Action: Tambah Kehadiran & More Menu */}
-          <div className="daily-toolbar-right">
+          {canManage ? <div className="daily-toolbar-right">
             <button
               type="button"
               className="daily-btn-primary"
@@ -458,7 +461,7 @@ export function DailyAttendanceManager({
                 </div>
               ) : null}
             </div>
-          </div>
+          </div> : null}
         </div>
 
         {/* Row 2: Dropdowns for Location, Position, and Jadwal Kerja matching Gambar 1 */}
@@ -702,15 +705,15 @@ export function DailyAttendanceManager({
                                 <Eye size={15} />
                               </Link>
                             ) : null}
-                            <button
+                            {canManage ? <button
                               type="button"
                               className="daily-action-icon-btn"
                               title="Edit Kehadiran"
                               onClick={() => openEditModal(row)}
                             >
                               <Pencil size={14} />
-                            </button>
-                            {row.id ? (
+                            </button> : null}
+                            {canManage && row.id ? (
                               <button
                                 type="button"
                                 className="daily-action-icon-btn danger"

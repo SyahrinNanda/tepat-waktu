@@ -14,7 +14,7 @@ export function isFeatureModule(value: string): value is FeatureModule {
 
 export function canReadFeature(module: FeatureModule, role: string) {
   if (role === "admin" || role === "owner" || role === "general_manager" || role === "hrd") return true;
-  if (role === "manager") return !module.startsWith("pengaturan/");
+  if (role === "manager") return !module.startsWith("pengaturan/") && !module.startsWith("master/");
   return module.startsWith("pengajuan/") || module === "kunjungan" || module === "pengumuman";
 }
 
@@ -26,5 +26,5 @@ export function canWriteFeature(module: FeatureModule, role: string) {
 
 export function canManageFeature(module: FeatureModule, role: string) {
   if (role === "admin" || role === "owner" || role === "general_manager" || role === "hrd") return true;
-  return role === "manager" && (module.startsWith("pengajuan/") || module === "kunjungan");
+  return role === "manager" && module === "kunjungan";
 }

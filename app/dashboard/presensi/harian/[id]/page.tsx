@@ -6,6 +6,7 @@ import { Camera, Clock3, MapPin, ShieldCheck } from "lucide-react";
 import { db } from "@/db";
 import { attendanceEvents, attendances, employees, user } from "@/db/schema";
 import { requireCompanyRole } from "@/lib/current-company";
+import { accessScope, employeeInScope } from "@/features/access/team-scope";
 import { StatusBadge } from "@/components/status-badge";
 
 export const metadata: Metadata = { title: "Detail Kehadiran" };
@@ -20,7 +21,7 @@ export default async function Page({ params }: Props) {
     code: employees.employeeCode, position: employees.position, department: employees.department,
   }).from(attendances).innerJoin(employees, eq(attendances.employeeId, employees.id))
     .where(and(eq(attendances.id, id), eq(attendances.companyId, context.companyId))).limit(1);
-  if (!record) notFound();
+  if (!record || !employeeInScope(await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role }), record)) notFound();
   const events = await db.select({
     id: attendanceEvents.id, type: attendanceEvents.type, source: attendanceEvents.source,
     occurredAt: attendanceEvents.occurredAt, clientCapturedAt: attendanceEvents.clientCapturedAt,

@@ -1,6 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { pushToComplaintHandlers } from "@/features/notifications/server/push";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -38,6 +39,7 @@ export async function submitComplaint(input: z.input<typeof submitSchema>) {
         reporterName: anonymous ? null : context.session.user.name,
       }).returning({ id: employeeComplaints.id, ticketCode: employeeComplaints.ticketCode });
       revalidatePath("/dashboard/karyawan/keluhan");
+      pushToComplaintHandlers(context.companyId, { title: `Keluhan baru: ${data.title}`, body: `${row.ticketCode} · ${anonymous ? "Anonim" : context.session.user.name}`, href: `/karyawan/keluhan/${row.id}` });
       return { ok: true as const, id: row.id, ticketCode: row.ticketCode };
     } catch (error) {
       const code = typeof error === "object" && error && "cause" in error && typeof error.cause === "object" && error.cause && "code" in error.cause ? error.cause.code : undefined;

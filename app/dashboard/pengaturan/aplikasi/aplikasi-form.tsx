@@ -256,10 +256,8 @@ export function AplikasiSettingsForm({
             }}
           >
             {[
-              { key: "menuIstirahat", label: "Tampilkan Menu Istirahat" },
               { key: "menuLaporan", label: "Tampilkan Menu Laporan" },
               { key: "menuKunjungan", label: "Tampilkan Menu Kunjungan" },
-              { key: "menuTugas", label: "Tampilkan Menu Tugas" },
               { key: "menuLembur", label: "Tampilkan Menu Lembur" },
               { key: "menuIzin", label: "Tampilkan Menu Izin" },
             ].map((item) => {
@@ -342,93 +340,6 @@ export function AplikasiSettingsForm({
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Section 3: Pengaturan Verifikasi Akses */}
-        <div style={{ marginBottom: "32px" }}>
-          <h2
-            style={{
-              fontSize: "15px",
-              fontWeight: 700,
-              color: "#262421",
-              margin: "0 0 18px 0",
-            }}
-          >
-            Pengaturan Verifikasi Akses
-          </h2>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              maxWidth: "450px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "13.5px",
-                color: "#474541",
-                fontWeight: 500,
-              }}
-            >
-              Aktifkan Verifikasi Akses
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={form.verifikasiAkses}
-              onClick={() => toggleField("verifikasiAkses")}
-              style={{
-                position: "relative",
-                width: "44px",
-                height: "24px",
-                borderRadius: "12px",
-                backgroundColor: form.verifikasiAkses ? "#faa005" : "#ef4444",
-                transition: "background-color 0.2s ease",
-                border: "none",
-                cursor: "pointer",
-                padding: "2px",
-                display: "inline-flex",
-                alignItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              {form.verifikasiAkses && (
-                <svg
-                  style={{
-                    position: "absolute",
-                    left: "6px",
-                    width: "11px",
-                    height: "11px",
-                    color: "#ffffff",
-                  }}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              )}
-              <span
-                style={{
-                  width: "19px",
-                  height: "19px",
-                  borderRadius: "50%",
-                  backgroundColor: "#ffffff",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                  transform: form.verifikasiAkses
-                    ? "translateX(21px)"
-                    : "translateX(1px)",
-                  transition: "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                  display: "inline-block",
-                }}
-              />
-            </button>
           </div>
         </div>
 

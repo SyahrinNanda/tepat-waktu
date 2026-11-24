@@ -41,6 +41,22 @@ export function VisitListManager({ initialRows, employees, today, canWrite, self
   const [exportingReport, setExportingReport] = useState(false);
   const [exportingPhotos, setExportingPhotos] = useState(false);
   const [error, setError] = useState("");
+  const [completingId, setCompletingId] = useState("");
+
+  async function markDone(id: string) {
+    setCompletingId(id);
+    setError("");
+    try {
+      const response = await fetch(`/api/visits/${id}`, { method: "PATCH" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) { setError(payload.error ?? "Status kunjungan belum dapat diubah."); return; }
+      setRows((current) => current.map((row) => (row.id === id ? { ...row, status: "Selesai" } : row)));
+    } catch {
+      setError("Server tidak dapat dihubungi.");
+    } finally {
+      setCompletingId("");
+    }
+  }
 
   const menuRef = useRef<HTMLDivElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -403,9 +419,10 @@ export function VisitListManager({ initialRows, employees, today, canWrite, self
                       "—"
                     )}
                   </td>
-                  <td>{row.attachmentCount} foto</td>
+                  <td>{row.attachmentCount} lampiran</td>
                   <td>
                     <span className="visit-status">{row.status}</span>
+                    {canWrite && row.status !== "Selesai" ? <button type="button" className="visit-complete-btn" disabled={completingId === row.id} onClick={() => void markDone(row.id)}>{completingId === row.id ? "Menyimpan..." : "Tandai Selesai"}</button> : null}
                   </td>
                 </tr>
               ))}
