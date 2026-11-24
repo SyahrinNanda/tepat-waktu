@@ -180,10 +180,11 @@ function Stop-Mailpit {
   Remove-Item -LiteralPath $mailpitPid -Force -ErrorAction SilentlyContinue
 }
 
+# Runs the storage script in THIS PowerShell process. Capturing a child powershell.exe's output
+# ($x = & powershell ...) made weed.exe inherit the capture pipe, so "local:start" never returned
+# while object storage kept running (same trap as pg_ctl above). Errors still surface: the scripts throw.
 function Invoke-Storage([string]$script) {
-  $output = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot $script) -StorageRoot $Root
-  if ($LASTEXITCODE -ne 0) { throw "Object storage: $output" }
-  $output
+  & (Join-Path $PSScriptRoot $script) -StorageRoot $Root
 }
 
 function Show-Status {

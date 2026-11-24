@@ -27,6 +27,14 @@ if ($existing) {
   exit 0
 }
 
+# weed.exe needs a few seconds before it listens: a second start right after the first must not launch a duplicate.
+$starting = Get-Process -Name weed -ErrorAction SilentlyContinue | Where-Object { $_.Path -and ([IO.Path]::GetFullPath($_.Path) -ieq [IO.Path]::GetFullPath($weedBinary)) } | Select-Object -First 1
+if ($starting) {
+  Set-Content -LiteralPath $pidPath -Value $starting.Id -Encoding ASCII
+  Write-Output "Object storage sedang/sudah berjalan (PID $($starting.Id)) di http://127.0.0.1:$S3Port"
+  exit 0
+}
+
 $arguments = @(
   "server",
   "-dir=$dataPath",
@@ -49,4 +57,9 @@ $arguments = @(
 $env:DEBUG = "false"
 $process = Start-Process -FilePath $weedBinary -ArgumentList $arguments -WorkingDirectory $dataPath -WindowStyle Hidden -RedirectStandardOutput $logPath -RedirectStandardError $errorLogPath -PassThru
 Set-Content -LiteralPath $pidPath -Value $process.Id -Encoding ASCII
+# Wait (max 30 s) until the S3 port listens, so "berjalan" is true when the app starts right after.
+for ($i = 0; $i -lt 60 -and -not (Get-NetTCPConnection -LocalPort $S3Port -State Listen -ErrorAction SilentlyContinue); $i++) {
+  if ($process.HasExited) { throw "Object storage berhenti saat start. Lihat $errorLogPath" }
+  Start-Sleep -Milliseconds 500
+}
 Write-Output "Object storage TepatWaktu berjalan dengan PID $($process.Id). Endpoint: http://127.0.0.1:$S3Port, Data: $dataPath"
