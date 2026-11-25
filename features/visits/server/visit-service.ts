@@ -169,9 +169,9 @@ export async function createVisit(input: {
         throw new Error(`Ukuran lampiran ${file.name} maksimal 8 MB.`);
       }
       const source = new Uint8Array(await file.arrayBuffer());
-      const format = attachmentFormat(source);
+      const format = imageFormat(source);
       if (!format) {
-        throw new Error(`Lampiran ${file.name} harus berformat JPEG, PNG, WebP, atau PDF.`);
+        throw new Error(`Lampiran ${file.name} harus berformat JPEG, PNG, atau WebP.`);
       }
       const compressed = await compressUpload(source, format.contentType, format.extension, "detail");
       const checksum = createHash("sha256").update(compressed.bytes).digest("hex");
@@ -224,12 +224,6 @@ export async function createVisit(input: {
     }
     throw error;
   }
-}
-
-/** Visit attachments: a photo or a PDF document (the selfie stays photo-only). */
-function attachmentFormat(bytes: Uint8Array) {
-  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) return { contentType: "application/pdf", extension: "pdf" };
-  return imageFormat(bytes);
 }
 
 function imageFormat(bytes: Uint8Array) {

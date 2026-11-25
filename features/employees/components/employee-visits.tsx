@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, CalendarDays, Ellipsis, FileText, Images, Inbox, MapPin, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Ellipsis, Images, Inbox, MapPin, RotateCcw } from "lucide-react";
 import { LocationModal } from "@/features/master-data/shared/location-modal";
 
 export type EmployeeVisitRow = {
@@ -19,7 +19,7 @@ const shift = (date: string, days: number) => { const value = new Date(`${date}T
 /** Absen Kunjungan tab of the employee detail page: the employee's visits with a date-range filter. */
 export function EmployeeVisits({ rows, from, to, today }: { rows: EmployeeVisitRow[]; from: string; to: string; today: string }) {
   const router = useRouter(), pathname = usePathname(), searchParams = useSearchParams();
-  const [page, setPage] = useState(1), [viewing, setViewing] = useState<EmployeeVisitRow | null>(null), [documents, setDocuments] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1), [viewing, setViewing] = useState<EmployeeVisitRow | null>(null);
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE)), current = Math.min(page, pages);
   const visible = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
@@ -61,9 +61,8 @@ export function EmployeeVisits({ rows, from, to, today }: { rows: EmployeeVisitR
     </footer>}
     {viewing && <LocationModal title={`Lampiran Kunjungan · ${viewing.locationName}`} onClose={() => setViewing(null)}>
       <div className="employee-visit-gallery">{viewing.attachments.map((id, index) => <a key={id} href={`/api/files/${id}`} target="_blank" rel="noreferrer">
-        {documents.has(id) ? <span className="employee-visit-doc"><FileText size={28}/>Dokumen {index + 1}</span>
-          // eslint-disable-next-line @next/next/no-img-element -- private files are served by our own API
-          : <img src={`/api/files/${id}`} alt={`Lampiran ${index + 1}`} loading="lazy" onError={() => setDocuments((old) => new Set(old).add(id))}/>}</a>)}</div>
+        {/* eslint-disable-next-line @next/next/no-img-element -- private files are served by our own API */}
+        <img src={`/api/files/${id}`} alt={`Lampiran ${index + 1}`} loading="lazy"/></a>)}</div>
       <p className="employee-visit-gallery-meta">{dayName(viewing.visitDate)}, {longDate(viewing.visitDate)} · {viewing.visitTime.slice(0, 5)}{viewing.note ? ` · ${viewing.note}` : ""}</p>
     </LocationModal>}
   </div>;

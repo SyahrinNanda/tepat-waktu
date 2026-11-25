@@ -419,7 +419,7 @@ export function VisitListManager({ initialRows, employees, today, canWrite, self
                       "—"
                     )}
                   </td>
-                  <td>{row.attachmentCount} lampiran</td>
+                  <td>{row.attachmentCount} foto</td>
                   <td>
                     <span className="visit-status">{row.status}</span>
                     {canWrite && row.status !== "Selesai" ? <button type="button" className="visit-complete-btn" disabled={completingId === row.id} onClick={() => void markDone(row.id)}>{completingId === row.id ? "Menyimpan..." : "Tandai Selesai"}</button> : null}
