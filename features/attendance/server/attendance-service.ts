@@ -23,7 +23,7 @@ import { compressUpload, storedFileName } from "@/lib/file-compression";
 import { ensureEmployeeRecord } from "./employee-link";
 import { getSubscriptionStatus, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/features/subscriptions/server/subscription-status";
 import { selectedCompanyFromRequest } from "@/lib/selected-company";
-import { clockMinutes, minutesLate, type ShiftOption } from "@/features/attendance/shift-time";
+import { clockMinutes, crossesMidnight, minutesLate, type ShiftOption } from "@/features/attendance/shift-time";
 
 export type AttendanceAction = "check_in" | "check_out";
 type CompanyRole = "owner" | "admin" | "general_manager" | "hrd" | "manager" | "employee";
@@ -272,6 +272,45 @@ export async function resolveSchedule(executor: Executor, input: { companyId: st
   };
 }
 
+/**
+ * A shift that ends after midnight (e.g. 19:00-01:00) is still open the next morning: its check-out
+ * belongs to the day it started. It stays open until this long after the shift's end time; later
+ * the employee is on a new day (the missed check-out is then counted until the shift end, as for any
+ * forgotten check-out).
+ */
+export const OVERNIGHT_CHECKOUT_GRACE_MINUTES = 6 * 60;
+
+const previousDate = (date: string) => { const value = new Date(`${date}T00:00:00Z`); value.setUTCDate(value.getUTCDate() - 1); return value.toISOString().slice(0, 10); };
+
+/**
+ * Yesterday's attendance when it is an overnight shift that was checked in and we are still within
+ * its check-out window at `time` (today's clock): open, it waits for the check-out; already checked
+ * out, the night is shown as done (no new check-in is offered in the middle of the night). Otherwise null.
+ */
+async function openOvernightAttendance(executor: Executor, input: { companyId: string; employeeId: string; position: string | null; date: string; time: string }) {
+  const date = previousDate(input.date);
+  const [row] = await executor.select({ id: attendances.id, checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status, shiftId: attendances.shiftId }).from(attendances)
+    .where(and(eq(attendances.companyId, input.companyId), eq(attendances.employeeId, input.employeeId), eq(attendances.attendanceDate, date))).limit(1);
+  if (!row?.checkIn) return null;
+  const schedule = await resolveSchedule(executor, { companyId: input.companyId, position: input.position, date, time: row.checkIn, scheduleId: row.shiftId });
+  if (!crossesMidnight(schedule.startTime, schedule.endTime)) return null;
+  if (clockMinutes(input.time) > clockMinutes(schedule.endTime) + OVERNIGHT_CHECKOUT_GRACE_MINUTES) return null;
+  return { row, date };
+}
+
+/** The attendance an employee is working on now: today's, or yesterday's night shift until its check-out window ends. */
+export async function currentAttendance(input: { companyId: string; employeeId: string; timezone: string; now?: Date }) {
+  const zoned = zonedParts(input.now ?? new Date(), input.timezone);
+  const columns = { checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status };
+  const [[today], [employee]] = await Promise.all([
+    db.select(columns).from(attendances).where(and(eq(attendances.companyId, input.companyId), eq(attendances.employeeId, input.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1),
+    db.select({ position: employees.position }).from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.companyId, input.companyId))).limit(1),
+  ]);
+  if (today?.checkIn) return today;
+  const overnight = await openOvernightAttendance(db, { companyId: input.companyId, employeeId: input.employeeId, position: employee?.position ?? null, date: zoned.date, time: zoned.time });
+  return overnight ? { checkIn: overnight.row.checkIn, checkOut: overnight.row.checkOut, status: overnight.row.status } : today ?? null;
+}
+
 /** Late only on a working day of a configured schedule, and only past start time + grace. */
 export function isLateCheckIn(schedule: ResolvedSchedule, time: string) {
   return schedule.isWorkday && schedule.source !== "default" && isLate(time, schedule.startTime, schedule.endTime, schedule.graceMinutes);
@@ -308,17 +347,20 @@ export async function allowedAttendanceLocations(executor: Executor, companyId: 
   return executor.select(columns).from(attendanceLocations).where(active);
 }
 
-export async function getSelfAttendanceStatus(context: SelfAttendanceContext) {
-  const now = new Date();
+export async function getSelfAttendanceStatus(context: SelfAttendanceContext, now = new Date()) {
   const zoned = zonedParts(now, context.timezone);
-  const [[employee], [attendance], rules] = await Promise.all([
+  const [[employee], [todayAttendance], rules] = await Promise.all([
     db.select({ position: employees.position }).from(employees).where(and(eq(employees.id, context.employeeId), eq(employees.companyId, context.companyId))).limit(1),
     db.select({ id: attendances.id, checkIn: attendances.checkIn, checkOut: attendances.checkOut, status: attendances.status, shiftId: attendances.shiftId }).from(attendances).where(and(eq(attendances.companyId, context.companyId), eq(attendances.employeeId, context.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1),
     selfAttendanceRules(context.companyId, context.employeeId),
   ]);
   const position = employee?.position ?? null;
+  // Before today's check-in, an open night shift from yesterday is still the working day.
+  const overnight = todayAttendance?.checkIn ? null : await openOvernightAttendance(db, { companyId: context.companyId, employeeId: context.employeeId, position, date: zoned.date, time: zoned.time });
+  const attendance = overnight?.row ?? todayAttendance;
+  const workDate = overnight?.date ?? zoned.date;
   const [schedule, shifts] = await Promise.all([
-    resolveSchedule(db, { companyId: context.companyId, position, date: zoned.date, time: zoned.time, scheduleId: attendance?.shiftId }),
+    resolveSchedule(db, { companyId: context.companyId, position, date: workDate, time: overnight?.row.checkIn ?? zoned.time, scheduleId: attendance?.shiftId }),
     // The shift is chosen once, at check-in; afterwards the recorded one applies.
     attendance?.checkIn ? [] : positionShiftOptions(db, context.companyId, position, zoned.date),
   ]);
@@ -328,6 +370,8 @@ export async function getSelfAttendanceStatus(context: SelfAttendanceContext) {
     schedule,
     rules,
     attendance: attendance ?? null,
+    /** The day this attendance belongs to: yesterday while an overnight shift waits for its check-out. */
+    attendanceDate: workDate,
     /** Non-empty only when check-in must pick one of several shifts; suggestedShiftId = start closest to now. */
     shifts,
     suggestedShiftId: shifts.length ? schedule.id ?? null : null,
@@ -381,7 +425,13 @@ export async function recordAttendanceEvent(input: {
       // The employee's row for the day is locked, so concurrent requests for the same employee run
       // one after another while different employees never wait on each other. Duplicates are also
       // blocked by the unique indexes (employee_id, attendance_date) and (attendance_id, type).
-      const lockDay = () => tx.select().from(attendances).where(and(eq(attendances.companyId, input.companyId), eq(attendances.employeeId, input.employeeId), eq(attendances.attendanceDate, zoned.date))).for("update").limit(1);
+      // A check-out after midnight closes yesterday's night shift when today has no check-in yet.
+      let workDate = zoned.date;
+      if (input.action === "check_out") {
+        const [today] = await tx.select({ checkIn: attendances.checkIn }).from(attendances).where(and(eq(attendances.companyId, input.companyId), eq(attendances.employeeId, input.employeeId), eq(attendances.attendanceDate, zoned.date))).limit(1);
+        if (!today?.checkIn) workDate = (await openOvernightAttendance(tx, { companyId: input.companyId, employeeId: input.employeeId, position: employee.position, date: zoned.date, time: zoned.time }))?.date ?? zoned.date;
+      }
+      const lockDay = () => tx.select().from(attendances).where(and(eq(attendances.companyId, input.companyId), eq(attendances.employeeId, input.employeeId), eq(attendances.attendanceDate, workDate))).for("update").limit(1);
       let [attendance] = await lockDay();
       if (!attendance) {
         if (input.action === "check_out") throw new AttendanceError("Check-in harus dicatat sebelum check-out.", 409);
@@ -422,7 +472,7 @@ export async function recordAttendanceEvent(input: {
           }
         }
       }
-      const schedule = await resolveSchedule(tx, { companyId: input.companyId, position: employee.position, date: zoned.date, time: zoned.time, scheduleId });
+      const schedule = await resolveSchedule(tx, { companyId: input.companyId, position: employee.position, date: workDate, time: zoned.time, scheduleId });
       const status = input.action === "check_in" && isLateCheckIn(schedule, zoned.time) ? "late" : attendance.status;
       await tx.insert(attendanceEvents).values({
         attendanceId: attendance.id,
@@ -447,7 +497,7 @@ export async function recordAttendanceEvent(input: {
         : { checkOut: zoned.time, note: input.note ?? attendance.note, updatedAt: new Date() })
         .where(eq(attendances.id, attendance.id));
 
-      return { attendanceId: attendance.id, action: input.action, time: zoned.time, date: zoned.date, status, photoAssetId };
+      return { attendanceId: attendance.id, action: input.action, time: zoned.time, date: workDate, status, photoAssetId };
     }, { isolationLevel: "read committed", accessMode: "read write" }));
   } catch (error) {
     if (input.photo) await deletePrivateObject(input.photo.bucket, input.photo.key).catch(() => undefined);

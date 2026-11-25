@@ -122,7 +122,9 @@ const clock = (value: string) => Number(value.slice(0, 2)) * 60 + Number(value.s
 /** Minutes from start to end on the same day (0 when missing or reversed). */
 export function minutesBetween(start: string | null, end: string | null) {
   if (!start || !end) return 0;
-  return Math.max(0, clock(end) - clock(start));
+  const span = clock(end) - clock(start);
+  // Checked out after midnight (night shift 19:00-01:00 = 6 hours).
+  return span < 0 ? span + 1440 : span;
 }
 
 export function hoursBetween(start: string | null, end: string | null) {

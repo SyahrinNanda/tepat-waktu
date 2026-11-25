@@ -91,11 +91,13 @@ export async function fetchMonthlyAttendanceSummary({
     db.select({ timezone: companies.timezone }).from(companies).where(eq(companies.id, companyId)).limit(1),
   ]);
   const today = dateInTimeZone(company?.timezone ?? "Asia/Jakarta");
+  // end is in minutes from the start day's midnight: a shift ending after midnight (19:00-01:00) ends at 25:00.
   const shiftMap = new Map<string, { name: string; start: number; end: number; duration: number }>();
   for (const s of shiftRows) {
     const startM = parseTimeToMinutes(s.startTime) ?? 8 * 60;
-    const endM = parseTimeToMinutes(s.endTime) ?? 17 * 60;
-    const span = Math.max(0, endM - startM);
+    const rawEnd = parseTimeToMinutes(s.endTime) ?? 17 * 60;
+    const endM = rawEnd <= startM ? rawEnd + 1440 : rawEnd;
+    const span = endM - startM;
     const duration = span - breakMinutesFor(span, 0, rules);
     shiftMap.set(s.id, { name: s.name, start: startM, end: endM, duration });
   }
@@ -184,9 +186,12 @@ export async function fetchMonthlyAttendanceSummary({
         presensiCount += 1;
         jamKerjaMinutes += scheduledDuration;
 
-        // Check in
-        const inM = parseTimeToMinutes(rec.checkIn);
-        const outM = parseTimeToMinutes(rec.checkOut);
+        // Check in. On a night shift a check-in after midnight is the same shift (start 22:00, in 00:10 = 24:10).
+        const rawIn = parseTimeToMinutes(rec.checkIn);
+        const inM = rawIn !== null && scheduledEnd > 1440 && rawIn < scheduledStart - 720 ? rawIn + 1440 : rawIn;
+        // A check-out earlier on the clock than the check-in happened after midnight.
+        const rawOut = parseTimeToMinutes(rec.checkOut);
+        const outM = rawOut !== null && inM !== null && rawOut < inM ? rawOut + 1440 * Math.ceil((inM - rawOut) / 1440) : rawOut;
 
         if (inM !== null) {
           // Terlambat
@@ -198,7 +203,7 @@ export async function fetchMonthlyAttendanceSummary({
           if (outM !== null) {
             const bStart = parseTimeToMinutes(rec.breakStart);
             const bEnd = parseTimeToMinutes(rec.breakEnd);
-            const recordedBreak = bStart !== null && bEnd !== null && bEnd > bStart ? bEnd - bStart : 0;
+            const recordedBreak = bStart !== null && bEnd !== null && bEnd !== bStart ? (bEnd > bStart ? bEnd - bStart : bEnd + 1440 - bStart) : 0;
             const totalDuration = Math.max(0, outM - inM);
             const breakMinutes = breakMinutesFor(totalDuration, recordedBreak, rules);
             jamIstirahatMinutes += breakMinutes;
@@ -220,8 +225,7 @@ export async function fetchMonthlyAttendanceSummary({
             // the same as the payslip, so the employee's hours are not lost.
             hasCheckedInTodayWithoutCheckOut = true;
             if (rec.attendanceDate < today) {
-              const end = scheduledEnd > scheduledStart ? scheduledEnd : scheduledEnd + 1440;
-              const totalDuration = Math.max(0, end - inM);
+              const totalDuration = Math.max(0, scheduledEnd - inM);
               const breakMinutes = breakMinutesFor(totalDuration, 0, rules);
               jamIstirahatMinutes += breakMinutes;
               jamAktualMinutes += totalDuration - breakMinutes;

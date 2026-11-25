@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { attendances, employees, leaveRequests } from "@/db/schema";
 import { dateInTimeZone, requireCompany } from "@/lib/current-company";
 import { getAppSettings } from "@/features/access/app-settings";
+import { currentAttendance } from "@/features/attendance/server/attendance-service";
 import { accessScope, employeeScopeFilter } from "@/features/access/team-scope";
 import { StatusBadge } from "@/components/status-badge";
 import { EmployeeDashboard } from "@/features/attendance/components/employee-dashboard";
@@ -32,16 +33,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         eq(employees.status, "active"),
       )).limit(1);
     }
-    const [attendance] = employee ? await db.select({
-      checkIn: attendances.checkIn,
-      checkOut: attendances.checkOut,
-      status: attendances.status,
-    }).from(attendances).where(and(
-      eq(attendances.companyId, context.companyId),
-      eq(attendances.employeeId, employee.id),
-      eq(attendances.attendanceDate, today),
-    )).limit(1) : [];
-    personalAttendance = attendance ?? null;
+    // Same rule as the check-in screen: a night shift (19:00-01:00) is still "today" until its check-out.
+    personalAttendance = employee ? await currentAttendance({ companyId: context.companyId, employeeId: employee.id, timezone: context.timezone }) : null;
   }
   // Admin, GM, HRD: the company. Manager: their Divisi. Staff: only themselves.
   const scope = await accessScope({ companyId: context.companyId, userId: context.session.user.id, role: context.role });

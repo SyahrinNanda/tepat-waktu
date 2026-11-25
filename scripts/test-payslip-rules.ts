@@ -79,5 +79,11 @@ const manual = (amount: number): EmployeeAttendanceRule => ({ absentRule: "manua
   check(line(s, "Terlambat")?.amount === 25_000, "Terlambat ikuti perusahaan: Rp 25.000 per hari", JSON.stringify(line(s, "Terlambat")));
 }
 
+// (j) Night shift 19:00-01:00 that ends after midnight: 6 hours on the clock, minus the 60-minute break.
+{
+  const s = slip({ basis: "hourly", rows: [{ date: "2026-11-02", scheduleId: null, status: "present", checkIn: "19:00:00", checkOut: "01:00:00", breakStart: null, breakEnd: null }] });
+  check(s.summary.workedHours === 5, "Shift malam 19:00-01:00 dihitung 6 jam dikurangi istirahat (bukan 0)", JSON.stringify(s.summary.workedHours));
+}
+
 console.log(`\nSummary: ${passed} passed, ${failed} failed, ${passed + failed} total`);
 if (failed) process.exitCode = 1;
